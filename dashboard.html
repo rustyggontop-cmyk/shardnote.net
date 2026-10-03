@@ -10,7 +10,6 @@ const {data:members,error}=await sb.from("team_members").select("username,role,j
 const box=document.getElementById("members");
 if(error){box.textContent="Unable to load team members.";return}
 box.innerHTML=members.map(m=>"<div class='member-row'><strong>"+String(m.username).replace(/[&<>]/g,"")+"</strong><span>"+m.role.toUpperCase()+"</span></div>").join("")||"No members yet.";
-const {data:invite}=await sb.rpc("current_weekly_invite");
-document.getElementById("invite-status").textContent=invite&&invite[0]?"Weekly invite is active; 5 maximum uses are enforced server-side.":"No active weekly invite.";
+document.getElementById("invite-status").textContent="Invite codes are private and validated server-side. Contact an admin for an invite.";
 })()
 </script></body></html>

@@ -60,8 +60,8 @@
  const {data:role}=await sb.rpc("current_user_role");
  if(role==="owner"||role==="co_owner"||role==="admin")document.getElementById("support-admin-link").style.display="flex";
  const ticketsBox=document.getElementById("tickets");
- const modal=document.getElementById("ticket-modal");
- const closeTicket=()=>modal.classList.remove("open");
+ const getTicketModal=()=>document.getElementById("ticket-modal");
+ const closeTicket=()=>getTicketModal()?.classList.remove("open");
  let activeTicketId=null;
  const renderReplies=async(ticketId)=>{
    const box=document.getElementById("ticket-replies"); box.textContent="Loading replies...";
@@ -82,8 +82,8 @@
    document.getElementById("ticket-modal-status").textContent=String(t.status).toUpperCase();
    document.getElementById("ticket-reply-message").value="";
    document.getElementById("ticket-reply-msg").textContent="";
-   modal.classList.add("open");
-   document.getElementById("ticket-close").focus();
+   getTicketModal()?.classList.add("open");
+   document.getElementById("ticket-close")?.focus();
    await renderReplies(t.id);
  };
  const load=async()=>{
@@ -93,18 +93,20 @@
    ticketsBox.innerHTML=(data||[]).map(t=>"<div class='member-row ticket-row'><div><strong>"+esc(t.subject)+"</strong><div class='support-note'>"+new Date(t.created_at).toLocaleString()+"</div><div class='support-note'>"+esc(t.message).slice(0,180)+(String(t.message).length>180?"…":"")+"</div></div><div class='admin-actions'><span class='support-status'>"+esc(t.status).toUpperCase()+"</span><button type='button' class='button open-ticket' data-ticket='"+esc(t.id)+"'>OPEN</button></div></div>").join("")||"<p class='support-note'>No support requests yet.</p>";
    ticketsBox.querySelectorAll(".open-ticket").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();openTicket(ticketMap[btn.dataset.ticket]);}));
  };
- const ticketReplyBox=document.getElementById("ticket-reply-message");ticketReplyBox?.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();document.getElementById("ticket-reply-send")?.click();}});
-document.getElementById("ticket-reply-send").onclick=async()=>{
-   const message=document.getElementById("ticket-reply-message").value.trim();
-   if(!activeTicketId||!message)return;
-   const b=document.getElementById("ticket-reply-send");b.disabled=true;
+ const sendTicketReply=async()=>{
+   const input=document.getElementById("ticket-reply-message"),b=document.getElementById("ticket-reply-send"),status=document.getElementById("ticket-reply-msg");
+   const message=input?.value.trim();
+   if(!activeTicketId||!message||!b)return;
+   b.disabled=true;
    const {error}=await sb.from("support_replies").insert({ticket_id:activeTicketId,user_id:user.id,message});
    b.disabled=false;
-   if(error){document.getElementById("ticket-reply-msg").textContent="Could not send reply: "+error.message;return;}
-   document.getElementById("ticket-reply-message").value="";
-   document.getElementById("ticket-reply-msg").textContent="Reply sent.";
+   if(error){if(status)status.textContent="Could not send reply: "+error.message;return;}
+   input.value="";
+   if(status)status.textContent="Reply sent.";
    await renderReplies(activeTicketId);
  };
+document.addEventListener("keydown",e=>{if(e.target?.id==="ticket-reply-message"&&e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendTicketReply();}});
+document.addEventListener("click",e=>{if(e.target?.id==="ticket-reply-send")sendTicketReply();});
  document.getElementById("send").onclick=async()=>{
    const subject=document.getElementById("subject").value.trim(),message=document.getElementById("message").value.trim(),msg=document.getElementById("msg");
    if(subject.length<2||message.length<1){msg.textContent="Please enter a subject and a message.";return;}

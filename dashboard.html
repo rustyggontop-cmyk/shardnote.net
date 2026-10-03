@@ -50,8 +50,11 @@
         <small>TEAM SETUP</small>
         <h2>Create your team</h2>
         <p>Choose a team name before using the dashboard.</p>
-        <input id="team-name" maxlength="32" placeholder="Team name">
+        <input id="team-name" class="team-name-input" maxlength="32" placeholder="Search or enter a team name">
         <button id="create-team" class="button orange">CREATE TEAM</button>
+        <div class="team-or-divider"><span>OR</span></div>
+        <input id="team-invite" class="team-name-input" maxlength="64" placeholder="Enter a team invite code">
+        <button id="join-team" class="button">JOIN TEAM</button>
         <p id="team-msg"></p>
       </section>
 
@@ -106,7 +109,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-config.js"></script>
+<script src="supabase-config.js"></script><script src="ban-check.js"></script>
 <script>
 (async()=>{
   document.documentElement.style.visibility="hidden";
@@ -135,8 +138,17 @@
     document.getElementById("create-team").onclick=async()=>{
       const name=document.getElementById("team-name").value.trim(),msg=document.getElementById("team-msg");
       if(!name){msg.textContent="Enter a team name.";return;}
+      msg.textContent="Creating team...";
       const {error}=await sb.rpc("create_my_team",{team_name:name});
       if(error){msg.textContent=error.message;return;}
+      location.reload();
+    };
+    document.getElementById("join-team").onclick=async()=>{
+      const code=document.getElementById("team-invite").value.trim().toUpperCase(),msg=document.getElementById("team-msg");
+      if(!code){msg.textContent="Enter a team invite code.";return;}
+      msg.textContent="Joining team...";
+      const {data,error}=await sb.rpc("join_team_by_invite",{p_code:code});
+      if(error||!data){msg.textContent=error?.message||"That team invite is invalid or already used.";return;}
       location.reload();
     };
     document.documentElement.style.visibility="visible";return;

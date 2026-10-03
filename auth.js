@@ -20,17 +20,16 @@ async function start(){
       const email=document.getElementById("email").value.trim();
       const password=document.getElementById("password").value;
       const betaCode=document.getElementById("beta-code").value.trim().toUpperCase();
-      const teamInvite=document.getElementById("team-invite").value.trim().toUpperCase();
       if(!betaCode){msg.textContent="A beta access code is required while SHARDNOTE is in beta.";return;}
       msg.textContent="Creating account...";
       try{
-        const response=await fetch(window.SUPABASE_URL+"/functions/v1/register-user",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,email,password,beta_code:betaCode,team_invite_code:teamInvite||undefined})});
+        const response=await fetch(window.SUPABASE_URL+"/functions/v1/register-user",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,email,password,beta_code:betaCode})});
         const result=await response.json();
         if(!response.ok){msg.textContent=result.error||"Account creation failed.";return;}
         if(result.session){
           const {error:setError}=await sb.auth.setSession({access_token:result.session.access_token,refresh_token:result.session.refresh_token});
           if(setError){msg.textContent="Account created. Log in with your username and password.";return;}
-          msg.textContent=teamInvite?"Account created and joined your team.":"Account created. You can now create or join a team.";
+          msg.textContent="Account created. You can now create your own team.";
           setTimeout(()=>location.href="dashboard.html",500);
           return;
         }

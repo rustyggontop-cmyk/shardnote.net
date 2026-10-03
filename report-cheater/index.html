@@ -33,7 +33,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/supabase-config.js"></script><script src="/realtime.js"></script><script src="/ban-check.js"></script>
 <script>
 (async()=>{
-const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);const params=new URLSearchParams(location.search);document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="/index/";};
+const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);const params=new URLSearchParams(location.search);document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="/index/";};
 const {data:{user}}=await sb.auth.getUser();if(!user){location.href="/login/";return;}
 const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
 const {data:role}=await sb.rpc("current_user_role");if(role==="owner"||role==="co_owner"||role==="admin")document.getElementById("report-admin-link").style.display="flex";

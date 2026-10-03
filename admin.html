@@ -36,7 +36,7 @@
 <section class="panel-card wide"><small>TEAM MANAGEMENT</small><h2>Team Members</h2><p class="support-note">Admins can remove member tags. Only the owner can appoint a co-owner.</p><div id="admin-members">Loading team members...</div></section>
 <section class="panel-card"><small>SUPPORT</small><h2>Support Tickets</h2><p class="support-note">Select a ticket to open the full request.</p><div id="tickets">Loading tickets...</div></section>
 <section class="panel-card"><small>MODERATION</small><h2>Cheater Reports</h2><div id="cheater-reports">Loading reports...</div></section>
-<section class="panel-card"><small>ROLE MANAGEMENT</small><div id="owner-invite" style="display:none" class="invitebox"><label>ADMIN INVITE</label><strong>676767</strong><small>Special admin signup code</small></div><div id="manage-roles"><h2>Manage Roles</h2><input id="admin-search" placeholder="Search a team member..." autocomplete="off"><div id="admin-results"></div></div></section>
+<section class="panel-card"><small>ROLE MANAGEMENT</small><div id="owner-invite" style="display:none" class="invitebox"><label>ADMIN INVITE</label><strong>676767</strong><small>Special admin signup code</small></div><div id="beta-access-card"><h2>Beta Access Codes</h2><p class="support-note">Single-use codes required for beta account creation.</p><div id="beta-codes">Loading beta codes...</div></div><div id="manage-roles"><h2>Manage Roles</h2><input id="admin-search" placeholder="Search a team member..." autocomplete="off"><div id="admin-results"></div></div></section>
 </div></div></main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -75,7 +75,7 @@ if(membersError){membersBox.textContent="Could not load team members: "+membersE
    const avatar=p?.avatar_url?"<img src='"+esc(p.avatar_url)+"' alt='' >":esc(String(m.username||"?").slice(0,1).toUpperCase());
    const tag=t&&!reservedTags.has(String(t.tag_name||"").trim().toLowerCase())?"<span class='user-tag' style='margin-left:6px;color:"+esc(t.color)+";border:1px solid "+esc(t.color)+";background:"+esc(t.color)+"22'>"+esc(t.tag_name)+"</span>":"";
    const steam=p?.steam_url?"<a class='steam-link' href='"+esc(p.steam_url)+"' target='_blank' rel='noopener'>STEAM</a>":"";
-   return "<div class='member-row'><div class='profile-link' role='link' tabindex='0' data-profile='"+encodeURIComponent(m.user_id)+"'><div class='profile-meta'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><div><strong>"+esc(m.username)+"</strong>"+tag+"</div>"+(p?.bio?"<div class='profile-bio'>"+esc(p.bio)+"</div>":"")+"</div></div><div><span class='role-pill'>"+esc(String(m.role).replace("_"," ").toUpperCase())+" · "+(online?"ONLINE":"OFFLINE")+"</span>"+steam+"</div></div><div class='admin-actions'><button type='button' class='button rename-user' data-user='"+esc(m.user_id)+"' data-name='"+esc(m.username)+"'>RENAME</button>"+(t?"<button class='button remove-tag' data-user='"+esc(m.user_id)+"'>REMOVE TAG</button>":"")+"<button class='button reset-pass' data-user='"+esc(m.user_id)+"'>RESET PASSWORD</button></div></div>";
+   return "<div class='member-row'><div class='profile-link' role='link' tabindex='0' data-profile='"+encodeURIComponent(m.user_id)+"'><div class='profile-meta'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><div><strong>"+esc(m.username)+"</strong>"+tag+"</div>"+(p?.bio?"<div class='profile-bio'>"+esc(p.bio)+"</div>":"")+"</div></div><div><span class='role-pill'>"+esc(String(m.role).replace("_"," ").toUpperCase())+" · "+(online?"ONLINE":"OFFLINE")+"</span>"+steam+"</div></div><div class='admin-actions'><button type='button' class='button rename-user' data-user='"+esc(m.user_id)+"' data-name='"+esc(m.username)+"'>RENAME</button>"+(t?"<button class='button remove-tag' data-user='"+esc(m.user_id)+"'>REMOVE TAG</button>":"")+"<button type='button' class='button ban-button ban-user' data-user='"+esc(m.user_id)+"' data-name='"+esc(m.username)+"'>BAN PLAYER</button><button class='button reset-pass' data-user='"+esc(m.user_id)+"'>RESET PASSWORD</button></div></div>";
  }).join("")||"No team members.";
  membersBox.querySelectorAll('[data-profile]').forEach(el=>{const go=()=>location.href='profile.html?id='+encodeURIComponent(el.dataset.profile);el.addEventListener('click',e=>{if(e.target.closest('a,button'))return;go();});el.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('a,button')){e.preventDefault();go();}});}); membersBox.querySelectorAll(".rename-user").forEach(b=>b.onclick=async()=>{
  const current=b.dataset.name||"",next=prompt("Enter a new username:",current);
@@ -87,6 +87,15 @@ if(membersError){membersBox.textContent="Could not load team members: "+membersE
  const {error}=await sb.from("team_members").update({username:name}).eq("user_id",b.dataset.user).eq("team_id",me.team_id);
  if(error){alert("Could not rename user: "+error.message);b.disabled=false;return;}
  b.textContent="RENAMED";setTimeout(()=>location.reload(),500);
+});
+membersBox.querySelectorAll(".ban-user").forEach(b=>b.onclick=async()=>{
+ const reason=prompt("Reason for banning "+(b.dataset.name||"this player")+":");
+ if(reason===null)return;
+ if(reason.trim().length<3){alert("Ban reason must be at least 3 characters.");return;}
+ b.disabled=true;
+ const {error}=await sb.rpc("admin_ban_user",{target_user:b.dataset.user,p_reason:reason.trim()});
+ if(error){alert("Could not ban player: "+error.message);b.disabled=false;return;}
+ b.textContent="BANNED";
 });
 membersBox.querySelectorAll(".remove-tag").forEach(b=>b.onclick=async()=>{
    if(!confirm("Remove this member's tag?"))return;
@@ -108,14 +117,26 @@ else{
  const ticketUsers=[...new Set((tickets||[]).map(t=>t.user_id).filter(Boolean))];
  const {data:ticketMembers}=ticketUsers.length?await sb.from("team_members").select("user_id,username").in("user_id",ticketUsers):{data:[]};
  const userNames=Object.fromEntries((ticketMembers||[]).map(x=>[x.user_id,x.username]));
- ticketsBox.innerHTML=(tickets||[]).map(t=>"<div class='member-row ticket-row'><div><strong>"+esc(t.subject)+"</strong><div class='support-note'>"+esc(userNames[t.user_id]||"Team member")+" · "+new Date(t.created_at).toLocaleString()+"</div><div class='support-note'>"+esc(t.message).slice(0,150)+(String(t.message).length>150?"…":"")+"</div></div><div class='admin-actions'><span class='support-status'>"+esc(t.status).toUpperCase()+"</span><button type='button' class='button open-ticket' data-ticket='"+esc(t.id)+"'>VIEW TICKET</button></div></div>").join("")||"No tickets.";
+ ticketsBox.innerHTML=(tickets||[]).map(t=>"<div class='member-row ticket-row'><div><strong>"+esc(t.subject)+"</strong><div class='support-note'>"+esc(userNames[t.user_id]||"Team member")+" · "+new Date(t.created_at).toLocaleString()+"</div><div class='support-note'>"+esc(t.message).slice(0,150)+(String(t.message).length>150?"…":"")+"</div></div><div class='admin-actions'><span class='support-status'>"+esc(t.status).toUpperCase()+"</span><button type='button' class='button open-ticket' data-ticket='"+esc(t.id)+"'>VIEW TICKET</button><button type='button' class='button delete-ticket' data-ticket='"+esc(t.id)+"'>DELETE</button></div></div>").join("")||"No tickets.";
  const byId=Object.fromEntries((tickets||[]).map(t=>[t.id,t]));
  const modal=document.getElementById("ticket-modal"),close=()=>modal.classList.remove("open"),openTicket=id=>{const t=byId[id];if(!t)return;document.getElementById("ticket-modal-title").textContent=t.subject;document.getElementById("ticket-modal-meta").textContent=(userNames[t.user_id]||"Team member")+" · "+new Date(t.created_at).toLocaleString();document.getElementById("ticket-modal-message").textContent=t.message;document.getElementById("ticket-modal-status").textContent=String(t.status).toUpperCase();modal.classList.add("open");document.getElementById("ticket-close").focus();};
  ticketsBox.querySelectorAll(".open-ticket").forEach(btn=>btn.addEventListener("click",()=>openTicket(btn.dataset.ticket)));
+ticketsBox.querySelectorAll(".delete-ticket").forEach(btn=>btn.addEventListener("click",async()=>{
+ if(!confirm("Delete this support ticket permanently?"))return;
+ btn.disabled=true;
+ const {error}=await sb.from("support_tickets").delete().eq("id",btn.dataset.ticket);
+ if(error){alert("Could not delete ticket: "+error.message);btn.disabled=false;return;}
+ btn.closest(".ticket-row")?.remove();
+}));
+
  document.getElementById("ticket-close").onclick=close;
  modal.addEventListener("click",e=>{if(e.target===modal)close();});
  document.addEventListener("keydown",e=>{if(e.key==="Escape")close();});
 }
+
+const {data:betaCodes,error:betaError}=await sb.from("beta_access_codes").select("code_label,uses,max_uses,active,valid_until").order("created_at",{ascending:false});
+const betaBox=document.getElementById("beta-codes");
+betaBox.innerHTML=betaError?"<p class='support-note'>Could not load beta codes: "+esc(betaError.message)+"</p>":(betaCodes||[]).map(b=>"<div class='member-row'><div><strong class='invite-code'>"+esc(b.code_label)+"</strong><div class='support-note'>"+esc(String(b.uses))+" / "+esc(String(b.max_uses))+" used</div></div><span class='support-status'>"+(b.active?"ACTIVE":"USED")+"</span></div>").join("")||"<p class='support-note'>No beta codes available.</p>";
 
 const {data:reports,error:reportsError}=await sb.from("cheater_reports").select("id,reported_username,reason,details,status,evidence_url,steam_url,created_at,reporter_id").eq("team_id",me.team_id).order("created_at",{ascending:false}).limit(50);
 const reportBox=document.getElementById("cheater-reports");

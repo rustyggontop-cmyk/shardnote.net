@@ -159,7 +159,7 @@
       const p=pm[m.user_id],avatar=p?.avatar_url?"<img src='"+escapeHtml(p.avatar_url)+"' alt=''>":escapeHtml(String(m.username||"?").slice(0,1).toUpperCase());
       const steam=p?.steam_url?"<a class='steam-link' href='"+escapeHtml(p.steam_url)+"' target='_blank' rel='noopener'>STEAM</a>":"";
       const bio=p?.bio?"<div class='profile-bio'>"+escapeHtml(p.bio)+"</div>":"";
-      return "<div class='member-row'><div class='profile-meta'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><div><strong>"+escapeHtml(m.username)+"</strong>"+tagHtml(tagMap[m.user_id])+"</div>"+bio+"</div></div><span>"+escapeHtml(String(m.role).replace("_"," ").toUpperCase())+" "+steam+"</span></div>";
+      return "<a class='member-row profile-link' href='profile.html?id="+encodeURIComponent(m.user_id)+"'><div class='profile-meta'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><div><strong>"+escapeHtml(m.username)+"</strong>"+tagHtml(tagMap[m.user_id])+"</div>"+bio+"</div></div><span>"+escapeHtml(String(m.role).replace("_"," ").toUpperCase())+" "+steam+"</span></a>";
     }).join("")||"No team members yet.";
   };
   await loadMembers();
@@ -185,7 +185,7 @@
     const ids=(data||[]).map(x=>x.user_id),{data:found}=ids.length?await sb.from("user_tags").select("user_id,tag_name,color").in("user_id",ids):{data:[]};
     const {data:profiles}=ids.length?await sb.from("profiles").select("id,avatar_url,bio,steam_url").in("id",ids):{data:[]};
     const map=Object.fromEntries((found||[]).map(x=>[x.user_id,x])),pm=Object.fromEntries((profiles||[]).map(x=>[x.id,x]));
-    results.innerHTML=(data||[]).map(u=>{const p=pm[u.user_id],avatar=p?.avatar_url?"<img src='"+escapeHtml(p.avatar_url)+"' alt=''>":escapeHtml(String(u.username||"?").slice(0,1).toUpperCase());const steam=p?.steam_url?"<a class='steam-link' href='"+escapeHtml(p.steam_url)+"' target='_blank' rel='noopener'>STEAM</a>":"";return "<div class='user-result-row'><div class='user-result-name'><span class='user-avatar'>"+avatar+"</span><div><strong>"+escapeHtml(u.username)+"</strong>"+(p?.bio?"<div class='profile-bio'>"+escapeHtml(p.bio)+"</div>":"")+"</div></div><div>"+(map[u.user_id]?tagHtml(map[u.user_id]):"<span class='user-no-tag'>No custom tag</span>")+" "+steam+"</div></div>";}).join("")||"<div class='user-search-empty'><span>⌕</span><strong>No users found</strong><small>Try a different username.</small></div>";
+    results.innerHTML=(data||[]).map(u=>{const p=pm[u.user_id],avatar=p?.avatar_url?"<img src='"+escapeHtml(p.avatar_url)+"' alt=''>":escapeHtml(String(u.username||"?").slice(0,1).toUpperCase());const steam=p?.steam_url?"<a class='steam-link' href='"+escapeHtml(p.steam_url)+"' target='_blank' rel='noopener'>STEAM</a>":"";return "<a class='user-result-row profile-link' href='profile.html?id="+encodeURIComponent(u.user_id)+"'><div class='user-result-name'><span class='user-avatar'>"+avatar+"</span><div><strong>"+escapeHtml(u.username)+"</strong>"+(p?.bio?"<div class='profile-bio'>"+escapeHtml(p.bio)+"</div>":"")+"</div></div><div>"+(map[u.user_id]?tagHtml(map[u.user_id]):"<span class='user-no-tag'>No custom tag</span>")+" "+steam+"</div></a>";}).join("")||"<div class='user-search-empty'><span>⌕</span><strong>No users found</strong><small>Try a different username.</small></div>";
   },180);};
 
   await sb.from("user_presence").upsert({user_id:user.id,last_seen:new Date().toISOString()});

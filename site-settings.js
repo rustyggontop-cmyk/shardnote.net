@@ -40,13 +40,13 @@
     }
 
     const { data: { user } = {} } = await sb.auth.getUser().catch(() => ({ data: { user: null } }));
-    let role = null;
+    let canBypass = false;
     if (user) {
-      const { data } = await sb.rpc("current_user_role").catch(() => ({ data: null }));
-      role = data || null;
+      const { data, error } = await sb.rpc("can_bypass_maintenance");
+      canBypass = !error && data === true;
     }
 
-    if (role === "owner" || role === "co_owner") {
+    if (canBypass) {
       hideMaintenance();
     } else {
       location.replace("maintenance.html");

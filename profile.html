@@ -72,7 +72,13 @@
  if(x.bio){const bio=document.getElementById("profile-bio");bio.textContent=x.bio;bio.style.display="block";}
  if(x.tag_name&&!["admin","owner","co_owner","co-owner"].includes(String(x.tag_name).trim().toLowerCase())){const t=document.getElementById("profile-tag");t.innerHTML="<span class='user-tag' style='margin-left:0;padding:7px 11px;height:auto;border-radius:8px;font-size:13px;color:"+esc(x.tag_color)+";border:1px solid "+esc(x.tag_color)+";background:"+esc(x.tag_color)+"22'>"+esc(x.tag_name)+"</span>";}
  if(x.steam_url){const a=document.createElement("a");a.className="button orange";a.href=x.steam_url;a.target="_blank";a.rel="noopener";a.textContent="VIEW STEAM PROFILE";document.getElementById("profile-actions").appendChild(a);}
- if(x.user_id!==user.id){
+ if(x.user_id!==user.id&&["owner","co_owner","admin"].includes(role)){
+  const rename=document.createElement("button");rename.type="button";rename.className="button";rename.textContent="RENAME";
+  rename.onclick=async()=>{const next=prompt("Enter a new username:",x.username||"");if(next===null||next.trim()===(x.username||""))return;rename.disabled=true;const {error}=await sb.rpc("admin_rename_user",{target_user:x.user_id,new_username:next.trim()});if(error){alert("Could not rename user: "+error.message);rename.disabled=false;return;}rename.textContent="RENAMED";setTimeout(()=>location.reload(),400);};document.getElementById("profile-actions").appendChild(rename);
+  const removeTag=document.createElement("button");removeTag.type="button";removeTag.className="button";removeTag.textContent="REMOVE TAG";
+  removeTag.onclick=async()=>{if(!x.tag_name||["admin","owner","co_owner","co-owner"].includes(String(x.tag_name).trim().toLowerCase())){alert("This user has no removable custom tag.");return;}if(!confirm("Remove this user's custom tag?"))return;removeTag.disabled=true;const {error}=await sb.rpc("admin_remove_user_tag",{target_user:x.user_id});if(error){alert("Could not remove tag: "+error.message);removeTag.disabled=false;return;}removeTag.textContent="REMOVED";setTimeout(()=>location.reload(),400);};document.getElementById("profile-actions").appendChild(removeTag);
+}
+if(x.user_id!==user.id){
   const report=document.createElement("a");
   report.className="button";
   report.href="report-cheater.html?id="+encodeURIComponent(x.user_id)+"&username="+encodeURIComponent(x.username||"")+"&steam="+encodeURIComponent(x.steam_url||"");

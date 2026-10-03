@@ -101,6 +101,30 @@
   };
   await refreshDiscord();
 
+  // After Discord OAuth returns, use the provider access token to join the SHARDNOTE server.
+  const hashParams=new URLSearchParams(location.hash.replace(/^#/,""));
+  const providerToken=hashParams.get("provider_token");
+  if(providerToken){
+    discordStatus.textContent="Discord linked. Joining SHARDNOTE server...";
+    const {data:{session}}=await sb.auth.getSession();
+    if(session){
+      const response=await fetch(window.SUPABASE_URL+"/functions/v1/discord-join-server",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":"Bearer "+session.access_token
+        },
+        body:JSON.stringify({provider_token:providerToken})
+      });
+      const result=await response.json().catch(()=>({}));
+      if(response.ok&&result.ok){
+        discordStatus.textContent="Discord linked and you've been added to the SHARDNOTE server.";
+      }else{
+        discordStatus.textContent="Discord linked, but automatic server join failed: "+(result.error||"Unknown error");
+      }
+    }
+  }
+
   // Remove OAuth tokens from the address bar after Supabase has processed the callback.
   if(location.hash && /access_token|refresh_token|provider_token|provider_refresh_token|code=/i.test(location.hash)){
     history.replaceState(null,document.title,location.pathname+location.search);

@@ -152,7 +152,15 @@
   const loadMembers=async()=>{
     const {data:members,error}=await sb.from("team_members").select("user_id,username,role").eq("team_id",teamId).order("username");
     if(error){document.getElementById("members-list").textContent="Could not load team members: "+error.message;return;}
-    document.getElementById("members-list").innerHTML=(members||[]).map(m=>"<div class='member-row'><strong>"+escapeHtml(m.username)+"</strong>"+tagHtml(tagMap[m.user_id])+"<span>"+escapeHtml(String(m.role).toUpperCase())+"</span></div>").join("")||"No team members yet.";
+    const ids=(members||[]).map(x=>x.user_id);
+    const {data:profiles}=ids.length?await sb.from("profiles").select("id,avatar_url,bio,steam_url").in("id",ids):{data:[]};
+    const pm=Object.fromEntries((profiles||[]).map(x=>[x.id,x]));
+    document.getElementById("members-list").innerHTML=(members||[]).map(m=>{
+      const p=pm[m.user_id],avatar=p?.avatar_url?"<img src='"+escapeHtml(p.avatar_url)+"' alt=''>":escapeHtml(String(m.username||"?").slice(0,1).toUpperCase());
+      const steam=p?.steam_url?"<a class='steam-link' href='"+escapeHtml(p.steam_url)+"' target='_blank' rel='noopener'>STEAM</a>":"";
+      const bio=p?.bio?"<div class='profile-bio'>"+escapeHtml(p.bio)+"</div>":"";
+      return "<div class='member-row'><div class='profile-meta'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><div><strong>"+escapeHtml(m.username)+"</strong>"+tagHtml(tagMap[m.user_id])+"</div>"+bio+"</div></div><span>"+escapeHtml(String(m.role).replace("_"," ").toUpperCase())+" "+steam+"</span></div>";
+    }).join("")||"No team members yet.";
   };
   await loadMembers();
 

@@ -62,14 +62,29 @@
  const ticketsBox=document.getElementById("tickets");
  const modal=document.getElementById("ticket-modal");
  const closeTicket=()=>modal.classList.remove("open");
- const openTicket=t=>{
-   if(!t)return;
+ let activeTicketId=null;
+ const renderReplies=async(ticketId)=>{
+   const box=document.getElementById("ticket-replies"); box.textContent="Loading replies...";
+   const {data,error}=await sb.from("support_replies").select("id,user_id,message,created_at").eq("ticket_id",ticketId).order("created_at");
+   if(error){box.textContent="Could not load replies: "+error.message;return;}
+   const ids=[...new Set((data||[]).map(r=>r.user_id))];
+   const {data:tm}=ids.length?await sb.from("team_members").select("user_id,username").in("user_id",ids):{data:[]};
+   const {data:pf}=ids.length?await sb.from("profiles").select("id,username").in("id",ids):{data:[]};
+   const names=Object.fromEntries((tm||[]).map(x=>[x.user_id,x.username]));
+   (pf||[]).forEach(x=>{if(!names[x.id])names[x.id]=x.username;});
+   box.innerHTML=(data||[]).map(r=>"<div class='support-note' style='padding:10px 0;border-bottom:1px solid #282039'><strong>"+esc(r.user_id===user.id?"You":(names[r.user_id]||"SHARDNOTE Support"))+"</strong><div style='margin-top:4px;color:#aaa1b0'>"+esc(r.message)+"</div><small>"+new Date(r.created_at).toLocaleString()+"</small></div>").join("")||"<p class='support-note'>No replies yet.</p>";
+ };
+ const openTicket=async t=>{
+   if(!t)return; activeTicketId=t.id;
    document.getElementById("ticket-modal-title").textContent=t.subject;
    document.getElementById("ticket-modal-meta").textContent=new Date(t.created_at).toLocaleString();
    document.getElementById("ticket-modal-message").textContent=t.message;
    document.getElementById("ticket-modal-status").textContent=String(t.status).toUpperCase();
+   document.getElementById("ticket-reply-message").value="";
+   document.getElementById("ticket-reply-msg").textContent="";
    modal.classList.add("open");
    document.getElementById("ticket-close").focus();
+   await renderReplies(t.id);
  };
  const load=async()=>{
    const {data,error}=await sb.from("support_tickets").select("id,subject,message,status,created_at").eq("user_id",user.id).order("created_at",{ascending:false});
@@ -77,6 +92,17 @@
    const ticketMap=Object.fromEntries((data||[]).map(t=>[t.id,t]));
    ticketsBox.innerHTML=(data||[]).map(t=>"<div class='member-row ticket-row'><div><strong>"+esc(t.subject)+"</strong><div class='support-note'>"+new Date(t.created_at).toLocaleString()+"</div><div class='support-note'>"+esc(t.message).slice(0,180)+(String(t.message).length>180?"…":"")+"</div></div><div class='admin-actions'><span class='support-status'>"+esc(t.status).toUpperCase()+"</span><button type='button' class='button open-ticket' data-ticket='"+esc(t.id)+"'>OPEN</button></div></div>").join("")||"<p class='support-note'>No support requests yet.</p>";
    ticketsBox.querySelectorAll(".open-ticket").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();openTicket(ticketMap[btn.dataset.ticket]);}));
+ };
+ document.getElementById("ticket-reply-send").onclick=async()=>{
+   const message=document.getElementById("ticket-reply-message").value.trim();
+   if(!activeTicketId||!message)return;
+   const b=document.getElementById("ticket-reply-send");b.disabled=true;
+   const {error}=await sb.from("support_replies").insert({ticket_id:activeTicketId,user_id:user.id,message});
+   b.disabled=false;
+   if(error){document.getElementById("ticket-reply-msg").textContent="Could not send reply: "+error.message;return;}
+   document.getElementById("ticket-reply-message").value="";
+   document.getElementById("ticket-reply-msg").textContent="Reply sent.";
+   await renderReplies(activeTicketId);
  };
  document.getElementById("send").onclick=async()=>{
    const subject=document.getElementById("subject").value.trim(),message=document.getElementById("message").value.trim(),msg=document.getElementById("msg");
@@ -98,6 +124,6 @@
  await load();
 })().catch(err=>{const m=document.getElementById("msg");if(m)m.textContent="Support error: "+String(err.message||err);});
 </script>
-<div id="ticket-modal" class="ticket-modal" role="dialog" aria-modal="true" aria-labelledby="ticket-modal-title"><div class="ticket-dialog"><div class="ticket-dialog-header"><div><small>SUPPORT / TICKET</small><h2 id="ticket-modal-title" class="ticket-dialog-title">Ticket</h2><div id="ticket-modal-meta" class="ticket-dialog-meta"></div></div><button id="ticket-close" class="button" aria-label="Close ticket">CLOSE</button></div><div id="ticket-modal-message" class="ticket-dialog-message"></div><div class="ticket-dialog-actions"><span id="ticket-modal-status" class="support-status"></span></div></div></div>
+<div id="ticket-modal" class="ticket-modal" role="dialog" aria-modal="true" aria-labelledby="ticket-modal-title"><div class="ticket-dialog"><div class="ticket-dialog-header"><div><small>SUPPORT / TICKET</small><h2 id="ticket-modal-title" class="ticket-dialog-title">Ticket</h2><div id="ticket-modal-meta" class="ticket-dialog-meta"></div></div><button id="ticket-close" class="button" aria-label="Close ticket">CLOSE</button></div><div id="ticket-modal-message" class="ticket-dialog-message"></div><div class="ticket-dialog-actions"><span id="ticket-modal-status" class="support-status"></span></div><div class="ticket-dialog-message"><strong>REPLIES</strong><div id="ticket-replies" style="margin-top:10px"></div><textarea id="ticket-reply-message" maxlength="5000" placeholder="Write a reply..." style="width:100%;min-height:90px;margin-top:12px"></textarea><button id="ticket-reply-send" type="button" class="button orange">REPLY</button><p id="ticket-reply-msg"></p></div></div></div>
 </body>
 </html>

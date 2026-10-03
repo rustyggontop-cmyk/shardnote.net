@@ -115,7 +115,8 @@
   if(userError||!user){location.href="login.html";return;}
 
   const escapeHtml=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
-  const tagHtml=t=>t?"<span class='user-tag' style='color:"+t.color+";border:1px solid "+t.color+";background:"+t.color+"22'>"+escapeHtml(t.tag_name)+"</span>":"";
+  const reservedTags=new Set(["admin","owner","co_owner","co-owner"]);
+  const tagHtml=t=>t&&!reservedTags.has(String(t.tag_name||"").trim().toLowerCase())?"<span class='user-tag' style='color:"+t.color+";border:1px solid "+t.color+";background:"+t.color+"22'>"+escapeHtml(t.tag_name)+"</span>":"";
 
   const {data:me,error:meError}=await sb.from("team_members").select("team_id,username,role").eq("user_id",user.id).maybeSingle();
   const {data:role,error:roleError}=await sb.rpc("current_user_role");

@@ -11,11 +11,4 @@ form.addEventListener("submit",async e=>{
   msg.textContent="Email sent successfully. Brevo message ID: "+(d.brevo?.messageId||"unknown");
  }catch(err){console.error(err);msg.textContent="Email failed: "+err.message;}
 });
-</script></main><script>
-document.getElementById("test").addEventListener("submit",function(e){
- e.preventDefault();
- const m=document.getElementById("msg");
- m.textContent="Send test is not connected to a server yet. GitHub Pages cannot send Brevo mail directly. Configure a server-side endpoint first.";
- m.style.color="#e89124";
-});
-</script></body></html>
+</script></main></body></html>

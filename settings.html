@@ -62,7 +62,7 @@
 (async()=>{
   const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
   const {data:{user}}=await sb.auth.getUser(); if(!user){location.href="login.html";return;}
-  const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":">","\"":"&quot;"}[c]));
+  const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
   const {data:me}=await sb.from("team_members").select("username,role").eq("user_id",user.id).maybeSingle();
   const {data:profile,error:profileError}=await sb.from("profiles").select("username,avatar_url,bio,steam_url").eq("id",user.id).maybeSingle();
   if(profileError){document.getElementById("save-msg").textContent="Could not load profile: "+profileError.message;return;}

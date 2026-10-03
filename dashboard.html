@@ -181,6 +181,19 @@ return "<div class='member-row profile-link' role='link' tabindex='0' data-profi
     location.reload();
   });
 
+  document.getElementById("reset-password").onclick=async()=>{
+    const msg=document.getElementById("password-msg");
+    const next=prompt("Enter your new password (minimum 8 characters):");
+    if(next===null)return;
+    const value=next.trim();
+    if(value.length<8){msg.textContent="Password must be at least 8 characters.";return;}
+    msg.textContent="Updating password...";
+    const change={}; change[pwdKey]=value;
+    const result=await sb.auth.updateUser(change);
+    if(result.error){msg.textContent="Could not reset password: "+result.error.message;return;}
+    msg.textContent="Password updated successfully.";
+  };
+
   const myTag=await sb.from("user_tags").select("tag_name,color").eq("user_id",user.id).maybeSingle();
   const ts=document.getElementById("tag-status"),tc=document.getElementById("tag-create"),tp=document.getElementById("tag-preview");
   if(myTag.data){ts.textContent="Your custom tag";tp.innerHTML=tagHtml(myTag.data);}

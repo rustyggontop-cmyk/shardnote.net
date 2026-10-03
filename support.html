@@ -48,7 +48,7 @@
   </main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-config.js"></script>
+<script src="supabase-config.js"></script><script src="realtime.js"></script>
 <script>
 (async()=>{
  const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
@@ -81,6 +81,7 @@
    document.getElementById("ticket-modal-status").textContent=String(t.status).toUpperCase();
    document.getElementById("ticket-reply-message").value="";
    document.getElementById("ticket-reply-msg").textContent="";
+   window.__activeTicketForSupport=t.id;
    getTicketModal()?.classList.add("open");
    document.getElementById("ticket-close")?.focus();
    await renderReplies(t.id);
@@ -125,6 +126,16 @@ document.addEventListener("click",e=>{if(e.target?.id==="ticket-reply-send")send
  });
  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeTicket();});
  await load();
+ shardnoteLive(sb,[{table:"support_tickets"},{table:"support_replies"}],payload=>{
+   if(payload.table==="support_replies"){
+     if(window.__activeTicketForSupport){
+       const ticketId=payload.new?.ticket_id||payload.old?.ticket_id;
+       if(ticketId===window.__activeTicketForSupport) renderReplies(window.__activeTicketForSupport);
+     }
+   } else {
+     load();
+   }
+ });
 })().catch(err=>{const m=document.getElementById("msg");if(m)m.textContent="Support error: "+String(err.message||err);});
 </script>
 <div id="ticket-modal" class="ticket-modal" role="dialog" aria-modal="true" aria-labelledby="ticket-modal-title"><div class="ticket-dialog"><div class="ticket-dialog-header"><div><small>SUPPORT / TICKET</small><h2 id="ticket-modal-title" class="ticket-dialog-title">Ticket</h2><div id="ticket-modal-meta" class="ticket-dialog-meta"></div></div><button id="ticket-close" class="button" aria-label="Close ticket">CLOSE</button></div><div id="ticket-modal-message" class="ticket-dialog-message"></div><div class="ticket-dialog-actions"><span id="ticket-modal-status" class="support-status"></span></div><div class="ticket-dialog-message"><strong>REPLIES</strong><div id="ticket-replies" style="margin-top:10px"></div><div class="reply-composer"><textarea id="ticket-reply-message" maxlength="5000" placeholder="Write a reply..." rows="1"></textarea><button id="ticket-reply-send" type="button" class="button orange reply-send">SEND</button></div><p id="ticket-reply-msg" class="reply-msg"></p></div></div></div>

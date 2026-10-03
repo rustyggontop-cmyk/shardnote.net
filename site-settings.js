@@ -7,8 +7,13 @@
   let currentState = { banner_text: "We've released!! 🥳", maintenance_mode: false };
 
   const setBanner = text => {
-    const value = String(text || "").trim() || "We've released!! 🥳";
+    const value = String(text ?? "").trim();
     document.querySelectorAll(".release-banner").forEach(el => {
+      if (!value) {
+        el.style.display = "none";
+        return;
+      }
+      el.style.display = "";
       const header = document.querySelector("header");
       if (header && el.parentElement !== header) header.appendChild(el);
       el.textContent = value;

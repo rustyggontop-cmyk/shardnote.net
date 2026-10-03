@@ -127,3 +127,11 @@ body:has(.dashboard-shell){overflow-x:hidden}
 .profile-bio{margin-top:5px;color:#777083;font-size:11px;line-height:1.35;max-width:520px}
 .steam-link{color:#a970ff!important;font-size:11px!important;text-decoration:none}
 .settings-divider{height:1px;background:#251b33;margin:22px 0}
+
+.sn-select{display:block;width:100%;margin:12px 0;padding:14px 15px;background:#080611;color:#f4f0ff;border:1px solid #302640;border-radius:11px;font:500 14px Inter,Arial,sans-serif;outline:none;appearance:none;transition:border-color .18s,box-shadow .18s,transform .18s;cursor:pointer}
+.sn-select:focus{border-color:#8b5fd3;box-shadow:0 0 0 3px rgba(169,112,255,.08);transform:translateY(-1px)}
+.sn-select option{background:#0d0916;color:#f4f0ff}
+.report-status{display:inline-flex;align-items:center;padding:5px 9px;border:1px solid #3b2d4f;border-radius:999px;background:#151026;color:#cdb9ff;font:800 10px Inter,Arial,sans-serif;letter-spacing:1px}
+.report-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid #242033}
+.report-row:last-child{border-bottom:0}
+.report-evidence{display:inline-block;margin-top:7px;color:#a970ff;font-size:11px;text-decoration:none}

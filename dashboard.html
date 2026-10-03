@@ -1,97 +1,194 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dashboard — SHARDNOTE</title><link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard — SHARDNOTE</title>
+<link rel="stylesheet" href="style.css">
 <style>
-.user-tag{display:inline-flex;align-items:center;justify-content:center;margin-left:6px;padding:0 4px;height:18px;line-height:16px;border-radius:4px;font-size:13px;font-weight:800;white-space:nowrap;vertical-align:middle;box-sizing:border-box}
+.dashboard-card .member-row{align-items:center}
+.dashboard-card .member-row strong{font-family:Space Grotesk,Inter,sans-serif;font-weight:800;letter-spacing:.1px}
+.user-tag{display:inline-flex;align-items:center;justify-content:center;margin-left:7px;padding:0 5px;height:18px;line-height:16px;border-radius:5px;font-size:13px;font-weight:800;white-space:nowrap;vertical-align:middle;box-sizing:border-box}
+.invite-code{font-family:Space Grotesk,Inter,sans-serif;letter-spacing:1.8px}
 </style>
 </head>
 <body>
 <header>
   <a class="brand" href="index.html"><img src="logo.png" alt="SHARDNOTE logo" class="site-logo">CS<span>2</span><b> SHARDNOTE</b></a>
-  <nav><a class="button" href="support.html">SUPPORT</a><a id="admin-link" class="button" style="display:none" href="admin.html">ADMIN PANEL</a></nav>
-  <button id="logout" class="button">LOGOUT</button>
+  <div style="display:flex;align-items:center;gap:8px"><a class="button" href="support.html">SUPPORT</a><button id="logout" class="button">LOGOUT</button></div>
 </header>
+
+<div class="dashboard-shell">
+  <aside class="dashboard-sidebar">
+    <div class="side-title">SHARDNOTE</div>
+    <nav class="side-nav">
+      <a class="side-btn active" href="#overview"><span class="ico">⌂</span>Overview</a>
+      <a class="side-btn" href="#members"><span class="ico">◉</span>Team Members</a>
+      <a class="side-btn" href="#find-user"><span class="ico">⌕</span>Find User</a>
+      <a class="side-btn" href="#tag"><span class="ico">◆</span>Your Tag</a>
+      <a class="side-btn" href="#invites"><span class="ico">◇</span>Invites</a>
+      <a class="side-btn" href="https://steamcommunity.com/groups/shardnotecs2" target="_blank" rel="noopener"><span class="ico">◈</span>Steam Group</a>
+      <a id="admin-link" class="side-btn" style="display:none" href="admin.html"><span class="ico">⚙</span>Admin Panel</a>
+    </nav>
+  </aside>
+
+  <main class="dashboard-main">
+    <div class="dashboard-wrap">
+      <section id="overview" class="dashboard-hero">
+        <div>
+          <small>SHARDNOTE / CLAN CONTROL</small>
+          <h1 id="team-title">TEAM DASHBOARD</h1>
+          <p id="member">Loading your SHARDNOTE account...</p>
+        </div>
+        <a class="button orange" href="https://steamcommunity.com/groups/shardnotecs2" target="_blank" rel="noopener">JOIN STEAM GROUP</a>
+      </section>
+
+      <section id="team-create" class="dashboard-card wide" style="display:none">
+        <small>TEAM SETUP</small>
+        <h2>Create your team</h2>
+        <p>Choose a team name before using the dashboard.</p>
+        <input id="team-name" maxlength="32" placeholder="Team name">
+        <button id="create-team" class="button orange">CREATE TEAM</button>
+        <p id="team-msg"></p>
+      </section>
+
+      <div class="dashboard-grid" id="dashboard-content">
+        <section id="members" class="dashboard-card wide">
+          <small>SHARDNOTE / PEOPLE</small>
+          <h2>TEAM MEMBERS</h2>
+          <div id="members-list">Loading team members...</div>
+        </section>
+
+        <section id="find-user" class="dashboard-card">
+          <small>SEARCH</small>
+          <h2>FIND USER</h2>
+          <input id="tag-user-search" placeholder="Search username..." autocomplete="off">
+          <div id="tag-user-results"></div>
+        </section>
+
+        <section id="tag" class="dashboard-card">
+          <small>IDENTITY</small>
+          <h2>YOUR TAG</h2>
+          <p id="tag-status">Loading tag...</p>
+          <div id="tag-create" style="display:none">
+            <input id="tag-name" maxlength="24" placeholder="Tag name">
+            <div style="display:flex;gap:10px;align-items:center">
+              <input id="tag-color" type="color" value="#A970FF" style="width:58px;height:40px;padding:2px">
+              <button id="create-tag" class="button orange">CREATE TAG</button>
+            </div>
+          </div>
+          <div id="tag-preview"></div>
+        </section>
+
+        <section id="invites" class="dashboard-card wide">
+          <small>INVITES</small>
+          <h2>YOUR WEEKLY INVITE CODES</h2>
+          <p id="invite-status">Loading weekly invites...</p>
+          <div id="invite-codes"></div>
+        </section>
+
+        <section class="dashboard-card wide" style="text-align:center">
+          <small>COMMUNITY</small>
+          <h2>JOIN THE SHARDNOTE STEAM GROUP</h2>
+          <p>Join the official SHARDNOTE CS2 Steam group.</p>
+          <a class="button orange" href="https://steamcommunity.com/groups/shardnotecs2" target="_blank" rel="noopener">JOIN STEAM GROUP</a>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<main class="center">
-<section class="box">
-  <small>SHARDNOTE / CLAN</small><h1>TEAM DASHBOARD</h1>
-  <div id="team-create" style="display:none">
-    <p>Create your team to unlock the dashboard.</p>
-    <input id="team-name" maxlength="32" placeholder="Team name">
-    <button id="create-team" class="button orange">CREATE TEAM</button><p id="team-msg"></p>
-  </div>
-  <p id="member">Loading...</p><h2 id="team-title"></h2>
-  <section class="box"><small>SHARDNOTE / PEOPLE</small><h2>FIND USER</h2><input id="tag-user-search" placeholder="Search username..." autocomplete="off"><div id="tag-user-results"></div></section>
-  <hr>
-  <section class="box" style="margin:18px 0;text-align:center"><small>SHARDNOTE / COMMUNITY</small><h2>JOIN OUR STEAM GROUP</h2><p>Join the official SHARDNOTE CS2 Steam group.</p><a class="button orange" href="https://steamcommunity.com/groups/shardnotecs2" target="_blank" rel="noopener noreferrer">JOIN STEAM GROUP</a></section>
-  <h2>TEAM MEMBERS</h2><div id="members">Loading team...</div>
-  <section class="box tag-panel"><small>SHARDNOTE / IDENTITY</small><h2>YOUR TAG</h2><p id="tag-status">Loading tag...</p>
-    <div id="tag-create" style="display:none"><input id="tag-name" maxlength="24" placeholder="Tag name"><div style="display:flex;gap:10px;align-items:center"><input id="tag-color" type="color" value="#A970FF" style="width:64px;height:44px;padding:2px"><button id="create-tag" class="button orange">CREATE TAG</button></div></div>
-    <div id="tag-preview"></div>
-  </section>
-  <hr><h2>INVITES</h2><p id="invite-status">Loading weekly invites...</p><div id="invite-codes"></div>
-</section>
-</main>
-<script src="supabase-config.js"></script><script>(function(){document.documentElement.style.visibility="hidden";window.__shardnote_auth_required=true;})();</script>
-<script src="auth.js"></script>
+<script src="supabase-config.js"></script>
 <script>
 (async()=>{
+  document.documentElement.style.visibility="hidden";
   const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
-  const {data:{user}}=await sb.auth.getUser(); if(!user)return;
-  const {data:me}=await sb.from("team_members").select("team_id,role,username").eq("user_id",user.id).maybeSingle();
-  if(me && (me.role==="owner"||me.role==="admin")) document.getElementById("admin-link").style.display="inline-flex";
+  const {data:{user},error:userError}=await sb.auth.getUser();
+  if(userError||!user){location.href="login.html";return;}
+
+  const escapeHtml=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+  const tagHtml=t=>t?"<span class='user-tag' style='color:"+t.color+";border:1px solid "+t.color+";background:"+t.color+"22'>"+escapeHtml(t.tag_name)+"</span>":"";
+
+  const {data:me,error:meError}=await sb.from("team_members").select("team_id,username,role").eq("user_id",user.id).maybeSingle();
+  if(meError){document.documentElement.style.visibility="visible";document.getElementById("member").textContent="Account data error: "+meError.message;return;}
+
+  document.getElementById("member").textContent="Logged in as "+escapeHtml(user.user_metadata?.username||me?.username||user.email||"member");
+  if(me && (me.role==="owner"||me.role==="admin")) document.getElementById("admin-link").style.display="flex";
 
   const {data:myTeam,error:teamError}=await sb.rpc("my_team");
-  if(teamError){document.getElementById("team-title").textContent="Team error: "+teamError.message;return;}
+  if(teamError){document.getElementById("member").textContent="Team error: "+teamError.message;document.documentElement.style.visibility="visible";return;}
   if(!myTeam||!myTeam.length){
-    document.getElementById("team-create").style.display="block";document.getElementById("member").textContent="";
+    document.getElementById("dashboard-content").style.display="none";
+    document.getElementById("team-create").style.display="block";
+    document.getElementById("team-title").textContent="CREATE YOUR TEAM";
+    document.getElementById("member").textContent="You're signed in, but you don't belong to a team yet.";
     document.getElementById("create-team").onclick=async()=>{
-      const name=document.getElementById("team-name").value.trim(),out=document.getElementById("team-msg");
-      if(!name){out.textContent="Enter a team name.";return;}
-      const {error}=await sb.rpc("create_my_team",{team_name:name}); if(error){out.textContent=error.message;return;} location.reload();
-    }; return;
-  }
-  const teamId=myTeam[0].id; document.getElementById("team-title").textContent=myTeam[0].name;
-
-  const renderTag=(t)=>t?"<span class='user-tag' style='color:"+t.color+";border:1px solid "+t.color+";background:"+t.color+"22'>"+String(t.tag_name).replace(/[&<>]/g,"")+"</span>":"";
-  const {data:tag}=await sb.from("user_tags").select("tag_name,color").eq("user_id",user.id).maybeSingle();
-  const ts=document.getElementById("tag-status"),tc=document.getElementById("tag-create"),tp=document.getElementById("tag-preview");
-  if(tag){ts.textContent="Your tag";tp.innerHTML=renderTag(tag);}
-  else{
-    ts.textContent="You can create one custom tag. Choose any color.";tc.style.display="block";
-    document.getElementById("create-tag").onclick=async()=>{
-      const name=document.getElementById("tag-name").value.trim(),color=document.getElementById("tag-color").value;
-      const {data,error}=await sb.rpc("create_my_tag",{p_name:name,p_color:color});
-      if(error){ts.textContent=error.message;return;}ts.textContent="Tag created.";tp.innerHTML=renderTag(data);tc.style.display="none";
+      const name=document.getElementById("team-name").value.trim(),msg=document.getElementById("team-msg");
+      if(!name){msg.textContent="Enter a team name.";return;}
+      const {error}=await sb.rpc("create_my_team",{team_name:name});
+      if(error){msg.textContent=error.message;return;}
+      location.reload();
     };
+    document.documentElement.style.visibility="visible";return;
   }
+
+  const teamId=myTeam[0].id;
+  document.getElementById("team-title").textContent=myTeam[0].name;
+
+  const {data:tags}=await sb.from("user_tags").select("user_id,tag_name,color").in("user_id",
+    (await sb.from("team_members").select("user_id").eq("team_id",teamId)).data?.map(x=>x.user_id)||[]
+  );
+  const tagMap=Object.fromEntries((tags||[]).map(t=>[t.user_id,t]));
 
   const loadMembers=async()=>{
-    const {data:team}=await sb.from("team_members").select("user_id,username,role").eq("team_id",teamId).order("username");
-    const ids=(team||[]).map(x=>x.user_id);
-    const {data:tags}=ids.length?await sb.from("user_tags").select("user_id,tag_name,color").in("user_id",ids):{data:[]};
-    const tm=Object.fromEntries((tags||[]).map(x=>[x.user_id,x]));
-    document.getElementById("members").innerHTML=(team||[]).map(m=>"<div class='member-row'><strong>"+String(m.username).replace(/[&<>]/g,"")+"</strong>"+renderTag(tm[m.user_id])+"<span>"+String(m.role).toUpperCase()+"</span></div>").join("")||"No team members yet.";
+    const {data:members,error}=await sb.from("team_members").select("user_id,username,role").eq("team_id",teamId).order("username");
+    if(error){document.getElementById("members-list").textContent="Could not load team members: "+error.message;return;}
+    document.getElementById("members-list").innerHTML=(members||[]).map(m=>"<div class='member-row'><strong>"+escapeHtml(m.username)+"</strong>"+tagHtml(tagMap[m.user_id])+"<span>"+escapeHtml(String(m.role).toUpperCase())+"</span></div>").join("")||"No team members yet.";
   };
   await loadMembers();
 
-  const tagInput=document.getElementById("tag-user-search"),tagResults=document.getElementById("tag-user-results"); let timer;
-  tagInput.oninput=()=>{clearTimeout(timer);const q=tagInput.value.trim();if(!q){tagResults.innerHTML="";return;}timer=setTimeout(async()=>{
+  const myTag=await sb.from("user_tags").select("tag_name,color").eq("user_id",user.id).maybeSingle();
+  const ts=document.getElementById("tag-status"),tc=document.getElementById("tag-create"),tp=document.getElementById("tag-preview");
+  if(myTag.data){ts.textContent="Your custom tag";tp.innerHTML=tagHtml(myTag.data);}
+  else{
+    ts.textContent="You can create one custom tag and choose its color.";tc.style.display="block";
+    document.getElementById("create-tag").onclick=async()=>{
+      const name=document.getElementById("tag-name").value.trim(),color=document.getElementById("tag-color").value;
+      const {data,error}=await sb.rpc("create_my_tag",{p_name:name,p_color:color});
+      if(error){ts.textContent=error.message;return;}
+      ts.textContent="Tag created.";tp.innerHTML=tagHtml(data);tc.style.display="none";
+      tagMap[user.id]=data;await loadMembers();
+    };
+  }
+
+  const search=document.getElementById("tag-user-search"),results=document.getElementById("tag-user-results");let timer;
+  search.oninput=()=>{clearTimeout(timer);const q=search.value.trim();if(!q){results.innerHTML="";return;}timer=setTimeout(async()=>{
     const {data,error}=await sb.rpc("search_team_users",{search_term:q});
-    if(error){tagResults.textContent="Search failed: "+error.message;return;}
+    if(error){results.textContent="Search failed: "+error.message;return;}
     const ids=(data||[]).map(x=>x.user_id),{data:found}=ids.length?await sb.from("user_tags").select("user_id,tag_name,color").in("user_id",ids):{data:[]};
     const map=Object.fromEntries((found||[]).map(x=>[x.user_id,x]));
-    tagResults.innerHTML=(data||[]).map(u=>"<div class='member-row'><strong>"+String(u.username).replace(/[&<>]/g,"")+"</strong>"+renderTag(map[u.user_id])+"</div>").join("")||"<p style='opacity:.6'>No users found.</p>";
+    results.innerHTML=(data||[]).map(u=>"<div class='member-row'><strong>"+escapeHtml(u.username)+"</strong>"+tagHtml(map[u.user_id])+"</div>").join("")||"<p class='dashboard-subtle'>No users found.</p>";
   },180);};
 
   await sb.from("user_presence").upsert({user_id:user.id,last_seen:new Date().toISOString()});
   setInterval(()=>sb.from("user_presence").upsert({user_id:user.id,last_seen:new Date().toISOString()}),30000);
 
   const {data:weekly,error:weeklyError}=await sb.rpc("ensure_my_weekly_invites");
-  const status=document.getElementById("invite-status");
-  if(weeklyError){status.textContent="Invite error: "+String(weeklyError.message||"Unknown error").replace(/[&<>]/g,"");}
-  else{status.textContent="Your 5 unique invite codes for this week:";document.getElementById("invite-codes").innerHTML=(weekly||[]).map(x=>"<div class='invitebox'><label>ONE-TIME INVITE</label><strong>"+x.code+"</strong><small>1 use · expires "+new Date(x.valid_until).toLocaleDateString()+"</small></div>").join("")||"No active codes."; }
-})();
-</script></body></html>
+  const inviteStatus=document.getElementById("invite-status"),inviteCodes=document.getElementById("invite-codes");
+  if(weeklyError){inviteStatus.textContent="Invite error: "+String(weeklyError.message||"Unknown error");}
+  else{
+    inviteStatus.textContent="Five unique one-time codes assigned to you for this week.";
+    inviteCodes.innerHTML=(weekly||[]).map(x=>"<div class='invitebox'><label>ONE-TIME INVITE</label><strong class='invite-code'>"+escapeHtml(x.code)+"</strong><small>1 use · expires "+new Date(x.valid_until).toLocaleDateString()+"</small></div>").join("")||"No active codes.";
+  }
+
+  document.documentElement.style.visibility="visible";
+})().catch(err=>{
+  console.error(err);
+  document.documentElement.style.visibility="visible";
+  const el=document.getElementById("member");
+  if(el)el.textContent="Dashboard error: "+String(err.message||err);
+});
+</script>
+</body>
+</html>

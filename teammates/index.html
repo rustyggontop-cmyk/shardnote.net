@@ -59,7 +59,7 @@
 <script src="/supabase-config.js"></script><script src="/realtime.js"></script><script src="/ban-check.js"></script>
 <script>
 (async()=>{
- const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="/";};
+ const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="/";};
  const {data:{user}}=await sb.auth.getUser();
  if(!user){location.href="/login/";return;}
  const {data:role}=await sb.rpc("current_user_role");

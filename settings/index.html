@@ -100,6 +100,12 @@
     }
   };
   await refreshDiscord();
+
+  // Remove OAuth tokens from the address bar after Supabase has processed the callback.
+  if(location.hash && /access_token|refresh_token|provider_token|provider_refresh_token|code=/i.test(location.hash)){
+    history.replaceState(null,document.title,location.pathname+location.search);
+  }
+
   linkDiscord.onclick=async()=>{
     linkDiscord.disabled=true;discordStatus.textContent="Opening Discord...";
     const {error}=await sb.auth.linkIdentity({

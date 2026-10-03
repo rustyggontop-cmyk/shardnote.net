@@ -34,6 +34,7 @@
 <div id="panel" class="panel-grid" style="display:none">
 <section class="panel-card wide"><small>OVERVIEW</small><h2>Team Activity</h2><div id="admin-stats" class="member-row">Loading team activity...</div></section>
  <section class="panel-card wide"><small>DIRECTORY</small><h2>ALL REGISTERED USERS</h2><p class="support-note">Every registered profile is shown here, including users without a team.</p><div id="all-users">Loading all users...</div></section>
+<section class="panel-card wide"><small>TEAM MODERATION</small><h2>ALL TEAMS</h2><p class="support-note">Admins, co-owners, and owners can remove inappropriate members from any team or delete an inappropriate team.</p><div id="all-teams">Loading teams...</div></section>
 <section class="panel-card wide"><small>TEAM MANAGEMENT</small><h2>Team Members</h2><p class="support-note">Admins can remove member tags. Only the owner can appoint a co-owner.</p><div id="admin-members">Loading team members...</div></section>
 <section class="panel-card"><small>SUPPORT</small><h2>Support Tickets</h2><p class="support-note">Select a ticket to open the full request.</p><div id="tickets">Loading tickets...</div></section>
 <section class="panel-card"><small>MODERATION</small><h2>Cheater Reports</h2><div id="cheater-reports">Loading reports...</div></section>
@@ -88,6 +89,45 @@ allUsersBox.querySelectorAll(".ban-directory-user").forEach(b=>b.onclick=async()
  if(error){alert("Could not ban player: "+error.message);b.disabled=false;return;}
  b.textContent="BANNED";setTimeout(()=>location.reload(),400);
 });
+const allTeamsBox=document.getElementById("all-teams");
+const loadAllTeams=async()=>{
+ const {data:teams,error}=await sb.rpc("admin_list_all_teams");
+ if(error){allTeamsBox.innerHTML="<p class='support-note'>Could not load teams: "+esc(error.message)+"</p>";return;}
+ const rows=[];
+ for(const team of (teams||[])){
+   const {data:roster,error:rosterError}=await sb.rpc("admin_list_team_roster",{p_team_id:team.team_id});
+   if(rosterError){rows.push("<div class='panel-card' style='margin:8px 0'><strong>"+esc(team.team_name)+"</strong><p class='support-note'>Could not load members: "+esc(rosterError.message)+"</p></div>");continue;}
+   rows.push("<div class='panel-card' style='margin:10px 0;padding:14px'>"+
+     "<div class='member-row'><div><strong>"+esc(team.team_name)+"</strong><div class='support-note'>Founder: "+esc(team.founder_username)+" · "+esc(String(team.member_count))+" member"+(Number(team.member_count)===1?"":"s")+"</div></div>"+
+     "<button type='button' class='button delete-team-moderation' data-team='"+esc(team.team_id)+"' data-name='"+esc(team.team_name)+"'>DELETE TEAM</button></div>"+
+     "<div class='team-moderation-roster'>"+
+     (roster||[]).map(m=>{
+       const isFounder=m.role==="owner";
+       const action=isFounder
+         ? "<span class='role-pill'>FOUNDER</span>"
+         : "<button type='button' class='button remove-team-member' data-user='"+esc(m.user_id)+"' data-name='"+esc(m.username)+"' data-team='"+esc(team.team_id)+"'>REMOVE FROM TEAM</button>";
+       return "<div class='member-row'><div><strong>"+esc(m.username)+"</strong><div class='support-note'>"+esc(String(m.role).replace("_"," ").toUpperCase())+"</div></div><div class='admin-actions'>"+action+"</div></div>";
+     }).join("")||"<p class='support-note'>No members.</p>"+
+     "</div></div>");
+ }
+ allTeamsBox.innerHTML=rows.join("")||"<p class='support-note'>No teams found.</p>";
+ allTeamsBox.querySelectorAll(".remove-team-member").forEach(btn=>btn.onclick=async()=>{
+   if(!confirm("Remove "+(btn.dataset.name||"this member")+" from this team?"))return;
+   btn.disabled=true;
+   const {error}=await sb.rpc("moderator_remove_member_from_team",{target_user:btn.dataset.user});
+   if(error){alert("Could not remove member: "+error.message);btn.disabled=false;return;}
+   await loadAllTeams();
+ });
+ allTeamsBox.querySelectorAll(".delete-team-moderation").forEach(btn=>btn.onclick=async()=>{
+   if(!confirm("DELETE TEAM '"+(btn.dataset.name||"")+"'? This removes the team and all of its memberships."))return;
+   btn.disabled=true;
+   const {error}=await sb.rpc("moderator_delete_team",{target_team:btn.dataset.team});
+   if(error){alert("Could not delete team: "+error.message);btn.disabled=false;return;}
+   await loadAllTeams();
+ });
+};
+await loadAllTeams();
+
 const {data:stats,error:statsError}=await sb.rpc("admin_stats");
 document.getElementById("admin-stats").textContent=statsError?"Stats unavailable: "+statsError.message:"ONLINE: "+stats.online+" · SIGNED IN: "+stats.signed_in;
 

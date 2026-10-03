@@ -38,7 +38,7 @@
 <section class="panel-card wide"><small>TEAM MANAGEMENT</small><h2>Team Members</h2><p class="support-note">Admins can remove member tags. Only the owner can appoint a co-owner.</p><div id="admin-members">Loading team members...</div></section>
 <section class="panel-card"><small>SUPPORT</small><h2>Support Tickets</h2><p class="support-note">Select a ticket to open the full request.</p><div id="tickets">Loading tickets...</div></section>
 <section class="panel-card"><small>MODERATION</small><h2>Cheater Reports</h2><div id="cheater-reports">Loading reports...</div></section>
-<section class="panel-card"><small>STAFF ACCESS</small><div id="owner-invite" style="display:none" class="invitebox"><label>ADMIN INVITE</label><strong>676767</strong><small>Special admin signup code</small></div><div id="beta-access-card"><h2>Beta Access Codes</h2><p class="support-note">Single-use codes required for beta account creation.</p><div id="beta-codes">Loading beta codes...</div></div><div id="manage-roles"><h2>Manage Staff</h2><p class="support-note">Only designated staff can access this panel. Team Founder/Member status does not grant moderation access.</p><input id="admin-search" placeholder="Search a user..." autocomplete="off"><div id="admin-results"></div></div></section>
+<section class="panel-card"><small>STAFF ACCESS</small><div id="owner-invite" style="display:none" class="invitebox"><label>ADMIN INVITE</label><strong>676767</strong><small>Special admin signup code</small></div><div id="manage-roles"><h2>Manage Staff</h2><p class="support-note">Only designated staff can access this panel. Team Founder/Member status does not grant moderation access.</p><input id="admin-search" placeholder="Search a user..." autocomplete="off"><div id="admin-results"></div></div></section>
 </div></div></main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -58,7 +58,6 @@ if(meError||roleError){status.textContent="Unable to verify administrative acces
 if(!role||!["owner","co_owner","admin"].includes(role)){status.textContent="Access denied: admin, co-owner, or owner role required.";return;}
 status.textContent="Authorized as "+role.replace("_"," ").toUpperCase()+".";
 document.getElementById("panel").style.display="grid";
-if(role==="owner")document.getElementById("owner-invite").style.display="block";
 if(role!=="owner"&&role!=="co_owner")document.getElementById("manage-roles").style.display="none";
 
 const {data:allUsers,error:allUsersError}=await sb.rpc("admin_list_all_users");

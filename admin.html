@@ -33,6 +33,7 @@
 <section class="panel-hero"><div><small>SHARDNOTE / ADMINISTRATION</small><h1>ADMIN PANEL</h1><p id="status">Checking admin access...</p></div><div class="dashboard-subtle">Team administration</div></section>
 <div id="panel" class="panel-grid" style="display:none">
 <section class="panel-card wide"><small>OVERVIEW</small><h2>Team Activity</h2><div id="admin-stats" class="member-row">Loading team activity...</div></section>
+ <section class="panel-card wide"><small>DIRECTORY</small><h2>ALL REGISTERED USERS</h2><p class="support-note">Every registered profile is shown here, including users without a team.</p><div id="all-users">Loading all users...</div></section>
 <section class="panel-card wide"><small>TEAM MANAGEMENT</small><h2>Team Members</h2><p class="support-note">Admins can remove member tags. Only the owner can appoint a co-owner.</p><div id="admin-members">Loading team members...</div></section>
 <section class="panel-card"><small>SUPPORT</small><h2>Support Tickets</h2><p class="support-note">Select a ticket to open the full request.</p><div id="tickets">Loading tickets...</div></section>
 <section class="panel-card"><small>MODERATION</small><h2>Cheater Reports</h2><div id="cheater-reports">Loading reports...</div></section>
@@ -59,6 +60,17 @@ document.getElementById("panel").style.display="grid";
 if(role==="owner")document.getElementById("owner-invite").style.display="block";
 if(role!=="owner"&&role!=="co_owner")document.getElementById("manage-roles").style.display="none";
 
+const {data:allUsers,error:allUsersError}=await sb.rpc("admin_list_all_users");
+const allUsersBox=document.getElementById("all-users");
+if(allUsersError){allUsersBox.innerHTML="<p class='support-note'>Could not load the user directory: "+esc(allUsersError.message)+"</p>";}
+else{
+ allUsersBox.innerHTML=(allUsers||[]).map(u=>{
+   const avatar=u.avatar_url?"<img src='"+esc(u.avatar_url)+"' alt=''>":esc(String(u.username||"?").slice(0,1).toUpperCase());
+   const team=u.team_name?esc(u.team_name):"No team";
+   const state=u.is_banned?"RESTRICTED":team;
+   return "<div class='member-row'><a class='profile-link' href='profile.html?id="+encodeURIComponent(u.user_id)+"'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><strong>"+esc(u.username)+"</strong><div class='profile-bio'>"+team+" · "+esc(String(u.role||"member").replace("_"," "))+"</div></div></a><span class='role-pill'>"+esc(state.toUpperCase())+"</span></div>";
+ }).join("")||"No registered users.";
+}
 const {data:stats,error:statsError}=await sb.rpc("admin_stats");
 document.getElementById("admin-stats").textContent=statsError?"Stats unavailable: "+statsError.message:"ONLINE: "+stats.online+" · SIGNED IN: "+stats.signed_in;
 

@@ -171,7 +171,7 @@ return "<div class='member-row profile-link' role='link' tabindex='0' data-profi
     btn.disabled=true;
     const {error}=await sb.rpc("leave_my_team");
     if(error){alert("Could not leave team: "+error.message);btn.disabled=false;return;}
-    location.href="join-team.html";
+    location.reload();
   });
 
   const myTag=await sb.from("user_tags").select("tag_name,color").eq("user_id",user.id).maybeSingle();

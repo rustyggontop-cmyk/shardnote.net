@@ -72,6 +72,29 @@ if(meError||roleError){status.textContent="Unable to verify administrative acces
 if(!role||!["owner","co_owner","admin"].includes(role)){status.textContent="Access denied: admin, co-owner, or owner role required.";return;}
 status.textContent="Authorized as "+role.replace("_"," ").toUpperCase()+".";
 document.getElementById("panel").style.display="grid";
+
+if(role==="owner"||role==="co_owner"){
+  const controls=document.getElementById("site-controls");
+  if(controls)controls.style.display="block";
+  const bannerInput=document.getElementById("site-banner-text");
+  const maintenanceToggle=document.getElementById("maintenance-toggle");
+  const siteMsg=document.getElementById("site-settings-msg");
+  const {data:siteSettings,error:siteSettingsError}=await sb.rpc("get_site_settings");
+  const siteData=Array.isArray(siteSettings)?siteSettings[0]:siteSettings;
+  if(siteSettingsError){siteMsg.textContent="Could not load site settings: "+siteSettingsError.message;}
+  if(siteData){
+    bannerInput.value=siteData.banner_text||"";
+    maintenanceToggle.checked=!!siteData.maintenance_mode;
+  }
+  document.getElementById("save-site-settings").onclick=async()=>{
+    siteMsg.textContent="Saving...";
+    const {error}=await sb.rpc("update_site_settings",{
+      p_banner_text:bannerInput.value.trim(),
+      p_maintenance_mode:maintenanceToggle.checked
+    });
+    siteMsg.textContent=error?"Could not save: "+error.message:"Site settings saved.";
+  };
+}
 if(role!=="owner"&&role!=="co_owner")document.getElementById("manage-roles").style.display="none";
 
 const {data:allUsers,error:allUsersError}=await sb.rpc("admin_list_all_users");

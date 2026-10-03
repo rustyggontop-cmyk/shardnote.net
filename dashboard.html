@@ -24,6 +24,7 @@
       <a class="side-btn active" href="#overview"><span class="ico">⌂</span>Overview</a>
       <a class="side-btn" href="#members"><span class="ico">◉</span>Team Members</a>
       <a class="side-btn" href="#find-user"><span class="ico">⌕</span>Find User</a><a class="side-btn" href="teammates.html"><span class="ico">⌁</span>Find Teammates</a>
+      <a class="side-btn" href="#invites"><span class="ico">◇</span>Team Invites</a>
       <a class="side-btn" href="#tag"><span class="ico">◆</span>Your Tag</a>
       <a class="side-btn" href="report-cheater.html"><span class="ico">!</span>Report Cheater</a><a class="side-btn" href="https://steamcommunity.com/groups/shardnotecs2" target="_blank" rel="noopener"><span class="ico">◈</span>Steam Group</a><a class="side-btn" href="https://discord.gg/27tEdSCuk9" target="_blank" rel="noopener"><span class="ico">◉</span>Discord</a>
       <a id="admin-link" class="side-btn" style="display:none" href="admin.html"><span class="ico">⚙</span>Admin Panel</a>
@@ -51,6 +52,13 @@
         <input id="team-name" class="team-name-input" maxlength="32" placeholder="Enter a team name">
         <button id="create-team" class="button orange">CREATE TEAM</button>
         <p id="team-msg"></p>
+      </section>
+
+      <section id="invites" class="dashboard-card wide">
+        <small>TEAM INVITATIONS</small>
+        <h2>TEAM INVITES</h2>
+        <p class="dashboard-subtle">You must accept an invitation before joining a team.</p>
+        <div id="team-invites">Loading team invitations...</div>
       </section>
 
       <div class="dashboard-grid" id="dashboard-content">
@@ -121,6 +129,39 @@
   document.getElementById("member").textContent="Logged in as "+escapeHtml(user.user_metadata?.username||me?.username||user.email||"member");
   if(role==="owner"||role==="co_owner"||role==="admin") document.getElementById("admin-link").style.display="flex";
 
+  const invitesBox=document.getElementById("team-invites");
+  const loadInvites=async()=>{
+    const {data:invites,error}=await sb.from("team_invites")
+      .select("id,team_id,inviter_id,status,created_at")
+      .eq("invitee_id",user.id)
+      .eq("status","pending")
+      .order("created_at",{ascending:false});
+    if(error){invitesBox.innerHTML="<p class='support-note'>Could not load invitations: "+escapeHtml(error.message)+"</p>";return;}
+    const teamIds=[...new Set((invites||[]).map(i=>i.team_id))];
+    const inviterIds=[...new Set((invites||[]).map(i=>i.inviter_id))];
+    const {data:teams}=teamIds.length?await sb.from("teams").select("id,name").in("id",teamIds):{data:[]};
+    const {data:profiles}=inviterIds.length?await sb.from("profiles").select("id,username").in("id",inviterIds):{data:[]};
+    const teamMap=Object.fromEntries((teams||[]).map(t=>[t.id,t.name]));
+    const inviterMap=Object.fromEntries((profiles||[]).map(p=>[p.id,p.username]));
+    invitesBox.innerHTML=(invites||[]).map(i=>"<div class='member-row'><div><strong>"+escapeHtml(teamMap[i.team_id]||"Unknown team")+"</strong><div class='support-note'>Invited by "+escapeHtml(inviterMap[i.inviter_id]||"Unknown player")+" · "+new Date(i.created_at).toLocaleString()+"</div></div><div class='admin-actions'><button type='button' class='button orange accept-team-invite' data-invite='"+escapeHtml(i.id)+"'>ACCEPT</button><button type='button' class='button decline-team-invite' data-invite='"+escapeHtml(i.id)+"'>DECLINE</button></div></div>").join("")||"<p class='support-note'>No pending team invitations.</p>";
+    invitesBox.querySelectorAll(".accept-team-invite").forEach(b=>b.onclick=async()=>{
+      b.disabled=true;
+      const row=b.closest(".member-row");
+      const {error}=await sb.rpc("respond_to_team_invite",{p_invite_id:b.dataset.invite,p_accept:true});
+      if(error){alert("Could not accept invitation: "+error.message);b.disabled=false;return;}
+      if(row)row.remove();
+      location.reload();
+    });
+    invitesBox.querySelectorAll(".decline-team-invite").forEach(b=>b.onclick=async()=>{
+      b.disabled=true;
+      const row=b.closest(".member-row");
+      const {error}=await sb.rpc("respond_to_team_invite",{p_invite_id:b.dataset.invite,p_accept:false});
+      if(error){alert("Could not decline invitation: "+error.message);b.disabled=false;return;}
+      if(row)row.remove();
+    });
+  };
+  await loadInvites();
+
   const {data:myTeam,error:teamError}=await sb.rpc("my_team");
   if(teamError){document.getElementById("member").textContent="Team error: "+teamError.message;document.documentElement.style.visibility="visible";return;}
   if(!myTeam||!myTeam.length){
@@ -180,6 +221,7 @@ return "<div class='member-row profile-link' role='link' tabindex='0' data-profi
     {table:"profiles"},
     {table:"user_presence"},
     {table:"teams"},
+    {table:"team_invites"},
     {table:"user_bans"}
   ],payload=>{
     const teamChange =
@@ -189,6 +231,7 @@ return "<div class='member-row profile-link' role='link' tabindex='0' data-profi
       payload.table==="user_presence" ||
       payload.table==="teams" ||
       payload.table==="user_bans";
+    if(payload.table==="team_invites"){ loadInvites(); return; }
     if(teamChange) loadMembers();
   });
   const memberList=document.getElementById("members-list");
@@ -243,7 +286,7 @@ return "<div class='member-row profile-link' role='link' tabindex='0' data-profi
       invite.disabled=true;
       const {error}=await sb.rpc("invite_user_to_my_team",{target_user:invite.dataset.user});
       if(error){alert("Could not invite player: "+error.message);invite.disabled=false;return;}
-      invite.textContent="ADDED TO TEAM";
+      invite.textContent="INVITE SENT";
       setTimeout(()=>search.dispatchEvent(new Event("input")),400);
       return;
     }

@@ -56,7 +56,7 @@
   </main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-config.js"></script><script src="ban-check.js"></script>
+<script src="supabase-config.js"></script><script src="realtime.js"></script><script src="ban-check.js"></script>
 <script src="auth.js"></script>
 <script>
 (async()=>{
@@ -87,6 +87,11 @@
     if(saveError){document.getElementById("avatar-msg").textContent="Avatar uploaded but profile save failed: "+saveError.message;return;}
     setAvatar(pub.publicUrl);document.getElementById("avatar-msg").textContent="Profile picture updated.";
   };
+
+  shardnoteLive(sb,[{table:"profiles"},{table:"team_members"},{table:"user_tags"}],payload=>{
+    const changed=payload.new?.id||payload.new?.user_id||payload.old?.id||payload.old?.user_id;
+    if(changed===user.id){ location.reload(); }
+  });
 
   document.getElementById("save-profile").onclick=async()=>{
     const bio=document.getElementById("bio").value.trim(),steam=document.getElementById("steam-url").value.trim(),msg=document.getElementById("save-msg");

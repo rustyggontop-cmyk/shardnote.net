@@ -72,7 +72,7 @@
   const preview=document.getElementById("avatar-preview");
   const setAvatar=url=>{preview.innerHTML=url?"<img src='"+esc(url)+"' alt='Profile picture'>":esc((me?.username||"M").slice(0,1).toUpperCase());};
   setAvatar(profile?.avatar_url);
-  if(me&&(me.role==="owner"||me.role==="admin"))document.getElementById("settings-admin-link").style.display="flex";
+  if(me&&(me.role==="owner"||me.role==="co_owner"||me.role==="admin"))document.getElementById("settings-admin-link").style.display="flex";
 
   document.getElementById("avatar-file").onchange=async e=>{
     const file=e.target.files?.[0]; if(!file)return;

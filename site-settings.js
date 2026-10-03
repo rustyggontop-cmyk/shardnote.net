@@ -33,7 +33,7 @@
     currentState = settings || currentState;
     setBanner(currentState.banner_text);
 
-    if (!currentState.maintenance_mode || page() === "login.html") {
+    if (!currentState.maintenance_mode || page() === "login.html" || page() === "maintenance.html") {
       hideMaintenance();
       document.documentElement.style.visibility = "visible";
       return;
@@ -49,7 +49,8 @@
     if (role === "owner" || role === "co_owner") {
       hideMaintenance();
     } else {
-      showMaintenance();
+      location.replace("maintenance.html");
+      return;
     }
     document.documentElement.style.visibility = "visible";
   };

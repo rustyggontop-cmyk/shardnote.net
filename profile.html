@@ -79,7 +79,9 @@
   report.textContent="REPORT PLAYER";
   document.getElementById("profile-actions").appendChild(report);
 }
-if(x.user_id!==user.id&&["owner","co_owner","admin"].includes(role)&&x.role!=="owner"){
+const {data:myMembership}=await sb.from("team_members").select("team_id,role").eq("user_id",user.id).maybeSingle();
+const canBanSameTeam=x.user_id!==user.id&&["owner","co_owner","admin"].includes(role)&&x.role!=="owner"&&!!myMembership?.team_id&&myMembership.team_id===x.team_id;
+if(canBanSameTeam){
   const ban=document.createElement("button");
   ban.type="button";
   ban.className="button ban-button";

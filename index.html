@@ -3,7 +3,7 @@
 <title>SHARDNOTE — CS2 Clan</title><link rel="stylesheet" href="style.css"></head>
 <body>
 <header><a class="brand" href="index.html"><img src="logo.png" class="site-logo" alt="SHARDNOTE logo">CS<span>2</span><b> SHARDNOTE</b></a><nav id="nav"><a href="login.html">LOGIN</a><a class="orange" href="register.html">REGISTER</a></nav></header>
-<script src="supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><main><div class="hero"><img src="logo.png" class="hero-logo" alt="SHARDNOTE logo"><small>COUNTER-STRIKE 2 • PRIVATE CLAN</small><h1>CS<span>2</span></h1><p>Competitive. Private. Built for the squad.</p><div id="hero-actions"><a class="button orange" href="register.html">JOIN THE CLAN</a><a class="button" href="login.html">LOGIN</a></div></div></main><script>
+<script src="supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><main><div class="hero"><img src="logo.png" class="hero-logo" alt="SHARDNOTE logo"><small>COUNTER-STRIKE 2</small><p>Competitive. Private. Built for the squad.</p><div id="hero-actions"><a class="button orange" href="register.html">JOIN THE CLAN</a><a class="button" href="login.html">LOGIN</a></div></div></main><script>
 (async()=>{
  const {createClient}=supabase; const sb=createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
  const {data:{session}}=await sb.auth.getSession();

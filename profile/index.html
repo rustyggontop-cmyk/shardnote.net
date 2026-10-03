@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Profile — SHARDNOTE</title><link rel="stylesheet" href="/style.css">
+</head>
+<body><div class="release-banner"><strong>We've released!! 🥳</strong></div>
+<header>
+<a class="brand" href="/index/"><img src="/logo.png" class="site-logo" alt="SHARDNOTE logo">CS<span>2</span><b> SHARDNOTE</b></a>
+<div style="display:flex;align-items:center;gap:8px"><a class="button" href="/dashboard/">DASHBOARD</a><button id="logout" class="button">LOGOUT</button></div>
+</header>
+<div class="panel-shell">
+<aside class="dashboard-sidebar">
+<div class="side-title">SHARDNOTE</div>
+<nav class="side-nav">
+<a class="side-btn" href="/dashboard/"><span class="ico">⌂</span>Overview</a>
+<a class="side-btn" href="/dashboard/#members"><span class="ico">◉</span>Team Members</a>
+<a class="side-btn" href="/teammates/"><span class="ico">⌁</span>Find Teammates</a>
+<a class="side-btn" href="/dashboard/#find-user"><span class="ico">⌕</span>Find User</a>
+<a class="side-btn" href="/support/"><span class="ico">?</span>Support</a>
+<a class="side-btn" href="/report-cheater/"><span class="ico">!</span>Report Cheater</a>
+<a class="side-btn" href="/socials/"><span class="ico">◎</span>Socials</a>
+<a id="profile-admin-link" class="side-btn" style="display:none" href="/admin/"><span class="ico">⚙</span>Admin Panel</a>
+</nav>
+<div class="side-bottom"><a class="side-btn" href="/settings/"><span class="ico">⚙</span>Settings</a></div>
+</aside>
+<main class="panel-main"><div class="panel-wrap">
+<section class="panel-hero"><div><small>SHARDNOTE / PROFILE</small><h1>PLAYER PROFILE</h1><p>Public profile information for this SHARDNOTE member.</p></div></section>
+<section id="profile-card" class="panel-card profile-page-card">
+<div id="profile-avatar" class="profile-page-avatar">?</div>
+<h2 id="profile-name" class="profile-page-name">Loading...</h2>
+<p id="profile-tagline" class="profile-page-tagline">Loading profile...</p>
+<div id="profile-tag" style="margin-top:14px"></div>
+<div class="profile-info-grid">
+<div class="profile-info-item"><small>TEAM</small><strong id="profile-team">—</strong></div>
+<div class="profile-info-item"><small>ROLE</small><strong id="profile-role">—</strong></div>
+<div class="profile-info-item"><small>STATUS</small><strong id="profile-status">—</strong></div>
+<div class="profile-info-item"><small>MEMBER SINCE</small><strong id="profile-joined">—</strong></div>
+<div class="profile-info-item"><small>USERNAME</small><strong id="profile-username">—</strong></div>
+<div class="profile-info-item"><small>STEAM</small><strong id="profile-steam-text">Not linked</strong></div>
+</div>
+<div id="profile-bio" class="profile-about" style="display:none"></div>
+<div id="profile-actions" class="profile-actions"></div>
+</section>
+</div></main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script><script src="/realtime.js"></script><script src="/ban-check.js"></script>
+<script>
+(async()=>{
+ const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+ const {data:{user}}=await sb.auth.getUser();if(!user){location.href="/login/";return;}
+ document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="/index/";};
+ const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+ const {data:role}=await sb.rpc("current_user_role");if(role==="owner"||role==="co_owner"||role==="admin")document.getElementById("profile-admin-link").style.display="flex";
+ const id=new URLSearchParams(location.search).get("id");
+ if(!id){document.getElementById("profile-name").textContent="Profile not found";document.getElementById("profile-tagline").textContent="No player was specified.";return;}
+ const {data:p,error}=await sb.rpc("get_public_profile",{target_user:id});
+ if(error||!p||!p.length){document.getElementById("profile-name").textContent="Profile unavailable";document.getElementById("profile-tagline").textContent="This player profile could not be loaded.";return;}
+ const x=p[0],initial=String(x.username||"?").slice(0,1).toUpperCase();
+ const {data:selfMembership}=await sb.from("team_members").select("role,team_id").eq("user_id",user.id).maybeSingle();
+ const isFounderSelf=x.user_id===user.id&&selfMembership?.role==="owner";
+ const av=document.getElementById("profile-avatar");av.innerHTML=x.avatar_url?"<img src='"+esc(x.avatar_url)+"' alt='Profile picture'>":esc(initial);
+ document.getElementById("profile-name").textContent=x.username||"Unknown player";
+ document.getElementById("profile-tagline").textContent=x.team_name?"Member of "+x.team_name:"Independent player";
+ document.getElementById("profile-team").textContent=x.team_name||"Independent";
+ const roleLabel=x.role==="owner" ? "Founder of "+(x.team_name||"this team") : (x.role==="member" ? "Member of "+(x.team_name||"SHARDNOTE") : String(x.role||"member").replace("_"," ").toUpperCase());
+ document.getElementById("profile-role").textContent=roleLabel;
+ document.getElementById("profile-status").textContent=x.is_online?"ONLINE":"OFFLINE";
+ document.getElementById("profile-joined").textContent=x.created_at?new Date(x.created_at).toLocaleDateString(): "—";
+ document.getElementById("profile-username").textContent=x.username||"—";
+ document.getElementById("profile-steam-text").textContent=x.steam_url?"Linked":"Not linked";
+ if(x.bio){const bio=document.getElementById("profile-bio");bio.textContent=x.bio;bio.style.display="block";}
+ if(x.tag_name&&!["admin","owner","co_owner","co-owner"].includes(String(x.tag_name).trim().toLowerCase())){const t=document.getElementById("profile-tag");t.innerHTML="<span class='user-tag' style='margin-left:0;padding:7px 11px;height:auto;border-radius:8px;font-size:13px;color:"+esc(x.tag_color)+";border:1px solid "+esc(x.tag_color)+";background:"+esc(x.tag_color)+"22'>"+esc(x.tag_name)+"</span>";}
+ if(x.steam_url){const a=document.createElement("a");a.className="button orange";a.href=x.steam_url;a.target="_blank";a.rel="noopener";a.textContent="VIEW STEAM PROFILE";document.getElementById("profile-actions").appendChild(a);}
+ if(["owner","co_owner","admin"].includes(role) || isFounderSelf){
+  if(["owner","co_owner","admin"].includes(role)){
+    const reset=document.createElement("button");reset.type="button";reset.className="button";reset.textContent="RESET PASSWORD";
+    reset.onclick=async()=>{
+      const next=prompt("Enter a new password for "+(x.username||"this user")+" (minimum 8 characters):");
+      if(next===null)return;
+      if(next.trim().length<8){alert("Password must be at least 8 characters.");return;}
+      const {data:{session}}=await sb.auth.getSession();
+      if(!session){alert("Your session has expired. Please log in again.");return;}
+      reset.disabled=true;
+      const response=await fetch(window.SUPABASE_URL+"/functions/v1/admin-reset-password",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},body:JSON.stringify({user_id:x.user_id,new_password:next})});
+      const result=await response.json();reset.disabled=false;
+      if(!response.ok||!result.ok){alert("Could not reset password: "+(result.error||"Reset failed"));return;}
+      reset.textContent="PASSWORD SET";setTimeout(()=>reset.textContent="RESET PASSWORD",1200);
+    };
+    document.getElementById("profile-actions").appendChild(reset);
+  }
+
+  const rename=document.createElement("button");rename.type="button";rename.className="button";rename.textContent="RENAME";
+  rename.onclick=async()=>{
+    const next=prompt("Enter a new username:",x.username||"");
+    if(next===null||next.trim()===(x.username||""))return;
+    rename.disabled=true;
+    const result=isFounderSelf
+      ? await sb.rpc("update_my_username",{new_username:next.trim()})
+      : await sb.rpc("admin_rename_user",{target_user:x.user_id,new_username:next.trim()});
+    rename.disabled=false;
+    if(result.error){alert("Could not rename user: "+result.error.message);return;}
+    rename.textContent="RENAMED";setTimeout(()=>location.reload(),400);
+  };
+  document.getElementById("profile-actions").appendChild(rename);
+
+  const removeTag=document.createElement("button");removeTag.type="button";removeTag.className="button";removeTag.textContent="REMOVE TAG";
+  removeTag.onclick=async()=>{
+    if(!x.tag_name||["admin","owner","co_owner","co-owner"].includes(String(x.tag_name).trim().toLowerCase())){alert("This user has no removable custom tag.");return;}
+    if(!confirm("Remove "+(isFounderSelf?"your":"this user's")+" custom tag?"))return;
+    removeTag.disabled=true;
+    const result=isFounderSelf
+      ? await sb.rpc("remove_my_tag")
+      : await sb.rpc("admin_remove_user_tag",{target_user:x.user_id});
+    removeTag.disabled=false;
+    if(result.error){alert("Could not remove tag: "+result.error.message);return;}
+    removeTag.textContent="REMOVED";setTimeout(()=>location.reload(),400);
+  };
+  document.getElementById("profile-actions").appendChild(removeTag);
+}
+if(x.user_id!==user.id){
+  const report=document.createElement("a");
+  report.className="button";
+  report.href="/report-cheater/?id="+encodeURIComponent(x.user_id)+"&username="+encodeURIComponent(x.username||"")+"&steam="+encodeURIComponent(x.steam_url||"");
+  report.textContent="REPORT PLAYER";
+  document.getElementById("profile-actions").appendChild(report);
+}
+const isModerator=["owner","co_owner","admin"].includes(role);
+if(x.user_id!==user.id&&isModerator){
+  const {data:banned,error:banStatusError}=await sb.rpc("admin_user_ban_status",{target_user:x.user_id});
+  if(!banStatusError){
+    const modButton=document.createElement("button");
+    modButton.type="button";
+    modButton.className=banned?"button":"button ban-button";
+    modButton.textContent=banned?"UNBAN":"BAN PLAYER";
+    modButton.onclick=async()=>{
+      if(banned){
+        if(!confirm("Remove the permanent ban from "+(x.username||"this player")+"?"))return;
+        modButton.disabled=true;
+        const {error}=await sb.rpc("admin_unban_user",{target_user:x.user_id});
+        if(error){alert("Could not unban player: "+error.message);modButton.disabled=false;return;}
+        modButton.textContent="UNBANNED";
+        modButton.disabled=true;
+      }else{
+        if(role==="admin"&&x.role==="co_owner"){alert("Admins cannot ban co-owners.");return;}
+        const reason=prompt("Reason for permanently banning "+(x.username||"this player")+":");
+        if(reason===null)return;
+        if(reason.trim().length<3){alert("Ban reason must be at least 3 characters.");return;}
+        modButton.disabled=true;
+        const {error}=await sb.rpc("admin_ban_user",{target_user:x.user_id,p_reason:reason.trim()});
+        if(error){alert("Could not ban player: "+error.message);modButton.disabled=false;return;}
+        modButton.textContent="BANNED";
+        modButton.disabled=true;
+      }
+    };
+    document.getElementById("profile-actions").appendChild(modButton);
+  }
+}
+ const back=document.createElement("a");back.className="button";back.href="/teammates/";back.textContent="BACK TO FIND TEAMMATES";document.getElementById("profile-actions").appendChild(back);
+})().catch(e=>{document.getElementById("profile-name").textContent="Profile error";document.getElementById("profile-tagline").textContent=String(e.message||e);});
+</script>
+<script src="/site-settings.js"></script>
+</body></html>

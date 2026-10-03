@@ -182,6 +182,15 @@ return "<div class='member-row profile-link' role='link' tabindex='0' data-profi
   const openProfile=el=>{if(el?.dataset.profile)location.href="profile.html?id="+encodeURIComponent(el.dataset.profile);};
   memberList.addEventListener("click",e=>{const row=e.target.closest("[data-profile]");if(row&& !e.target.closest("a,button"))openProfile(row);});
   memberList.addEventListener("keydown",e=>{const row=e.target.closest("[data-profile]");if(row&&!e.target.closest("a,button")&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openProfile(row);}});
+  memberList.addEventListener("click",async e=>{
+    const btn=e.target.closest(".leave-team");if(!btn)return;
+    e.preventDefault();e.stopPropagation();
+    if(!confirm("Leave this team? You will become an Independent Player."))return;
+    btn.disabled=true;
+    const {error}=await sb.rpc("leave_my_team");
+    if(error){alert("Could not leave team: "+error.message);btn.disabled=false;return;}
+    location.href="join-team.html";
+  });
 
   const myTag=await sb.from("user_tags").select("tag_name,color").eq("user_id",user.id).maybeSingle();
   const ts=document.getElementById("tag-status"),tc=document.getElementById("tag-create"),tp=document.getElementById("tag-preview");

@@ -25,12 +25,18 @@ async function start(){
       const {data,error}=await sb.auth.signUp({
         email,password,options:{data:{username}}
       });
-      if(error){msg.textContent=error.message;return}
+      if(error){
+        // If the invite was consumed but account creation failed, do not reveal
+        // backend details. The user can request another invite from an admin.
+        msg.textContent=error.message;
+        return;
+      }
 
-      msg.textContent=data.session
-        ? "Account created. Welcome to SHARDNOTE!"
-        : "Account created. Check your email to confirm, then log in.";
+      msg.textContent = data.session
+        ? "Account created successfully! Redirecting to your team dashboard..."
+        : "Account created successfully! Check your email to confirm your account, then log in.";
       register.reset();
+      if(data.session) setTimeout(()=>location.href="dashboard.html",700);
     };
   }
 

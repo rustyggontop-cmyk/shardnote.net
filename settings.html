@@ -74,6 +74,38 @@
   setAvatar(profile?.avatar_url);
   if(me&&(me.role==="owner"||me.role==="co_owner"||me.role==="admin"))document.getElementById("settings-admin-link").style.display="flex";
 
+  const discordStatus=document.getElementById("discord-status"),linkDiscord=document.getElementById("link-discord"),unlinkDiscord=document.getElementById("unlink-discord");
+  const refreshDiscord=async()=>{
+    const {data:ids,error}=await sb.auth.getUserIdentities();
+    if(error){discordStatus.textContent="Could not check Discord connection: "+error.message;return;}
+    const ident=(ids?.identities||[]).find(x=>x.provider==="discord");
+    if(ident){
+      await sb.rpc("sync_my_discord_identity");
+      const name=ident.identity_data?.global_name||ident.identity_data?.username||ident.identity_data?.name||"Discord account";
+      discordStatus.textContent="Linked Discord: "+name;
+      linkDiscord.textContent="DISCORD LINKED";linkDiscord.disabled=true;unlinkDiscord.style.display="inline-block";
+    }else{
+      discordStatus.textContent="No Discord account linked.";
+      linkDiscord.textContent="LINK DISCORD";linkDiscord.disabled=false;unlinkDiscord.style.display="none";
+    }
+  };
+  await refreshDiscord();
+  linkDiscord.onclick=async()=>{
+    linkDiscord.disabled=true;discordStatus.textContent="Opening Discord...";
+    const {error}=await sb.auth.linkIdentity({provider:"discord",options:{redirectTo:location.origin+location.pathname+"?discord=linked"}});
+    if(error){discordStatus.textContent="Could not link Discord: "+error.message;linkDiscord.disabled=false;}
+  };
+  unlinkDiscord.onclick=async()=>{
+    const {data:ids}=await sb.auth.getUserIdentities(),ident=(ids?.identities||[]).find(x=>x.provider==="discord");
+    if(!ident)return;
+    if((ids?.identities||[]).length<2){alert("You need another login identity before unlinking Discord.");return;}
+    unlinkDiscord.disabled=true;
+    const {error}=await sb.auth.unlinkIdentity(ident);
+    unlinkDiscord.disabled=false;
+    if(error){alert("Could not unlink Discord: "+error.message);return;}
+    await refreshDiscord();
+  };
+
   document.getElementById("avatar-file").onchange=async e=>{
     const file=e.target.files?.[0]; if(!file)return;
     if(!/^image\/(png|jpe?g|webp|gif)$/i.test(file.type)){document.getElementById("avatar-msg").textContent="Please choose a PNG, JPG, WEBP, or GIF image.";e.target.value="";return;}

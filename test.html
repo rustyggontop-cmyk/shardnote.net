@@ -4,9 +4,7 @@ form.addEventListener("submit",async e=>{
  e.preventDefault(); msg.textContent="Sending...";
  try{
   const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
-  const {data:{session}}=await sb.auth.getSession();
-  if(!session){msg.textContent="You must be logged in to send a test email.";return;}
-  const r=await fetch(window.SUPABASE_URL+"/functions/v1/send-test-email",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},body:JSON.stringify({adminKey:document.getElementById("adminKey").value,to:document.getElementById("to").value,subject:document.getElementById("subject").value,message:document.getElementById("message").value})});
+  const r=await fetch(window.SUPABASE_URL+"/functions/v1/send-test-email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminKey:document.getElementById("adminKey").value,to:document.getElementById("to").value,subject:document.getElementById("subject").value,message:document.getElementById("message").value})});
   const d=await r.json(); if(!r.ok) throw new Error(d.error+(d.details?" — "+d.details:""));
   msg.textContent="Email sent successfully. Brevo message ID: "+(d.brevo?.messageId||"unknown");
  }catch(err){console.error(err);msg.textContent="Email failed: "+err.message;}

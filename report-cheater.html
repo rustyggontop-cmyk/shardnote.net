@@ -8,7 +8,7 @@
 <div class="panel-shell">
 <aside class="dashboard-sidebar"><div class="side-title">SHARDNOTE</div><nav class="side-nav">
 <a class="side-btn" href="dashboard.html"><span class="ico">⌂</span>Overview</a>
-<a class="side-btn" href="dashboard.html#members"><span class="ico">◉</span>Team Members</a>
+<a class="side-btn" href="dashboard.html#members"><span class="ico">◉</span>Team Members</a><a class="side-btn" href="teammates.html"><span class="ico">⌁</span>Find Teammates</a>
 <a class="side-btn" href="support.html"><span class="ico">?</span>Support</a>
 <a class="side-btn active" href="report-cheater.html"><span class="ico">!</span>Report Cheater</a>
 <a class="side-btn" href="dashboard.html#invites"><span class="ico">◇</span>Invites</a>
@@ -36,7 +36,7 @@
 const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
 const {data:{user}}=await sb.auth.getUser();if(!user){location.href="login.html";return;}
 const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
-const {data:role}=await sb.rpc("current_user_role");if(role==="owner"||role==="admin")document.getElementById("report-admin-link").style.display="flex";
+const {data:role}=await sb.rpc("current_user_role");if(role==="owner"||role==="co_owner"||role==="admin")document.getElementById("report-admin-link").style.display="flex";
 const {data:me}=await sb.from("team_members").select("team_id").eq("user_id",user.id).maybeSingle();
 const load=async()=>{const {data,error}=await sb.from("cheater_reports").select("reported_username,reason,status,created_at").eq("reporter_id",user.id).order("created_at",{ascending:false}).limit(20);const box=document.getElementById("report-history");if(error){box.textContent="Could not load reports: "+error.message;return;}box.innerHTML=(data||[]).map(r=>"<div class='member-row'><div><strong>"+esc(r.reported_username)+"</strong><div class='support-note'>"+esc(r.reason)+"</div></div><span class='support-status'>"+esc(r.status).toUpperCase()+"</span></div>").join("")||"<p class='support-note'>No reports submitted yet.</p>";};
 document.getElementById("submit-report").onclick=async()=>{

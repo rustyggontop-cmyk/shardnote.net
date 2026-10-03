@@ -5,7 +5,7 @@
 <header><a class="brand" href="/index/""><img src="logo.png" class="site-logo" alt="SHARDNOTE logo">CS<span>2</span><b> SHARDNOTE</b></a><nav id="nav"><a href="/socials/"">SOCIALS</a><a href="/login/"">LOGIN</a><a class="orange" href="/register/"">REGISTER</a></nav></header>
 <script src="supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><main><div class="hero"><img src="logo.png" class="hero-logo" alt="SHARDNOTE logo"><small>COUNTER-STRIKE 2</small><p>Competitive. Private. Built for the squad.</p><div id="hero-actions"><a class="button orange" href="/register/"">JOIN THE CLAN</a><a class="button" href="/login/"">LOGIN</a></div></div></main><script>
 (async()=>{
- const {createClient}=supabase; const sb=createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+ const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
  const {data:{session}}=await sb.auth.getSession();
  const nav=document.getElementById("nav"), actions=document.getElementById("hero-actions");
  if(session){

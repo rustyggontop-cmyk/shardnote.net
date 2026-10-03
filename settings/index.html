@@ -70,7 +70,11 @@
 <script src="/auth.js"></script>
 <script>
 (async()=>{
-  const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+  if(!window.supabase||typeof window.supabase.createClient!=="function"){
+    document.getElementById("save-msg").textContent="Supabase is still loading. Please refresh once.";
+    return;
+  }
+  const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
   const {data:{user}}=await sb.auth.getUser(); if(!user){location.href="/login/";return;}
   const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
   const {data:me}=await sb.from("team_members").select("username,role").eq("user_id",user.id).maybeSingle();

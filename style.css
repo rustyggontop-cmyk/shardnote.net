@@ -226,3 +226,6 @@ header nav,header>div{position:relative;z-index:3}
 
 /* Centered small footer */
 .site-footer{width:100%;text-align:center;color:#666b74;font-size:11px;font-weight:500;padding:18px 16px 24px;letter-spacing:.2px}
+
+/* Release banner */
+.release-banner{width:100%;background:#6f42c1;color:#fff;text-align:center;font-size:12px;font-weight:800;line-height:1.2;padding:7px 12px;letter-spacing:.2px}

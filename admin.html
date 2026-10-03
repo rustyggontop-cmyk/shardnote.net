@@ -68,9 +68,25 @@ else{
    const avatar=u.avatar_url?"<img src='"+esc(u.avatar_url)+"' alt=''>":esc(String(u.username||"?").slice(0,1).toUpperCase());
    const team=u.team_name?esc(u.team_name):"No team";
    const state=u.is_banned?"RESTRICTED":team;
-   return "<div class='member-row'><a class='profile-link' href='profile.html?id="+encodeURIComponent(u.user_id)+"'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><strong>"+esc(u.username)+"</strong><div class='profile-bio'>"+team+" · "+esc(String(u.role||"member").replace("_"," "))+"</div></div></a><span class='role-pill'>"+esc(state.toUpperCase())+"</span></div>";
+   const banAction=u.is_banned
+    ? "<button type='button' class='button unban-user' data-user='"+esc(u.user_id)+"' data-name='"+esc(u.username)+"'>UNBAN</button>"
+    : (u.user_id!==user.id&&!(role==="admin"&&u.role==="co_owner")?"<button type='button' class='button ban-button ban-directory-user' data-user='"+esc(u.user_id)+"' data-name='"+esc(u.username)+"'>BAN PLAYER</button>":"");
+   return "<div class='member-row'><a class='profile-link' href='profile.html?id="+encodeURIComponent(u.user_id)+"'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><strong>"+esc(u.username)+"</strong><div class='profile-bio'>"+team+" · "+esc(String(u.role||"member").replace("_"," "))+"</div></div></a><div class='admin-actions'><span class='role-pill'>"+esc(state.toUpperCase())+"</span>"+banAction+"</div></div>";
  }).join("")||"No registered users.";
 }
+allUsersBox.querySelectorAll(".unban-user").forEach(b=>b.onclick=async()=>{
+ if(!confirm("Permanently remove the ban from "+(b.dataset.name||"this player")+"?"))return;
+ b.disabled=true;const {error}=await sb.rpc("admin_unban_user",{target_user:b.dataset.user});
+ if(error){alert("Could not unban player: "+error.message);b.disabled=false;return;}
+ b.textContent="UNBANNED";setTimeout(()=>location.reload(),400);
+});
+allUsersBox.querySelectorAll(".ban-directory-user").forEach(b=>b.onclick=async()=>{
+ const reason=prompt("Reason for banning "+(b.dataset.name||"this player")+":");
+ if(reason===null||reason.trim().length<3)return;
+ b.disabled=true;const {error}=await sb.rpc("admin_ban_user",{target_user:b.dataset.user,p_reason:reason.trim()});
+ if(error){alert("Could not ban player: "+error.message);b.disabled=false;return;}
+ b.textContent="BANNED";setTimeout(()=>location.reload(),400);
+});
 const {data:stats,error:statsError}=await sb.rpc("admin_stats");
 document.getElementById("admin-stats").textContent=statsError?"Stats unavailable: "+statsError.message:"ONLINE: "+stats.online+" · SIGNED IN: "+stats.signed_in;
 

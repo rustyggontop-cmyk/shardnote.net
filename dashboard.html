@@ -210,8 +210,38 @@ return "<div class='member-row profile-link' role='link' tabindex='0' data-profi
     const ids=(data||[]).map(x=>x.user_id),{data:found}=ids.length?await sb.from("user_tags").select("user_id,tag_name,color").in("user_id",ids):{data:[]};
     const {data:profiles}=ids.length?await sb.from("profiles").select("id,avatar_url,bio,steam_url").in("id",ids):{data:[]};
     const map=Object.fromEntries((found||[]).map(x=>[x.user_id,x])),pm=Object.fromEntries((profiles||[]).map(x=>[x.id,x]));
-    results.innerHTML=(data||[]).map(u=>{const p=pm[u.user_id],avatar=p?.avatar_url?"<img src='"+escapeHtml(p.avatar_url)+"' alt=''>":escapeHtml(String(u.username||"?").slice(0,1).toUpperCase());const steam=p?.steam_url?"<a class='steam-link' href='"+escapeHtml(p.steam_url)+"' target='_blank' rel='noopener'>STEAM</a>":"";const state=u.team_id?(u.team_id===teamId?"IN YOUR TEAM":"IN ANOTHER TEAM"):"AVAILABLE";return "<div class='user-result-row profile-link' role='link' tabindex='0' data-profile='"+encodeURIComponent(u.user_id)+"'><div class='user-result-name'><span class='user-avatar'>"+avatar+"</span><div><strong>"+escapeHtml(u.username)+"</strong><div class='profile-bio'>"+escapeHtml(u.team_name||"No team")+" · "+state+"</div></div></div><div>"+(map[u.user_id]?tagHtml(map[u.user_id]):"<span class='user-no-tag'>No custom tag</span>")+" "+steam+"</div></div>";}).join("")||"<div class='user-search-empty'><span>⌕</span><strong>No users found</strong><small>Try a different username.</small></div>";
+    results.innerHTML=(data||[]).map(u=>{
+      const p=pm[u.user_id],avatar=p?.avatar_url?"<img src='"+escapeHtml(p.avatar_url)+"' alt=''>":escapeHtml(String(u.username||"?").slice(0,1).toUpperCase());
+      const steam=p?.steam_url?"<a class='steam-link' href='"+escapeHtml(p.steam_url)+"' target='_blank' rel='noopener'>STEAM</a>":"";
+      const state=u.team_id?(u.team_id===teamId?"IN YOUR TEAM":"IN ANOTHER TEAM"):"AVAILABLE";
+      const action=u.user_id===user.id?"":(!u.team_id?
+        "<button type='button' class='button invite-user' data-user='"+escapeHtml(u.user_id)+"' data-name='"+escapeHtml(u.username)+"'>INVITE TO TEAM</button>":
+        (u.team_id===teamId&&u.role!=="owner"?"<button type='button' class='button kick-user' data-user='"+escapeHtml(u.user_id)+"' data-name='"+escapeHtml(u.username)+"'>KICK FROM TEAM</button>":""));
+      return "<div class='user-result-row profile-link' role='link' tabindex='0' data-profile='"+encodeURIComponent(u.user_id)+"'><div class='user-result-name'><span class='user-avatar'>"+avatar+"</span><div><strong>"+escapeHtml(u.username)+"</strong><div class='profile-bio'>"+escapeHtml(u.team_name||"No team")+" · "+state+"</div></div></div><div class='admin-actions'>"+(map[u.user_id]?tagHtml(map[u.user_id]):"<span class='user-no-tag'>No custom tag</span>")+" "+steam+" "+action+"</div></div>";
+    }).join("")||"<div class='user-search-empty'><span>⌕</span><strong>No users found</strong><small>Try a different username.</small></div>";
   },180);};
+  results.addEventListener("click",async e=>{
+    const invite=e.target.closest(".invite-user");
+    if(invite){
+      e.preventDefault();e.stopPropagation();
+      invite.disabled=true;
+      const {error}=await sb.rpc("invite_user_to_my_team",{target_user:invite.dataset.user});
+      if(error){alert("Could not invite player: "+error.message);invite.disabled=false;return;}
+      invite.textContent="ADDED TO TEAM";
+      setTimeout(()=>search.dispatchEvent(new Event("input")),400);
+      return;
+    }
+    const kick=e.target.closest(".kick-user");
+    if(kick){
+      e.preventDefault();e.stopPropagation();
+      if(!confirm("Kick "+(kick.dataset.name||"this player")+" from your team?"))return;
+      kick.disabled=true;
+      const {error}=await sb.rpc("kick_user_from_my_team",{target_user:kick.dataset.user});
+      if(error){alert("Could not kick player: "+error.message);kick.disabled=false;return;}
+      kick.textContent="KICKED";
+      setTimeout(()=>search.dispatchEvent(new Event("input")),400);
+    }
+  });
   results.addEventListener("click",e=>{const row=e.target.closest("[data-profile]");if(row&&!e.target.closest("a,button"))openProfile(row);});
   results.addEventListener("keydown",e=>{const row=e.target.closest("[data-profile]");if(row&&!e.target.closest("a,button")&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openProfile(row);}});
 

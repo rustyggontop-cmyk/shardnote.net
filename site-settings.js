@@ -16,6 +16,8 @@
   const setBanner = text => {
     const value = String(text || "").trim() || "We've released!! 🥳";
     document.querySelectorAll(".release-banner").forEach(el => {
+      const header=document.querySelector("header");
+      if(header && el.parentElement!==header) header.appendChild(el);
       el.textContent = value;
     });
   };

@@ -51,6 +51,15 @@
           <button id="save-profile" class="button orange">SAVE PROFILE</button>
           <p id="save-msg"></p>
         </section>
+        <section class="panel-card settings-card">
+          <small>DISCORD</small><h2>LINK DISCORD</h2>
+          <p id="discord-status" class="support-note">Checking Discord connection...</p>
+          <p class="support-note">Link your Discord account so SHARDNOTE can show your Discord name on your profile and in the Admin directory.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button id="link-discord" type="button" class="button orange">LINK DISCORD</button>
+            <button id="unlink-discord" type="button" class="button" style="display:none">UNLINK DISCORD</button>
+          </div>
+        </section>
       </div>
     </div>
   </main>
@@ -72,7 +81,8 @@
   const preview=document.getElementById("avatar-preview");
   const setAvatar=url=>{preview.innerHTML=url?"<img src='"+esc(url)+"' alt='Profile picture'>":esc((me?.username||"M").slice(0,1).toUpperCase());};
   setAvatar(profile?.avatar_url);
-  if(me&&(me.role==="owner"||me.role==="co_owner"||me.role==="admin"))document.getElementById("settings-admin-link").style.display="flex";
+  const {data:siteRole}=await sb.rpc("current_user_role");
+  if(siteRole==="owner"||siteRole==="co_owner"||siteRole==="admin")document.getElementById("settings-admin-link").style.display="flex";
 
   const discordStatus=document.getElementById("discord-status"),linkDiscord=document.getElementById("link-discord"),unlinkDiscord=document.getElementById("unlink-discord");
   const refreshDiscord=async()=>{

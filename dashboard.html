@@ -15,7 +15,7 @@
 <body>
 <header>
   <a class="brand" href="index.html"><img src="logo.png" alt="SHARDNOTE logo" class="site-logo">CS<span>2</span><b> SHARDNOTE</b></a>
-  <div style="display:flex;align-items:center;gap:8px"><a class="button" href="support.html">SUPPORT</a><button id="logout" class="button">LOGOUT</button></div>
+  <div style="display:flex;align-items:center;gap:8px"><button id="logout" class="button">LOGOUT</button></div>
 </header>
 
 <div class="dashboard-shell">
@@ -67,9 +67,7 @@
             <span class="user-search-icon">⌕</span>
             <input id="tag-user-search" placeholder="Search by username..." autocomplete="off" spellcheck="false">
           </div>
-          <div id="tag-user-results" class="user-search-results">
-            <div class="user-search-empty"><span>⌕</span><strong>Search the team</strong><small>Start typing a username to find a member.</small></div>
-          </div>
+          <div id="tag-user-results" class="user-search-results"></div>
         </section>
 
         <section id="tag" class="dashboard-card">

@@ -7,6 +7,17 @@ async function start(){
   const {createClient}=supabase;
   const sb=createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
 
+  const weeklyCode=document.getElementById("weeklyCode");
+  if(weeklyCode){
+    const {data,error}=await sb.rpc("current_weekly_invite");
+    if(!error && data && data[0]){
+      weeklyCode.textContent=data[0].code;
+      document.getElementById("expires").textContent="Valid until "+new Date(data[0].valid_until).toLocaleString();
+      document.getElementById("invite").value=data[0].code;
+      document.getElementById("copyCode").onclick=()=>navigator.clipboard?.writeText(data[0].code);
+    } else weeklyCode.textContent="UNAVAILABLE";
+  }
+
   const register=document.getElementById("register");
   if(register){
     register.onsubmit=async e=>{

@@ -1,1 +1,8 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Email Test — SHARDNOTE</title><link rel="stylesheet" href="style.css"></head><body><header><a class="brand" href="index.html">CS<span>2</span><b> SHARDNOTE</b></a></header><main class="center"><form class="box" id="test"><small>SHARDNOTE / EMAIL</small><h1>EMAIL TEST</h1><input id="to" type="email" placeholder="Recipient email" required><input id="subject" placeholder="Subject" value="SHARDNOTE test email" required><textarea id="message" placeholder="Message" required style="min-height:140px"></textarea><button class="button orange">SEND TEST</button><p id="msg"></p><p style="font-size:12px;opacity:.6">Email sending requires the server-side Brevo endpoint.</p></form></main></body></html>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Email Test — SHARDNOTE</title><link rel="stylesheet" href="style.css"></head><body><header><a class="brand" href="index.html">CS<span>2</span><b> SHARDNOTE</b></a></header><main class="center"><form class="box" id="test"><small>SHARDNOTE / EMAIL</small><h1>EMAIL TEST</h1><input id="to" type="email" placeholder="Recipient email" required><input id="subject" placeholder="Subject" value="SHARDNOTE test email" required><textarea id="message" placeholder="Message" required style="min-height:140px"></textarea><button class="button orange">SEND TEST</button><p id="msg"></p><p style="font-size:12px;opacity:.6">Email sending requires the server-side Brevo endpoint.</p></form></main><script>
+document.getElementById("test").addEventListener("submit",function(e){
+ e.preventDefault();
+ const m=document.getElementById("msg");
+ m.textContent="Send test is not connected to a server yet. GitHub Pages cannot send Brevo mail directly. Configure a server-side endpoint first.";
+ m.style.color="#e89124";
+});
+</script></body></html>

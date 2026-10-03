@@ -19,19 +19,28 @@ async function start(){
       const username=document.getElementById("username").value.trim();
       const email=document.getElementById("email").value.trim();
       const password=document.getElementById("password").value;
-      const invite=document.getElementById("invite").value.trim().toUpperCase();
+      const betaCode=document.getElementById("beta-code").value.trim().toUpperCase();
+      const teamInvite=document.getElementById("team-invite").value.trim().toUpperCase();
 
-      if(invite){
-        msg.textContent="Checking invite...";
-        const {data:valid,error:ve}=await sb.rpc("check_clan_invite",{invite_code:invite});
-        if(ve){ msg.textContent="Could not verify the invite code. Please try again."; return; }
-        if(!valid){msg.textContent="Invalid or exhausted clan invite code.";return}
-      } else {
-        msg.textContent="Creating account...";
+      if(!betaCode){
+        msg.textContent="A beta access code is required while SHARDNOTE is in beta.";
+        return;
       }
 
-      const options={data:{username}};
-      if(invite) options.data.invite_code=invite;
+      msg.textContent="Checking beta access...";
+      const {data:betaValid,error:be}=await sb.rpc("check_beta_access_code",{p_code:betaCode});
+      if(be){msg.textContent="Could not verify the beta access code. Please try again.";return;}
+      if(!betaValid){msg.textContent="Invalid or already used beta access code.";return;}
+
+      if(teamInvite){
+        msg.textContent="Checking team invite...";
+        const {data:teamValid,error:te}=await sb.rpc("check_clan_invite",{invite_code:teamInvite});
+        if(te){msg.textContent="Could not verify the team invite code. Please try again.";return;}
+        if(!teamValid){msg.textContent="Invalid or already used team invite code.";return;}
+      }
+
+      const options={data:{username,beta_code:betaCode}};
+      if(teamInvite) options.data.team_invite_code=teamInvite;
       const {data,error}=await sb.auth.signUp({email,password,options});
       if(error){
         const m=String(error.message||error);
@@ -46,7 +55,7 @@ async function start(){
 
       msg.textContent = data.session
         ? "Account created successfully! Redirecting to your team dashboard..."
-        : (invite ? "Account created successfully! Check your email to confirm your account, then log in." : "Account created successfully! Check your email to confirm your account, then log in and create your team.");
+        : (teamInvite ? "Account created successfully! Check your email to confirm your account, then log in." : "Account created successfully! Check your email to confirm your account, then log in and create your team.");
       register.reset();
       if(data.session) setTimeout(()=>location.href="dashboard.html",700);
     };

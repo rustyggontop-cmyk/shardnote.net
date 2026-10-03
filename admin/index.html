@@ -59,7 +59,7 @@
 <script src="/supabase-config.js"></script><script src="/realtime.js"></script><script src="/ban-check.js"></script>
 <script>
 (async()=>{
-const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
 const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
 const reservedTags=new Set(["admin","owner","co_owner","co-owner"]);
 
@@ -376,7 +376,7 @@ if(role==="owner"||role==="co_owner"){
      const id=window.__adminActiveTicketId,message=input?.value.trim();
      if(!id||!message)return;
      ticket.disabled=true;
-     const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+     const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
      const {error}=await sb.rpc("admin_reply_support_ticket",{p_ticket_id:id,p_message:message});
      ticket.disabled=false;
      if(error){if(status)status.textContent="Could not send reply: "+error.message;return;}

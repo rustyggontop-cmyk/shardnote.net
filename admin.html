@@ -1,2 +1,115 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Panel — SHARDNOTE</title><link rel="stylesheet" href="style.css"><style>.panel-tag{display:inline-flex;align-items:center;padding:0 5px;height:18px;line-height:16px;border-radius:5px;font-size:13px;font-weight:800;white-space:nowrap;vertical-align:middle}</style></head><body><header><a class="brand" href="index.html"><img src="logo.png" class="site-logo" alt="SHARDNOTE logo">CS<span>2</span><b> SHARDNOTE</b></a><div style="display:flex;align-items:center;gap:8px"><a class="button" href="dashboard.html">DASHBOARD</a><button id="logout" class="button">LOGOUT</button></div></header><div class="panel-shell"><aside class="dashboard-sidebar"><div class="side-title">SHARDNOTE</div><nav class="side-nav"><a class="side-btn" href="dashboard.html"><span class="ico">⌂</span>Overview</a><a class="side-btn" href="dashboard.html#members"><span class="ico">◉</span>Team Members</a><a class="side-btn" href="teammates.html"><span class="ico">⌁</span>Find Teammates</a><a class="side-btn" href="support.html"><span class="ico">?</span>Support</a><a class="side-btn" href="report-cheater.html"><span class="ico">!</span>Report Cheater</a><a class="side-btn" href="dashboard.html#invites"><span class="ico">◇</span>Invites</a><a class="side-btn" href="https://steamcommunity.com/groups/shardnotecs2" target="_blank" rel="noopener"><span class="ico">◈</span>Steam Group</a><a class="side-btn active" href="admin.html"><span class="ico">⚙</span>Admin Panel</a></nav><div class="side-bottom"><a class="side-btn" href="settings.html"><span class="ico">⚙</span>Settings</a></div></aside><main class="panel-main"><div class="panel-wrap"><section class="panel-hero"><div><small>SHARDNOTE / ADMINISTRATION</small><h1>ADMIN PANEL</h1><p id="status">Checking admin access...</p></div><div class="dashboard-subtle">Restricted access</div></section><div id="panel" style="display:none" class="panel-grid"><section class="panel-card wide"><small>OVERVIEW</small><h2>Team Activity</h2><div id="admin-stats" class="member-row">Loading stats...</div></section><section class="panel-card wide"><small>TEAM</small><h2>Team Members</h2><div id="admin-members">Loading team members...</div></section><section class="panel-card"><small>SUPPORT</small><h2>Support Tickets</h2><div id="tickets">Loading...</div></section><section class="panel-card wide"><small>MODERATION</small><h2>Cheater Reports</h2><div id="cheater-reports">Loading reports...</div></section><section class="panel-card"><small>OWNER ACCESS</small><div id="owner-invite" style="display:none" class="invitebox"><label>ADMIN INVITE</label><strong>676767</strong><small>Owner admin code</small></div><h2 id="manage-admins-title">Manage Admins</h2><input id="admin-search" placeholder="Search username..." autocomplete="off"><div id="admin-results"></div></section></div></div></main></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="auth.js"></script><script>(async()=>{const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);const {data:{user}}=await sb.auth.getUser();if(!user)return;const {data:me,error:meError}=await sb.from("team_members").select("role,team_id,username").eq("user_id",user.id).maybeSingle();const {data:role,error:roleError}=await sb.rpc("current_user_role");if(meError||roleError){document.getElementById("status").textContent="Unable to verify admin access. Please refresh.";return;}if(!me || !role || (role!=="owner" && role!=="co_owner" && role!=="admin")){document.getElementById("status").textContent="Access denied: admin or owner role required.";return;}document.getElementById("status").textContent="Authorized as "+role.toUpperCase()+".";document.getElementById("panel").style.display="block";if(role==="owner")document.getElementById("owner-invite").style.display="block";const {data:stats}=await sb.rpc("admin_stats");document.getElementById("admin-stats").textContent=stats?"ONLINE: "+stats.online+" · SIGNED IN: "+stats.signed_in:"Stats unavailable";
-const {data:members}=await sb.from("team_members").select("user_id,username,role").eq("team_id",me.team_id).order("username"); const ids=(members||[]).map(x=>x.user_id); const {data:tags}=ids.length?await sb.from("user_tags").select("user_id,tag_name,color").in("user_id",ids):{data:[]}; const {data:profiles}=ids.length?await sb.from("profiles").select("id,avatar_url,bio,steam_url").in("id",ids):{data:[]}; const tm=Object.fromEntries((tags||[]).map(x=>[x.user_id,x])); const profileMap=Object.fromEntries((profiles||[]).map(x=>[x.id,x])); const {data:pres}=ids.length?await sb.from("user_presence").select("user_id,last_seen").in("user_id",ids):{data:[]}; const presenceMap=Object.fromEntries((pres||[]).map(x=>[x.user_id,x])); document.getElementById("admin-members").innerHTML="<h2>TEAM MEMBERS</h2>"+(members||[]).map(m=>{const t=tm[m.user_id],profile=profileMap[m.user_id],presence=presenceMap[m.user_id],online=presence&&Date.now()-new Date(presence.last_seen).getTime()<300000;const avatar=profile?.avatar_url?"<img src='"+String(p.avatar_url).replace(/[&<>"]/g,"")+"' alt='' style='width:38px;height:38px;border-radius:11px;object-fit:cover'>":String(m.username||"?").slice(0,1).toUpperCase();return "<div class='member-row'><div class='profile-meta'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><strong>"+String(m.username).replace(/[&<>]/g,"")+"</strong>"+(t?"<span class='user-tag' style='display:inline-flex;align-items:center;justify-content:center;margin-left:6px;padding:0 4px;height:18px;line-height:16px;border-radius:4px;font-size:13px;font-weight:800;white-space:nowrap;vertical-align:middle;box-sizing:border-box;border:1px solid "+t.color+";color:"+t.color+";background:"+t.color+"22'>"+String(t.tag_name).replace(/[&<>]/g,"")+"</span>":"")+(profile?.bio?"<div class='profile-bio'>"+String(profile.bio).replace(/[&<>]/g,"")+"</div>":"")+"</div></div><span>"+m.role.toUpperCase()+" · "+(online?"ONLINE":"OFFLINE")+(profile?.steam_url?" · <a class='steam-link' href='"+String(profile.steam_url).replace(/[&<>"]/g,"")+"' target='_blank' rel='noopener'>STEAM</a>":"")+"</span>"+(t?"<button class='button remove-tag' data-user='"+m.user_id+"'>REMOVE TAG</button>":"")+"<button class='button reset-pass' data-user='"+m.user_id+"'>RESET PASSWORD</button></div>"}).join(""); document.querySelectorAll(".remove-tag").forEach(b=>b.onclick=async()=>{if(!confirm("Remove this user's tag?"))return;b.disabled=true;const {error}=await sb.rpc("admin_remove_user_tag",{target_user:b.dataset.user});if(error){b.textContent="FAILED";return;}b.textContent="REMOVED";setTimeout(()=>location.reload(),400);}); document.querySelectorAll(".reset-pass").forEach(b=>b.onclick=async()=>{b.disabled=true;const {data:{session}}=await sb.auth.getSession();const r=await fetch(window.SUPABASE_URL+"/functions/v1/admin-reset-password",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},body:JSON.stringify({user_id:b.dataset.user,redirectTo:location.origin+"/reset-password.html"})});const d=await r.json();b.textContent=d.ok?"RESET SENT":"FAILED";});const {data:t}=await sb.from("support_tickets").select("subject,message,status,created_at").order("created_at",{ascending:false}).limit(30);document.getElementById("tickets").innerHTML=(t||[]).map(x=>"<div class='member-row'><strong>"+String(x.subject).replace(/[&<>]/g,"")+"</strong><small>"+String(x.message).replace(/[&<>]/g,"")+"</small><span>"+x.status.toUpperCase()+"</span></div>").join("")||"No tickets.";const {data:reports,error:reportsError}=await sb.from("cheater_reports").select("id,reported_username,steam_url,reason,evidence_url,details,status,created_at").eq("team_id",me.team_id).order("created_at",{ascending:false}).limit(50);const reportBox=document.getElementById("cheater-reports");reportBox.innerHTML=reportsError?"Could not load reports: "+String(reportsError.message).replace(/[&<>]/g,""):(reports||[]).map(r=>"<div class='report-row'><div><strong>"+String(r.reported_username).replace(/[&<>]/g,"")+"</strong><div class='support-note'>"+String(r.reason).replace(/[&<>]/g,"")+"</div><div class='support-note'>"+String(r.details).replace(/[&<>]/g,"")+"</div>"+(r.steam_url?"<a class='report-evidence' href='"+String(r.steam_url).replace(/[&<>"]/g,"")+"'>STEAM PROFILE</a> ":"")+(r.evidence_url?"<a class='report-evidence' href='"+String(r.evidence_url).replace(/[&<>"]/g,"")+"'>EVIDENCE</a>":"")+"</div><span class='report-status'>"+String(r.status).replace(/[&<>]/g,"").toUpperCase()+"</span></div>").join("")||"No reports yet.";;if(role!=="owner" && role!=="co_owner"){document.getElementById("manage-admins-title").style.display="none";document.getElementById("admin-search").style.display="none";} const input=document.getElementById("admin-search"),out=document.getElementById("admin-results");let timer;input.oninput=()=>{clearTimeout(timer);const q=input.value.trim();if(!q){out.innerHTML="";return;}timer=setTimeout(async()=>{const {data}=await sb.rpc("search_team_users",{search_term:q});out.innerHTML=(data||[]).slice(0,8).map(x=>"<div class='member-row'><strong>"+String(x.username).replace(/[&<>]/g,"")+"</strong><span>"+String(x.role).toUpperCase()+" <button class='button make-admin' data-id='"+x.user_id+"' "+(me.role!=="owner"?"disabled":"")+">MAKE ADMIN</button></span></div>").join("")||"No users found.";out.querySelectorAll(".make-admin").forEach(b=>b.onclick=async()=>{b.disabled=true;const {error}=await sb.rpc("admin_set_role",{target_user:b.dataset.id,new_role:"admin"});b.textContent=error?"FAILED":"ADMIN";});out.querySelectorAll(".make-co-owner").forEach(b=>b.onclick=async()=>{b.disabled=true;const {error}=await sb.rpc("admin_set_role",{target_user:b.dataset.id,new_role:"co_owner"});b.textContent=error?"FAILED":"CO-OWNER";});},180);};})();</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Panel — SHARDNOTE</title><link rel="stylesheet" href="style.css">
+<style>
+.admin-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+.admin-actions .button{margin:0;padding:8px 10px;font-size:10px}
+.role-pill{display:inline-flex;align-items:center;padding:4px 7px;border:1px solid #4a3567;border-radius:999px;background:#151026;color:#cdb9ff;font:800 10px/1 Inter,Arial,sans-serif}
+</style>
+</head>
+<body>
+<header>
+<a class="brand" href="index.html"><img src="logo.png" class="site-logo" alt="SHARDNOTE logo">CS<span>2</span><b> SHARDNOTE</b></a>
+<div style="display:flex;align-items:center;gap:8px"><a class="button" href="dashboard.html">DASHBOARD</a><button id="logout" class="button">LOGOUT</button></div>
+</header>
+<div class="panel-shell">
+<aside class="dashboard-sidebar">
+<div class="side-title">SHARDNOTE</div>
+<nav class="side-nav">
+<a class="side-btn" href="dashboard.html"><span class="ico">⌂</span>Overview</a>
+<a class="side-btn" href="dashboard.html#members"><span class="ico">◉</span>Team Members</a>
+<a class="side-btn" href="teammates.html"><span class="ico">⌁</span>Find Teammates</a>
+<a class="side-btn" href="support.html"><span class="ico">?</span>Support</a>
+<a class="side-btn" href="report-cheater.html"><span class="ico">!</span>Report Cheater</a>
+<a class="side-btn" href="dashboard.html#invites"><span class="ico">◇</span>Invites</a>
+<a class="side-btn" href="https://steamcommunity.com/groups/shardnotecs2" target="_blank" rel="noopener"><span class="ico">◈</span>Steam Group</a>
+<a class="side-btn active" href="admin.html"><span class="ico">⚙</span>Admin Panel</a>
+</nav>
+<div class="side-bottom"><a class="side-btn" href="settings.html"><span class="ico">⚙</span>Settings</a></div>
+</aside>
+<main class="panel-main"><div class="panel-wrap">
+<section class="panel-hero"><div><small>SHARDNOTE / ADMINISTRATION</small><h1>ADMIN PANEL</h1><p id="status">Checking admin access...</p></div><div class="dashboard-subtle">Team administration</div></section>
+<div id="panel" class="panel-grid" style="display:none">
+<section class="panel-card wide"><small>OVERVIEW</small><h2>Team Activity</h2><div id="admin-stats" class="member-row">Loading team activity...</div></section>
+<section class="panel-card wide"><small>TEAM MANAGEMENT</small><h2>Team Members</h2><p class="support-note">Admins can remove member tags. Only the owner can appoint a co-owner.</p><div id="admin-members">Loading team members...</div></section>
+<section class="panel-card"><small>SUPPORT</small><h2>Support Tickets</h2><div id="tickets">Loading tickets...</div></section>
+<section class="panel-card"><small>MODERATION</small><h2>Cheater Reports</h2><div id="cheater-reports">Loading reports...</div></section>
+<section class="panel-card"><small>ROLE MANAGEMENT</small><div id="owner-invite" style="display:none" class="invitebox"><label>ADMIN INVITE</label><strong>676767</strong><small>Special admin signup code</small></div><div id="manage-roles"><h2>Manage Roles</h2><input id="admin-search" placeholder="Search a team member..." autocomplete="off"><div id="admin-results"></div></div></section>
+</div></div></main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+(async()=>{
+const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+const {data:{user}}=await sb.auth.getUser();
+if(!user){location.href="login.html";return;}
+const {data:me,error:meError}=await sb.from("team_members").select("role,team_id,username").eq("user_id",user.id).maybeSingle();
+const {data:role,error:roleError}=await sb.rpc("current_user_role");
+const status=document.getElementById("status");
+if(meError||roleError){status.textContent="Unable to verify administrative access. Please refresh.";return;}
+if(!me||!role||!["owner","co_owner","admin"].includes(role)){status.textContent="Access denied: admin, co-owner, or owner role required.";return;}
+status.textContent="Authorized as "+role.replace("_"," ").toUpperCase()+".";
+document.getElementById("panel").style.display="grid";
+if(role==="owner")document.getElementById("owner-invite").style.display="block";
+if(role!=="owner"&&role!=="co_owner")document.getElementById("manage-roles").style.display="none";
+
+const {data:stats,error:statsError}=await sb.rpc("admin_stats");
+document.getElementById("admin-stats").textContent=statsError?"Stats unavailable: "+statsError.message:"ONLINE: "+stats.online+" · SIGNED IN: "+stats.signed_in;
+
+const {data:members,error:membersError}=await sb.from("team_members").select("user_id,username,role").eq("team_id",me.team_id).order("username");
+const membersBox=document.getElementById("admin-members");
+if(membersError){membersBox.textContent="Could not load team members: "+membersError.message;}else{
+ const ids=(members||[]).map(x=>x.user_id);
+ const {data:tags}=ids.length?await sb.from("user_tags").select("user_id,tag_name,color").in("user_id",ids):{data:[]};
+ const {data:profiles}=ids.length?await sb.from("profiles").select("id,avatar_url,bio,steam_url").in("id",ids):{data:[]};
+ const {data:presence}=ids.length?await sb.from("user_presence").select("user_id,last_seen").in("user_id",ids):{data:[]};
+ const tm=Object.fromEntries((tags||[]).map(x=>[x.user_id,x])),pm=Object.fromEntries((profiles||[]).map(x=>[x.id,x])),pres=Object.fromEntries((presence||[]).map(x=>[x.user_id,x]));
+ membersBox.innerHTML=(members||[]).map(m=>{
+   const t=tm[m.user_id],p=pm[m.user_id],pr=pres[m.user_id],online=pr&&Date.now()-new Date(pr.last_seen).getTime()<300000;
+   const avatar=p?.avatar_url?"<img src='"+esc(p.avatar_url)+"' alt='' >":esc(String(m.username||"?").slice(0,1).toUpperCase());
+   const tag=t?"<span class='user-tag' style='margin-left:6px;color:"+esc(t.color)+";border:1px solid "+esc(t.color)+";background:"+esc(t.color)+"22'>"+esc(t.tag_name)+"</span>":"";
+   const steam=p?.steam_url?"<a class='steam-link' href='"+esc(p.steam_url)+"' target='_blank' rel='noopener'>STEAM</a>":"";
+   return "<div class='member-row'><div class='profile-meta'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><div><strong>"+esc(m.username)+"</strong>"+tag+"</div>"+(p?.bio?"<div class='profile-bio'>"+esc(p.bio)+"</div>":"")+"</div></div><div class='admin-actions'><span class='role-pill'>"+esc(String(m.role).replace("_"," ").toUpperCase())+" · "+(online?"ONLINE":"OFFLINE")+"</span>"+steam+(t?"<button class='button remove-tag' data-user='"+esc(m.user_id)+"'>REMOVE TAG</button>":"")+"<button class='button reset-pass' data-user='"+esc(m.user_id)+"'>RESET PASSWORD</button></div></div>";
+ }).join("")||"No team members.";
+ membersBox.querySelectorAll(".remove-tag").forEach(b=>b.onclick=async()=>{
+   if(!confirm("Remove this member's tag?"))return;
+   b.disabled=true;const {error}=await sb.rpc("admin_remove_user_tag",{target_user:b.dataset.user});
+   if(error){b.disabled=false;b.textContent="FAILED";return;}
+   b.textContent="REMOVED";b.closest(".member-row")?.querySelector(".user-tag")?.remove();
+ });
+ membersBox.querySelectorAll(".reset-pass").forEach(b=>b.onclick=async()=>{
+   b.disabled=true;const {data:{session}}=await sb.auth.getSession();
+   const r=await fetch(window.SUPABASE_URL+"/functions/v1/admin-reset-password",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},body:JSON.stringify({user_id:b.dataset.user,redirectTo:location.origin+"/reset-password.html"})});
+   const d=await r.json();b.disabled=false;b.textContent=d.ok?"RESET SENT":"FAILED";
+ });
+}
+
+const {data:tickets,error:ticketsError}=await sb.from("support_tickets").select("subject,message,status,created_at").order("created_at",{ascending:false}).limit(30);
+document.getElementById("tickets").innerHTML=ticketsError?"Could not load tickets: "+esc(ticketsError.message):(tickets||[]).map(t=>"<div class='member-row'><div><strong>"+esc(t.subject)+"</strong><div class='support-note'>"+esc(t.message).slice(0,160)+"</div></div><span class='support-status'>"+esc(t.status).toUpperCase()+"</span></div>").join("")||"No tickets.";
+
+const {data:reports,error:reportsError}=await sb.from("cheater_reports").select("reported_username,reason,details,status,evidence_url,steam_url,created_at").eq("team_id",me.team_id).order("created_at",{ascending:false}).limit(50);
+document.getElementById("cheater-reports").innerHTML=reportsError?"Could not load reports: "+esc(reportsError.message):(reports||[]).map(r=>"<div class='report-row'><div><strong>"+esc(r.reported_username)+"</strong><div class='support-note'>"+esc(r.reason)+"</div><div class='support-note'>"+esc(r.details).slice(0,220)+"</div>"+(r.steam_url?"<a class='report-evidence' href='"+esc(r.steam_url)+"' target='_blank' rel='noopener'>STEAM</a> ":"")+(r.evidence_url?"<a class='report-evidence' href='"+esc(r.evidence_url)+"' target='_blank' rel='noopener'>EVIDENCE</a>":"")+"</div><span class='report-status'>"+esc(r.status).toUpperCase()+"</span></div>").join("")||"No reports.";
+
+if(role==="owner"||role==="co_owner"){
+ const input=document.getElementById("admin-search"),out=document.getElementById("admin-results");let timer;
+ input.oninput=()=>{clearTimeout(timer);const q=input.value.trim();if(!q){out.innerHTML="";return;}timer=setTimeout(async()=>{
+   const {data,error}=await sb.rpc("search_team_users",{search_term:q});
+   if(error){out.textContent="Search failed: "+error.message;return;}
+   out.innerHTML=(data||[]).slice(0,12).map(x=>{
+     const self=x.user_id===user.id;
+     const makeAdmin=!self&&x.role!=="admin"&&x.role!=="owner";
+     const makeCo=role==="owner"&&!self&&x.role!=="owner"&&x.role!=="co_owner";
+     return "<div class='member-row'><div><strong>"+esc(x.username)+"</strong><div class='support-note'>"+esc(String(x.role).replace("_"," ").toUpperCase())+"</div></div><div class='admin-actions'>"+(makeAdmin?"<button class='button make-admin' data-id='"+esc(x.user_id)+"'>MAKE ADMIN</button>":"")+(makeCo?"<button class='button make-co' data-id='"+esc(x.user_id)+"'>MAKE CO-OWNER</button>":"")+"</div></div>";
+   }).join("")||"No matching team members.";
+   out.querySelectorAll(".make-admin").forEach(b=>b.onclick=async()=>{b.disabled=true;const {error}=await sb.rpc("admin_set_role",{target_user:b.dataset.id,new_role:"admin"});b.textContent=error?"FAILED":"ADMIN";});
+   out.querySelectorAll(".make-co").forEach(b=>b.onclick=async()=>{b.disabled=true;const {error}=await sb.rpc("admin_set_role",{target_user:b.dataset.id,new_role:"co_owner"});b.textContent=error?"FAILED":"CO-OWNER";});
+ },180);};
+}
+})().catch(e=>{const s=document.getElementById("status");if(s)s.textContent="Admin panel error: "+String(e.message||e);});
+</script>
+</body>
+</html>

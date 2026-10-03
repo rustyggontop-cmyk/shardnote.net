@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Profile — SHARDNOTE</title><link rel="stylesheet" href="/style.css">
+<style>.profile-verified{display:inline-block;margin-left:7px;color:#a970ff;font:800 10px/1 Inter,Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;vertical-align:middle}</style>
 </head>
 <body><div class="release-banner"><strong>We've released!! 🥳</strong></div>
 <header>
@@ -28,7 +29,7 @@
 <section class="panel-hero"><div><small>SHARDNOTE / PROFILE</small><h1>PLAYER PROFILE</h1><p>Public profile information for this SHARDNOTE member.</p></div></section>
 <section id="profile-card" class="panel-card profile-page-card">
 <div id="profile-avatar" class="profile-page-avatar">?</div>
-<h2 id="profile-name" class="profile-page-name">Loading...</h2>
+<h2 id="profile-name" class="profile-page-name">Loading... <span id="profile-verified" class="profile-verified" style="display:none">VERIFIED</span></h2>
 <p id="profile-tagline" class="profile-page-tagline">Loading profile...</p>
 <div id="profile-tag" style="margin-top:14px"></div>
 <div class="profile-info-grid">
@@ -61,7 +62,10 @@
  const {data:selfMembership}=await sb.from("team_members").select("role,team_id").eq("user_id",user.id).maybeSingle();
  const isFounderSelf=x.user_id===user.id&&selfMembership?.role==="owner";
  const av=document.getElementById("profile-avatar");av.innerHTML=x.avatar_url?"<img src='"+esc(x.avatar_url)+"' alt='Profile picture'>":esc(initial);
- document.getElementById("profile-name").textContent=x.username||"Unknown player";
+ const profileName=document.getElementById("profile-name");
+ profileName.childNodes[0].nodeValue=(x.username||"Unknown player")+" ";
+ const verified=document.getElementById("profile-verified");
+ if(verified)verified.style.display=x.is_verified?"inline-block":"none";
  document.getElementById("profile-tagline").textContent=x.team_name?"Member of "+x.team_name:"Independent player";
  document.getElementById("profile-team").textContent=x.team_name||"Independent";
  const roleLabel=x.role==="owner" ? "Founder of "+(x.team_name||"this team") : (x.role==="member" ? "Member of "+(x.team_name||"SHARDNOTE") : String(x.role||"member").replace("_"," ").toUpperCase());

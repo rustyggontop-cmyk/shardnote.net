@@ -247,7 +247,6 @@ shardnoteLive(sb,[
  {table:"user_presence"},
  {table:"user_bans"},
  {table:"teams"},
- {table:"beta_access_codes"}
 ],payload=>{
  if(payload.table==="support_replies"&&window.__adminActiveTicketId){
    const ticketId=payload.new?.ticket_id||payload.old?.ticket_id;

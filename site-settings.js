@@ -1,6 +1,9 @@
 (() => {
   document.documentElement.style.visibility = "hidden";
-  const page = () => (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  const page = () => {
+    const parts = location.pathname.split("/").filter(Boolean);
+    return (parts[parts.length - 1] || "index").replace(/\.html$/i,"").toLowerCase();
+  };
   let currentState = { banner_text: "We've released!! 🥳", maintenance_mode: false };
 
   const setBanner = text => {
@@ -33,7 +36,7 @@
     currentState = settings || currentState;
     setBanner(currentState.banner_text);
 
-    if (!currentState.maintenance_mode || page() === "login/" || page() === "maintenance/") {
+    if (!currentState.maintenance_mode || page() === "login" || page() === "maintenance") {
       hideMaintenance();
       document.documentElement.style.visibility = "visible";
       return;
@@ -49,7 +52,7 @@
     if (canBypass) {
       hideMaintenance();
     } else {
-      location.replace("maintenance/");
+      location.replace("/maintenance/");
       return;
     }
     document.documentElement.style.visibility = "visible";

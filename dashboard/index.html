@@ -117,7 +117,7 @@
 <script>
 (async()=>{
   document.documentElement.style.visibility="hidden";
-  const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="/index/";};
+  const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="/";};
   const {data:{user},error:userError}=await sb.auth.getUser();
   if(userError||!user){location.href="/login/";return;}
 

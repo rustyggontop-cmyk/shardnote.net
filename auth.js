@@ -20,16 +20,19 @@ async function start(){
       const email=document.getElementById("email").value.trim();
       const password=document.getElementById("password").value;
       const invite=document.getElementById("invite").value.trim().toUpperCase();
-      msg.textContent="Checking invite...";
 
-      const {data:valid,error:ve}=await sb.rpc("check_clan_invite",{invite_code:invite});
-      if(ve){ msg.textContent="Could not verify the invite code. Please try again."; return; }
-      if(!valid){msg.textContent="Invalid or exhausted clan invite code.";return}
+      if(invite){
+        msg.textContent="Checking invite...";
+        const {data:valid,error:ve}=await sb.rpc("check_clan_invite",{invite_code:invite});
+        if(ve){ msg.textContent="Could not verify the invite code. Please try again."; return; }
+        if(!valid){msg.textContent="Invalid or exhausted clan invite code.";return}
+      } else {
+        msg.textContent="Creating account...";
+      }
 
-      msg.textContent="Creating account...";
-      const {data,error}=await sb.auth.signUp({
-        email,password,options:{data:{username,invite_code:invite}}
-      });
+      const options={data:{username}};
+      if(invite) options.data.invite_code=invite;
+      const {data,error}=await sb.auth.signUp({email,password,options});
       if(error){
         const m=String(error.message||error);
         if(/already registered|already exists/i.test(m)) msg.textContent="That email is already registered. Try logging in instead.";
@@ -43,7 +46,7 @@ async function start(){
 
       msg.textContent = data.session
         ? "Account created successfully! Redirecting to your team dashboard..."
-        : "Account created successfully! Check your email to confirm your account, then log in.";
+        : (invite ? "Account created successfully! Check your email to confirm your account, then log in." : "Account created successfully! Check your email to confirm your account, then log in and create your team.");
       register.reset();
       if(data.session) setTimeout(()=>location.href="dashboard.html",700);
     };

@@ -50,8 +50,11 @@ if(steam&&!/^https:\/\/steamcommunity\.com\/(profiles|id)\/[A-Za-z0-9_\-]+\/?$/i
 if(evidence&&!/^https:\/\/[^\s]+$/i.test(evidence)){msg.textContent="Enter a valid evidence URL.";return;}
 if(!me?.team_id){msg.textContent="You must belong to a team to submit a report.";return;}
 msg.textContent="Submitting report...";
-const {error}=await sb.from("cheater_reports").insert({reporter_id:user.id,team_id:me.team_id,reported_user_id:presetUserId||null,reported_username:username,steam_url:steam||null,reason,evidence_url:evidence||null,details});
+const {data:report,error}=await sb.from("cheater_reports").insert({reporter_id:user.id,team_id:me.team_id,reported_user_id:presetUserId||null,reported_username:username,steam_url:steam||null,reason,evidence_url:evidence||null,details}).select("id").single();
 if(error){msg.textContent="Could not submit report: "+error.message;return;}
+try{
+ await fetch(window.SUPABASE_URL+"/functions/v1/notify-admin-tickets",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+(await sb.auth.getSession()).data.session?.access_token},body:JSON.stringify({type:"report",id:report.id})});
+}catch(e){console.warn("Admin report notification unavailable",e);}
 msg.textContent="Report submitted successfully.";["username","steam","evidence","details"].forEach(id=>document.getElementById(id).value="");document.getElementById("reason").value="";await load();
 };
 await load();

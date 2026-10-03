@@ -58,6 +58,10 @@
           <small>SHARDNOTE / PEOPLE</small>
           <h2>TEAM MEMBERS</h2>
           <p id="team-members-note" class="dashboard-subtle"></p>
+          <div id="founder-controls" style="display:none;margin:10px 0 14px">
+            <button id="abandon-team" type="button" class="button">ABANDON TEAM</button>
+            <span id="abandon-team-msg" class="support-note"></span>
+          </div>
           <div id="members-list">Loading team members...</div>
         </section>
 
@@ -137,6 +141,18 @@
 
   const teamId=myTeam[0].id;
   document.getElementById("team-title").textContent=myTeam[0].name;
+  if(me?.role==="owner"){
+    document.getElementById("founder-controls").style.display="block";
+    document.getElementById("abandon-team").onclick=async()=>{
+      if(!confirm("Abandon your team? The team will be deleted and all members will become independent players."))return;
+      const b=document.getElementById("abandon-team"),msg=document.getElementById("abandon-team-msg");
+      b.disabled=true;msg.textContent="Abandoning team...";
+      const {error}=await sb.rpc("founder_abandon_team");
+      if(error){msg.textContent="Could not abandon team: "+error.message;b.disabled=false;return;}
+      msg.textContent="Team abandoned.";
+      setTimeout(()=>location.reload(),500);
+    };
+  }
 
   const {data:tags}=await sb.from("user_tags").select("user_id,tag_name,color").in("user_id",
     (await sb.from("team_members").select("user_id").eq("team_id",teamId)).data?.map(x=>x.user_id)||[]

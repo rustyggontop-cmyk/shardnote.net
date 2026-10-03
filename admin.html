@@ -93,6 +93,12 @@ if(role==="owner"||role==="co_owner"){
       p_maintenance_mode:maintenanceToggle.checked
     });
     siteMsg.textContent=error?"Could not save: "+error.message:"Site settings saved.";
+    if(!error&&window.__shardnoteApplySiteSettings){
+      await window.__shardnoteApplySiteSettings({
+        banner_text:document.getElementById("site-banner-text").value.trim(),
+        maintenance_mode:document.getElementById("maintenance-toggle").checked
+      });
+    }
   };
 }
 if(role!=="owner"&&role!=="co_owner")document.getElementById("manage-roles").style.display="none";

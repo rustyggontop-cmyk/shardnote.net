@@ -213,11 +213,36 @@ const renderReportReplies=async(id)=>{
 };
 const openReport=async r=>{if(!r)return;activeReportId=r.id;document.getElementById("report-modal-title").textContent=r.reported_username;document.getElementById("report-modal-meta").textContent=new Date(r.created_at).toLocaleString();document.getElementById("report-modal-reason").textContent=r.reason;document.getElementById("report-modal-details").textContent=r.details;document.getElementById("report-modal-status").textContent=String(r.status).toUpperCase();document.getElementById("report-modal-links").innerHTML=(r.steam_url?"<a class='report-evidence' target='_blank' rel='noopener' href='"+esc(r.steam_url)+"'>STEAM PROFILE</a> ":"")+(r.evidence_url?"<a class='report-evidence' target='_blank' rel='noopener' href='"+esc(r.evidence_url)+"'>EVIDENCE</a> ":"")+(r.reported_user_id?"<button type='button' class='button ban-button' id='ban-reported'>BAN PLAYER</button>":"")+"<button type='button' class='button delete-report' id='delete-reported'>DELETE REPORT</button>";document.getElementById("report-reply-message").value="";document.getElementById("report-reply-msg").textContent="";document.getElementById("report-modal").classList.add("open");if(r.reported_user_id){document.getElementById("ban-reported").onclick=async()=>{const reason=prompt("Reason for banning "+(r.reported_username||"this player")+":",r.reason||"");if(reason===null||reason.trim().length<3)return;const b=document.getElementById("ban-reported");b.disabled=true;const rr=await sb.rpc("admin_ban_user",{target_user:r.reported_user_id,p_reason:reason.trim()});if(rr.error){alert("Could not ban player: "+rr.error.message);b.disabled=false;return;}b.textContent="BANNED";};}document.getElementById("delete-reported").onclick=async()=>{if(!confirm("Delete this cheater report permanently?"))return;const b=document.getElementById("delete-reported");b.disabled=true;const {error}=await sb.from("cheater_reports").delete().eq("id",r.id);if(error){alert("Could not delete report: "+error.message);b.disabled=false;return;}document.getElementById("report-modal").classList.remove("open");delete reportMap[r.id];document.querySelector(".open-report[data-report='"+esc(r.id)+"']")?.closest(".report-row")?.remove();};await renderReportReplies(r.id);};
  reportBox.querySelectorAll(".open-report").forEach(b=>b.onclick=()=>openReport(reportMap[b.dataset.report]));
-document.getElementById("ticket-reply-send").onclick=async()=>{const msg=document.getElementById("ticket-reply-message").value.trim();if(!activeTicketId||msg.length<1)return;const b=document.getElementById("ticket-reply-send");b.disabled=true;const {error}=await sb.from("support_replies").insert({ticket_id:activeTicketId,user_id:user.id,message:msg});b.disabled=false;if(error){document.getElementById("ticket-reply-msg").textContent="Could not send reply: "+error.message;return;}document.getElementById("ticket-reply-message").value="";document.getElementById("ticket-reply-msg").textContent="Reply sent.";await renderTicketReplies(activeTicketId);};
-const ticketReplyBox=document.getElementById("ticket-reply-message");ticketReplyBox?.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();document.getElementById("ticket-reply-send")?.click();}});
-const reportReplyBox=document.getElementById("report-reply-message");reportReplyBox?.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();document.getElementById("report-reply-send")?.click();}});
-document.getElementById("report-reply-send").onclick=async()=>{const msg=document.getElementById("report-reply-message").value.trim();if(!activeReportId||msg.length<1)return;const b=document.getElementById("report-reply-send");b.disabled=true;const {error}=await sb.from("cheater_report_replies").insert({report_id:activeReportId,user_id:user.id,message:msg});b.disabled=false;if(error){document.getElementById("report-reply-msg").textContent="Could not send reply: "+error.message;return;}document.getElementById("report-reply-message").value="";document.getElementById("report-reply-msg").textContent="Reply sent.";await renderReportReplies(activeReportId);};
-}if(role==="owner"||role==="co_owner"){
+const sendAdminTicketReply=async()=>{
+ const input=document.getElementById("ticket-reply-message"),b=document.getElementById("ticket-reply-send"),status=document.getElementById("ticket-reply-msg");
+ const msg=input?.value.trim(); if(!activeTicketId||!msg||!b)return;
+ b.disabled=true;
+ const {error}=await sb.rpc("admin_reply_support_ticket",{p_ticket_id:activeTicketId,p_message:msg});
+ b.disabled=false;
+ if(error){if(status)status.textContent="Could not send reply: "+error.message;return;}
+ input.value=""; if(status)status.textContent="Reply sent."; await renderTicketReplies(activeTicketId);
+};
+const sendAdminReportReply=async()=>{
+ const input=document.getElementById("report-reply-message"),b=document.getElementById("report-reply-send"),status=document.getElementById("report-reply-msg");
+ const msg=input?.value.trim(); if(!activeReportId||!msg||!b)return;
+ b.disabled=true;
+ const {error}=await sb.rpc("admin_reply_cheater_report",{p_report_id:activeReportId,p_message:msg});
+ b.disabled=false;
+ if(error){if(status)status.textContent="Could not send reply: "+error.message;return;}
+ input.value=""; if(status)status.textContent="Reply sent."; await renderReportReplies(activeReportId);
+};
+document.getElementById("ticket-reply-send").onclick=sendAdminTicketReply;
+document.getElementById("report-reply-send").onclick=sendAdminReportReply;
+const ticketReplyBox=document.getElementById("ticket-reply-message");
+ticketReplyBox?.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendAdminTicketReply();}});
+const reportReplyBox=document.getElementById("report-reply-message");
+reportReplyBox?.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendAdminReportReply();}});
+}
+// Moderator reply handlers are intentionally outside the report-loading branch.
+if(typeof sendAdminTicketReply==="function")document.getElementById("ticket-reply-send").onclick=sendAdminTicketReply;
+if(typeof sendAdminReportReply==="function")document.getElementById("report-reply-send").onclick=sendAdminReportReply;
+
+if(role==="owner"||role==="co_owner"){
  const input=document.getElementById("admin-search"),out=document.getElementById("admin-results");let timer;
  input.oninput=()=>{clearTimeout(timer);const q=input.value.trim();if(!q){out.innerHTML="";return;}timer=setTimeout(async()=>{
    const {data,error}=await sb.rpc("search_team_users",{search_term:q});

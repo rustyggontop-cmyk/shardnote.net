@@ -2,4 +2,5 @@
 shardnoteLive(sb,[{table:"user_bans"}],payload=>{
   if(payload.eventType==="DELETE"&&payload.old?.user_id===user.id) location.href="dashboard.html";
   if(payload.eventType==="INSERT"&&payload.new?.user_id===user.id) location.reload();
-});document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="index.html";};})().catch(()=>{});</script></body></html>
+});document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="index.html";};})().catch(()=>{});</script><script src="site-settings.js"></script>
+</body></html>

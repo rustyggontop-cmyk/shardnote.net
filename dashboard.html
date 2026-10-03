@@ -131,19 +131,9 @@
 
   const invitesBox=document.getElementById("team-invites");
   const loadInvites=async()=>{
-    const {data:invites,error}=await sb.from("team_invites")
-      .select("id,team_id,inviter_id,status,created_at")
-      .eq("invitee_id",user.id)
-      .eq("status","pending")
-      .order("created_at",{ascending:false});
+    const {data:invites,error}=await sb.rpc("my_pending_team_invites");
     if(error){invitesBox.innerHTML="<p class='support-note'>Could not load invitations: "+escapeHtml(error.message)+"</p>";return;}
-    const teamIds=[...new Set((invites||[]).map(i=>i.team_id))];
-    const inviterIds=[...new Set((invites||[]).map(i=>i.inviter_id))];
-    const {data:teams}=teamIds.length?await sb.from("teams").select("id,name").in("id",teamIds):{data:[]};
-    const {data:profiles}=inviterIds.length?await sb.from("profiles").select("id,username").in("id",inviterIds):{data:[]};
-    const teamMap=Object.fromEntries((teams||[]).map(t=>[t.id,t.name]));
-    const inviterMap=Object.fromEntries((profiles||[]).map(p=>[p.id,p.username]));
-    invitesBox.innerHTML=(invites||[]).map(i=>"<div class='member-row'><div><strong>INVITED TO: "+escapeHtml(teamMap[i.team_id]||"Unknown team")+"</strong><div class='support-note'>INVITED FROM: "+escapeHtml(inviterMap[i.inviter_id]||"Unknown player")+" · "+new Date(i.created_at).toLocaleString()+"</div></div><div class='admin-actions'><button type='button' class='button orange accept-team-invite' data-invite='"+escapeHtml(i.id)+"'>ACCEPT</button><button type='button' class='button decline-team-invite' data-invite='"+escapeHtml(i.id)+"'>DECLINE</button></div></div>").join("")||"<p class='support-note'>No pending team invitations.</p>";
+    invitesBox.innerHTML=(invites||[]).map(i=>"<div class='member-row'><div><strong>INVITED TO: "+escapeHtml(i.team_name||"Unknown team")+"</strong><div class='support-note'>INVITED FROM: "+escapeHtml(i.inviter_username||"Unknown player")+" · "+new Date(i.created_at).toLocaleString()+"</div></div><div class='admin-actions'><button type='button' class='button orange accept-team-invite' data-invite='"+escapeHtml(i.id)+"'>ACCEPT</button><button type='button' class='button decline-team-invite' data-invite='"+escapeHtml(i.id)+"'>DECLINE</button></div></div>").join("")||"<p class='support-note'>No pending team invitations.</p>";
     invitesBox.querySelectorAll(".accept-team-invite").forEach(b=>b.onclick=async()=>{
       b.disabled=true;
       const row=b.closest(".member-row");

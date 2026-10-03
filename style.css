@@ -228,7 +228,7 @@ header nav,header>div{position:relative;z-index:3}
 .site-footer{width:100%;text-align:center;color:#666b74;font-size:11px;font-weight:500;padding:18px 16px 24px;letter-spacing:.2px}
 
 /* Release banner */
-.release-banner{width:100%;background:#6f42c1;color:#fff;text-align:center;font-size:12px;font-weight:800;line-height:1.2;padding:7px 12px;letter-spacing:.2px}
+.release-banner{width:fit-content;max-width:calc(100% - 32px);margin:12px auto 6px;padding:9px 18px;background:#171226;color:#d9c8ff;border:1px solid #6f42c1;border-radius:999px;box-shadow:0 8px 26px rgba(111,66,193,.28),0 0 0 1px rgba(111,66,193,.08);text-align:center;font-size:11px;font-weight:800;line-height:1.2;letter-spacing:.35px}
 
 .maintenance-screen{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 0,#24103d 0,#09070f 65%,#05040a 100%)}
 #maintenance-screen{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:24px;background:rgba(7,5,13,.98)}

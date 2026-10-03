@@ -14,7 +14,7 @@
     <div class="side-title">SHARDNOTE</div>
     <nav class="side-nav">
       <a class="side-btn" href="dashboard.html"><span class="ico">⌂</span>Overview</a>
-      <a class="side-btn" href="dashboard.html#members"><span class="ico">◉</span>Team Members</a>
+      <a class="side-btn" href="dashboard.html#members"><span class="ico">◉</span>Team Members</a><a class="side-btn" href="teammates.html"><span class="ico">⌁</span>Find Teammates</a>
       <a class="side-btn active" href="support.html"><span class="ico">?</span>Support</a>
       <a class="side-btn" href="dashboard.html#invites"><span class="ico">◇</span>Invites</a>
       <a class="side-btn" href="report-cheater.html"><span class="ico">!</span>Report Cheater</a><a class="side-btn" href="https://steamcommunity.com/groups/shardnotecs2" target="_blank" rel="noopener"><span class="ico">◈</span>Steam Group</a>
@@ -57,7 +57,7 @@
   if(!user){location.href="login.html";return;}
   const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
   const {data:role}=await sb.rpc("current_user_role");
-  if(role==="owner"||role==="admin")document.getElementById("support-admin-link").style.display="flex";
+  if(role==="owner"||role==="co_owner"||role==="admin")document.getElementById("support-admin-link").style.display="flex";
   const load=async()=>{
     const {data,error}=await sb.from("support_tickets").select("subject,message,status,created_at").eq("user_id",user.id).order("created_at",{ascending:false});
     const box=document.getElementById("tickets");

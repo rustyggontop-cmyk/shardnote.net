@@ -143,7 +143,7 @@
     const {data:profiles}=inviterIds.length?await sb.from("profiles").select("id,username").in("id",inviterIds):{data:[]};
     const teamMap=Object.fromEntries((teams||[]).map(t=>[t.id,t.name]));
     const inviterMap=Object.fromEntries((profiles||[]).map(p=>[p.id,p.username]));
-    invitesBox.innerHTML=(invites||[]).map(i=>"<div class='member-row'><div><strong>"+escapeHtml(teamMap[i.team_id]||"Unknown team")+"</strong><div class='support-note'>Invited by "+escapeHtml(inviterMap[i.inviter_id]||"Unknown player")+" · "+new Date(i.created_at).toLocaleString()+"</div></div><div class='admin-actions'><button type='button' class='button orange accept-team-invite' data-invite='"+escapeHtml(i.id)+"'>ACCEPT</button><button type='button' class='button decline-team-invite' data-invite='"+escapeHtml(i.id)+"'>DECLINE</button></div></div>").join("")||"<p class='support-note'>No pending team invitations.</p>";
+    invitesBox.innerHTML=(invites||[]).map(i=>"<div class='member-row'><div><strong>INVITED TO: "+escapeHtml(teamMap[i.team_id]||"Unknown team")+"</strong><div class='support-note'>INVITED FROM: "+escapeHtml(inviterMap[i.inviter_id]||"Unknown player")+" · "+new Date(i.created_at).toLocaleString()+"</div></div><div class='admin-actions'><button type='button' class='button orange accept-team-invite' data-invite='"+escapeHtml(i.id)+"'>ACCEPT</button><button type='button' class='button decline-team-invite' data-invite='"+escapeHtml(i.id)+"'>DECLINE</button></div></div>").join("")||"<p class='support-note'>No pending team invitations.</p>";
     invitesBox.querySelectorAll(".accept-team-invite").forEach(b=>b.onclick=async()=>{
       b.disabled=true;
       const row=b.closest(".member-row");
@@ -215,6 +215,12 @@ return "<div class='member-row profile-link' role='link' tabindex='0' data-profi
     }).join("")||"No team members yet.";
   };
   await loadMembers();
+  window.__teamInvitePoll=true;
+  setInterval(()=>{
+    if(document.visibilityState!=="visible")return;
+    loadInvites();
+  },3000);
+
   shardnoteLive(sb,[
     {table:"team_members"},
     {table:"user_tags"},

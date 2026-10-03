@@ -1,7 +1,18 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard — SHARDNOTE</title><link rel="stylesheet" href="style.css"></head>
 <body><header><a class="brand" href="index.html">CS<span>2</span><b> SHARDNOTE</b></a><button id="logout" class="button">LOGOUT</button></header>
 <main class="center"><section class="box"><small>SHARDNOTE / CLAN</small><h1>TEAM DASHBOARD</h1><p id="member">Loading...</p><hr><h2>TEAM MEMBERS</h2><div id="members">Loading team...</div><hr><h2>INVITES</h2><p>Weekly clan invites are limited to 5 successful registrations. Invite codes are private and are never displayed publicly.</p><p id="invite-status">Checking invite status...</p></section></main>
-<script src="supabase-config.js"></script><script src="auth.js"></script>
+<script src="supabase-config.js"></script>
+<script>
+(function(){
+  // Never render dashboard content until auth.js confirms an authenticated session.
+  document.documentElement.style.visibility="hidden";
+  window.__shardnote_auth_required=true;
+})();
+</script>
+<script src="auth.js"></script>
+<script>
+setTimeout(()=>{ if(document.documentElement.style.visibility==="hidden") location.replace("login.html"); },5000);
+</script>
 <script>
 (async()=>{const {createClient}=supabase;const sb=createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
 const {data:{user}}=await sb.auth.getUser();if(!user){location.href="login.html";return}

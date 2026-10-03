@@ -51,7 +51,7 @@ const renderReplies=async(reportId)=>{
  const {data:tm}=ids.length?await sb.from("team_members").select("user_id,username").in("user_id",ids):{data:[]};
  const {data:pf}=ids.length?await sb.from("profiles").select("id,username").in("id",ids):{data:[]};
  const names=Object.fromEntries((tm||[]).map(x=>[x.user_id,x.username]));(pf||[]).forEach(x=>{if(!names[x.id])names[x.id]=x.username;});
- box.innerHTML=(data||[]).map(r=>"<div class='support-note' style='padding:10px 0;border-bottom:1px solid #282039'><strong>"+esc(r.user_id===user.id?"You":(names[r.user_id]||"SHARDNOTE Moderation"))+"</strong><div style='margin-top:4px;color:#aaa1b0'>"+esc(r.message)+"</div><small>"+new Date(r.created_at).toLocaleString()+"</small></div>").join("")||"<p class='support-note'>No replies yet.</p>";
+ box.innerHTML=(data||[]).map(r=>"<div class='reply-bubble "+(r.user_id===user.id?"reply-mine":"")+"'><div class='reply-author'>"+esc(r.user_id===user.id?"You":(names[r.user_id]||"SHARDNOTE Moderation"))+"</div><div>"+esc(r.message)+"</div><div class='reply-time'>"+new Date(r.created_at).toLocaleString()+"</div></div>").join("")||"<p class='support-note'>No replies yet.</p>";
 };
 let activeReportId=null;
 const openReport=async r=>{
@@ -76,6 +76,7 @@ const load=async()=>{
  box.innerHTML=(data||[]).map(r=>"<div class='member-row report-history-row'><div><strong>"+esc(r.reported_username)+"</strong><div class='support-note'>"+esc(r.reason)+"</div></div><div><span class='support-status'>"+esc(r.status).toUpperCase()+"</span> <button type='button' class='button open-user-report' data-report='"+esc(r.id)+"'>OPEN</button></div></div>").join("")||"<p class='support-note'>No reports submitted yet.</p>";
  box.querySelectorAll(".open-user-report").forEach(b=>b.onclick=()=>openReport(reportMap[b.dataset.report]));
 };
+const reportReplyBox=document.getElementById("report-reply-message");reportReplyBox?.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();document.getElementById("report-reply-send")?.click();}});
 document.getElementById("report-reply-send").onclick=async()=>{
  const message=document.getElementById("report-reply-message").value.trim(); if(!activeReportId||!message)return;
  const b=document.getElementById("report-reply-send");b.disabled=true;
@@ -100,7 +101,7 @@ msg.textContent="Report submitted successfully.";["username","steam","evidence",
 };
 await load();
 })().catch(e=>{const m=document.getElementById("report-msg");if(m)m.textContent="Report error: "+String(e.message||e);});
-<div id="report-modal" class="ticket-modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title"><div class="ticket-dialog"><div class="ticket-dialog-header"><div><small>MODERATION / REPORT</small><h2 id="report-modal-title" class="ticket-dialog-title">Report</h2><div id="report-modal-meta" class="ticket-dialog-meta"></div></div><button id="report-modal-close" class="button" type="button">CLOSE</button></div><div><span id="report-modal-status" class="report-status"></span><div id="report-modal-reason" class="ticket-dialog-meta"></div></div><div id="report-modal-details" class="ticket-dialog-message"></div><div id="report-modal-links" class="ticket-dialog-actions"></div><div class="ticket-dialog-message"><strong>REPLIES</strong><div id="report-replies" style="margin-top:10px"></div><textarea id="report-reply-message" maxlength="5000" placeholder="Write a reply..." style="width:100%;min-height:90px;margin-top:12px"></textarea><button id="report-reply-send" type="button" class="button orange">REPLY</button><p id="report-reply-msg"></p></div></div></div><script>
+<div id="report-modal" class="ticket-modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title"><div class="ticket-dialog"><div class="ticket-dialog-header"><div><small>MODERATION / REPORT</small><h2 id="report-modal-title" class="ticket-dialog-title">Report</h2><div id="report-modal-meta" class="ticket-dialog-meta"></div></div><button id="report-modal-close" class="button" type="button">CLOSE</button></div><div><span id="report-modal-status" class="report-status"></span><div id="report-modal-reason" class="ticket-dialog-meta"></div></div><div id="report-modal-details" class="ticket-dialog-message"></div><div id="report-modal-links" class="ticket-dialog-actions"></div><div class="ticket-dialog-message"><strong>REPLIES</strong><div id="report-replies" style="margin-top:10px"></div><div class="reply-composer"><textarea id="report-reply-message" maxlength="5000" placeholder="Write a reply..." rows="1"></textarea><button id="report-reply-send" type="button" class="button orange reply-send">SEND</button></div><p id="report-reply-msg" class="reply-msg"></p></div></div></div><script>
 document.getElementById("report-modal-close").onclick=()=>document.getElementById("report-modal").classList.remove("open");
 document.getElementById("report-modal").addEventListener("click",e=>{if(e.target.id==="report-modal")e.currentTarget.classList.remove("open");});
 </script></body></html>

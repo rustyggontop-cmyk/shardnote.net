@@ -7,14 +7,6 @@ async function start(){
   const {createClient}=supabase;
   const sb=createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
 
-  const expires=document.getElementById("expires");
-  if(expires){
-    const {data,error}=await sb.rpc("current_weekly_invite");
-    if(!error && data && data[0]){
-      expires.textContent="Weekly invite is active until "+new Date(data[0].valid_until).toLocaleString();
-    }
-  }
-
   const register=document.getElementById("register");
   if(register){
     register.onsubmit=async e=>{

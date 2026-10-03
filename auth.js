@@ -8,8 +8,11 @@ else{
 }
 
 async function start(){
-  const {createClient}=supabase;
-  const sb=createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+  if(!window.supabase||typeof window.supabase.createClient!=="function"){
+    console.error("Supabase client library is not ready.");
+    return;
+  }
+  const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
 
   const register=document.getElementById("register");
   if(register){

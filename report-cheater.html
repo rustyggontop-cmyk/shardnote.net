@@ -76,15 +76,18 @@ const load=async()=>{
  box.innerHTML=(data||[]).map(r=>"<div class='member-row report-history-row'><div><strong>"+esc(r.reported_username)+"</strong><div class='support-note'>"+esc(r.reason)+"</div></div><div><span class='support-status'>"+esc(r.status).toUpperCase()+"</span> <button type='button' class='button open-user-report' data-report='"+esc(r.id)+"'>OPEN</button></div></div>").join("")||"<p class='support-note'>No reports submitted yet.</p>";
  box.querySelectorAll(".open-user-report").forEach(b=>b.onclick=()=>openReport(reportMap[b.dataset.report]));
 };
-const reportReplyBox=document.getElementById("report-reply-message");reportReplyBox?.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();document.getElementById("report-reply-send")?.click();}});
-document.getElementById("report-reply-send").onclick=async()=>{
- const message=document.getElementById("report-reply-message").value.trim(); if(!activeReportId||!message)return;
- const b=document.getElementById("report-reply-send");b.disabled=true;
+const sendReportReply=async()=>{
+ const input=document.getElementById("report-reply-message"),b=document.getElementById("report-reply-send"),status=document.getElementById("report-reply-msg");
+ const message=input?.value.trim();
+ if(!activeReportId||!message||!b)return;
+ b.disabled=true;
  const {error}=await sb.from("cheater_report_replies").insert({report_id:activeReportId,user_id:user.id,message});
  b.disabled=false;
- if(error){document.getElementById("report-reply-msg").textContent="Could not send reply: "+error.message;return;}
- document.getElementById("report-reply-message").value="";document.getElementById("report-reply-msg").textContent="Reply sent.";await renderReplies(activeReportId);
+ if(error){if(status)status.textContent="Could not send reply: "+error.message;return;}
+ input.value="";if(status)status.textContent="Reply sent.";await renderReplies(activeReportId);
 };
+document.addEventListener("keydown",e=>{if(e.target?.id==="report-reply-message"&&e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendReportReply();}});
+document.addEventListener("click",e=>{if(e.target?.id==="report-reply-send")sendReportReply();});
 document.getElementById("submit-report").onclick=async()=>{
 const username=document.getElementById("username").value.trim(),steam=document.getElementById("steam").value.trim(),reason=document.getElementById("reason").value, evidence=document.getElementById("evidence").value.trim(),details=document.getElementById("details").value.trim(),msg=document.getElementById("report-msg");
 if(username.length<1||reason===""||details.length<5){msg.textContent="Please provide the player, a reason, and at least 5 characters of details.";return;}

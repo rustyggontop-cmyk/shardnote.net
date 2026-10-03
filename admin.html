@@ -77,7 +77,18 @@ if(membersError){membersBox.textContent="Could not load team members: "+membersE
    const steam=p?.steam_url?"<a class='steam-link' href='"+esc(p.steam_url)+"' target='_blank' rel='noopener'>STEAM</a>":"";
    return "<div class='member-row'><div class='profile-link' role='link' tabindex='0' data-profile='"+encodeURIComponent(m.user_id)+"'><div class='profile-meta'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><div><strong>"+esc(m.username)+"</strong>"+tag+"</div>"+(p?.bio?"<div class='profile-bio'>"+esc(p.bio)+"</div>":"")+"</div></div><div><span class='role-pill'>"+esc(String(m.role).replace("_"," ").toUpperCase())+" · "+(online?"ONLINE":"OFFLINE")+"</span>"+steam+"</div></div><div class='admin-actions'><button type='button' class='button rename-user' data-user='"+esc(m.user_id)+"' data-name='"+esc(m.username)+"'>RENAME</button>"+(t?"<button class='button remove-tag' data-user='"+esc(m.user_id)+"'>REMOVE TAG</button>":"")+"<button class='button reset-pass' data-user='"+esc(m.user_id)+"'>RESET PASSWORD</button></div></div>";
  }).join("")||"No team members.";
- membersBox.querySelectorAll('[data-profile]').forEach(el=>{const go=()=>location.href='profile.html?id='+encodeURIComponent(el.dataset.profile);el.addEventListener('click',e=>{if(e.target.closest('a,button'))return;go();});el.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('a,button')){e.preventDefault();go();}});}); membersBox.querySelectorAll(".remove-tag").forEach(b=>b.onclick=async()=>{
+ membersBox.querySelectorAll('[data-profile]').forEach(el=>{const go=()=>location.href='profile.html?id='+encodeURIComponent(el.dataset.profile);el.addEventListener('click',e=>{if(e.target.closest('a,button'))return;go();});el.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('a,button')){e.preventDefault();go();}});}); membersBox.querySelectorAll(".rename-user").forEach(b=>b.onclick=async()=>{
+ const current=b.dataset.name||"",next=prompt("Enter a new username:",current);
+ if(next===null)return;
+ const name=next.trim();
+ if(name.length<2||name.length>32){alert("Username must be 2-32 characters.");return;}
+ if(name===current)return;
+ b.disabled=true;
+ const {error}=await sb.from("team_members").update({username:name}).eq("user_id",b.dataset.user).eq("team_id",me.team_id);
+ if(error){alert("Could not rename user: "+error.message);b.disabled=false;return;}
+ b.textContent="RENAMED";setTimeout(()=>location.reload(),500);
+});
+membersBox.querySelectorAll(".remove-tag").forEach(b=>b.onclick=async()=>{
    if(!confirm("Remove this member's tag?"))return;
    b.disabled=true;const {error}=await sb.rpc("admin_remove_user_tag",{target_user:b.dataset.user});
    if(error){b.disabled=false;b.textContent="FAILED";return;}
@@ -97,7 +108,7 @@ else{
  const ticketUsers=[...new Set((tickets||[]).map(t=>t.user_id).filter(Boolean))];
  const {data:ticketMembers}=ticketUsers.length?await sb.from("team_members").select("user_id,username").in("user_id",ticketUsers):{data:[]};
  const userNames=Object.fromEntries((ticketMembers||[]).map(x=>[x.user_id,x.username]));
- ticketsBox.innerHTML=(tickets||[]).map(t=>"<div class='member-row ticket-row'><div><strong>"+esc(t.subject)+"</strong><div class='support-note'>"+esc(userNames[t.user_id]||"Team member")+" · "+new Date(t.created_at).toLocaleString()+"</div><div class='support-note'>"+esc(t.message).slice(0,150)+(String(t.message).length>150?"…":"")+"</div></div><div class='admin-actions'><span class='support-status'>"+esc(t.status).toUpperCase()+"</span><button type='button' class='button open-ticket' data-ticket='"+esc(t.id)+"'>OPEN</button></div></div>").join("")||"No tickets.";
+ ticketsBox.innerHTML=(tickets||[]).map(t=>"<div class='member-row ticket-row'><div><strong>"+esc(t.subject)+"</strong><div class='support-note'>"+esc(userNames[t.user_id]||"Team member")+" · "+new Date(t.created_at).toLocaleString()+"</div><div class='support-note'>"+esc(t.message).slice(0,150)+(String(t.message).length>150?"…":"")+"</div></div><div class='admin-actions'><span class='support-status'>"+esc(t.status).toUpperCase()+"</span><button type='button' class='button open-ticket' data-ticket='"+esc(t.id)+"'>VIEW TICKET</button></div></div>").join("")||"No tickets.";
  const byId=Object.fromEntries((tickets||[]).map(t=>[t.id,t]));
  const modal=document.getElementById("ticket-modal"),close=()=>modal.classList.remove("open"),openTicket=id=>{const t=byId[id];if(!t)return;document.getElementById("ticket-modal-title").textContent=t.subject;document.getElementById("ticket-modal-meta").textContent=(userNames[t.user_id]||"Team member")+" · "+new Date(t.created_at).toLocaleString();document.getElementById("ticket-modal-message").textContent=t.message;document.getElementById("ticket-modal-status").textContent=String(t.status).toUpperCase();modal.classList.add("open");document.getElementById("ticket-close").focus();};
  ticketsBox.querySelectorAll(".open-ticket").forEach(btn=>btn.addEventListener("click",()=>openTicket(btn.dataset.ticket)));
@@ -106,12 +117,12 @@ else{
  document.addEventListener("keydown",e=>{if(e.key==="Escape")close();});
 }
 
-const {data:reports,error:reportsError}=await sb.from("cheater_reports").select("reported_username,reason,details,status,evidence_url,steam_url,created_at").eq("team_id",me.team_id).order("created_at",{ascending:false}).limit(50);
+const {data:reports,error:reportsError}=await sb.from("cheater_reports").select("id,reported_username,reason,details,status,evidence_url,steam_url,created_at,reporter_id").eq("team_id",me.team_id).order("created_at",{ascending:false}).limit(50);
 const reportBox=document.getElementById("cheater-reports");
 if(reportsError){reportBox.innerHTML="<p class='support-note'>Could not load reports: "+esc(reportsError.message)+"</p>";}
 else{
  const reportMap=Object.fromEntries((reports||[]).map(r=>[r.id,r]));
- reportBox.innerHTML=(reports||[]).map(r=>"<div class='report-row'><div><strong>"+esc(r.reported_username)+"</strong><div class='support-note'>"+esc(r.reason)+"</div><div class='support-note'>"+esc(r.details).slice(0,180)+"</div></div><div class='admin-actions'><span class='report-status'>"+esc(r.status).toUpperCase()+"</span><button type='button' class='button open-report' data-report='"+esc(r.id)+"'>OPEN</button></div></div>").join("")||"No reports.";
+ reportBox.innerHTML=(reports||[]).map(r=>"<div class='report-row'><div><strong>"+esc(r.reported_username)+"</strong><div class='support-note'>"+esc(r.reason)+"</div><div class='support-note'>"+esc(r.details).slice(0,180)+"</div></div><div class='admin-actions'><span class='report-status'>"+esc(r.status).toUpperCase()+"</span><button type='button' class='button open-report' data-report='"+esc(r.id)+"'>VIEW REPORT</button></div></div>").join("")||"No reports.";
  const openReport=r=>{if(!r)return;document.getElementById("report-modal-title").textContent=r.reported_username;document.getElementById("report-modal-meta").textContent=new Date(r.created_at).toLocaleString();document.getElementById("report-modal-reason").textContent=r.reason;document.getElementById("report-modal-details").textContent=r.details;document.getElementById("report-modal-status").textContent=String(r.status).toUpperCase();document.getElementById("report-modal-links").innerHTML=(r.steam_url?"<a class='report-evidence' target='_blank' rel='noopener' href='"+esc(r.steam_url)+"'>STEAM PROFILE</a> ":"")+(r.evidence_url?"<a class='report-evidence' target='_blank' rel='noopener' href='"+esc(r.evidence_url)+"'>EVIDENCE</a>":"");document.getElementById("report-modal").classList.add("open");};
  reportBox.querySelectorAll(".open-report").forEach(b=>b.onclick=()=>openReport(reportMap[b.dataset.report]));
 }if(role==="owner"||role==="co_owner"){

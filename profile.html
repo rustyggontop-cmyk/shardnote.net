@@ -72,6 +72,7 @@
  if(x.bio){const bio=document.getElementById("profile-bio");bio.textContent=x.bio;bio.style.display="block";}
  if(x.tag_name&&!["admin","owner","co_owner","co-owner"].includes(String(x.tag_name).trim().toLowerCase())){const t=document.getElementById("profile-tag");t.innerHTML="<span class='user-tag' style='margin-left:0;padding:7px 11px;height:auto;border-radius:8px;font-size:13px;color:"+esc(x.tag_color)+";border:1px solid "+esc(x.tag_color)+";background:"+esc(x.tag_color)+"22'>"+esc(x.tag_name)+"</span>";}
  if(x.steam_url){const a=document.createElement("a");a.className="button orange";a.href=x.steam_url;a.target="_blank";a.rel="noopener";a.textContent="VIEW STEAM PROFILE";document.getElementById("profile-actions").appendChild(a);}
+ if(x.user_id!==user.id){const report=document.createElement("a");report.className="button";report.href="report-cheater.html?username="+encodeURIComponent(x.username||"")+"&steam="+encodeURIComponent(x.steam_url||"");report.textContent="REPORT PLAYER";document.getElementById("profile-actions").appendChild(report);}
  const back=document.createElement("a");back.className="button";back.href="teammates.html";back.textContent="BACK TO FIND TEAMMATES";document.getElementById("profile-actions").appendChild(back);
 })().catch(e=>{document.getElementById("profile-name").textContent="Profile error";document.getElementById("profile-tagline").textContent=String(e.message||e);});
 </script>

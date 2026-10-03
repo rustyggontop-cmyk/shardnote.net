@@ -38,7 +38,7 @@
 <section class="panel-card wide"><small>TEAM MANAGEMENT</small><h2>Team Members</h2><p class="support-note">Admins can remove member tags. Only the owner can appoint a co-owner.</p><div id="admin-members">Loading team members...</div></section>
 <section class="panel-card"><small>SUPPORT</small><h2>Support Tickets</h2><p class="support-note">Select a ticket to open the full request.</p><div id="tickets">Loading tickets...</div></section>
 <section class="panel-card"><small>MODERATION</small><h2>Cheater Reports</h2><div id="cheater-reports">Loading reports...</div></section>
-<section class="panel-card"><small>ROLE MANAGEMENT</small><div id="owner-invite" style="display:none" class="invitebox"><label>ADMIN INVITE</label><strong>676767</strong><small>Special admin signup code</small></div><div id="beta-access-card"><h2>Beta Access Codes</h2><p class="support-note">Single-use codes required for beta account creation.</p><div id="beta-codes">Loading beta codes...</div></div><div id="manage-roles"><h2>Manage Roles</h2><input id="admin-search" placeholder="Search a team member..." autocomplete="off"><div id="admin-results"></div></div></section>
+<section class="panel-card"><small>STAFF ACCESS</small><div id="owner-invite" style="display:none" class="invitebox"><label>ADMIN INVITE</label><strong>676767</strong><small>Special admin signup code</small></div><div id="beta-access-card"><h2>Beta Access Codes</h2><p class="support-note">Single-use codes required for beta account creation.</p><div id="beta-codes">Loading beta codes...</div></div><div id="manage-roles"><h2>Manage Staff</h2><p class="support-note">Only designated staff can access this panel. Team Founder/Member status does not grant moderation access.</p><input id="admin-search" placeholder="Search a user..." autocomplete="off"><div id="admin-results"></div></div></section>
 </div></div></main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -55,7 +55,7 @@ const {data:me,error:meError}=await sb.from("team_members").select("role,team_id
 const {data:role,error:roleError}=await sb.rpc("current_user_role");
 const status=document.getElementById("status");
 if(meError||roleError){status.textContent="Unable to verify administrative access. Please refresh.";return;}
-if(!me||!role||!["owner","co_owner","admin"].includes(role)){status.textContent="Access denied: admin, co-owner, or owner role required.";return;}
+if(!role||!["owner","co_owner","admin"].includes(role)){status.textContent="Access denied: admin, co-owner, or owner role required.";return;}
 status.textContent="Authorized as "+role.replace("_"," ").toUpperCase()+".";
 document.getElementById("panel").style.display="grid";
 if(role==="owner")document.getElementById("owner-invite").style.display="block";
@@ -288,17 +288,25 @@ const openReport=async r=>{if(!r)return;activeReportId=r.id;window.__adminActive
 if(role==="owner"||role==="co_owner"){
  const input=document.getElementById("admin-search"),out=document.getElementById("admin-results");let timer;
  input.oninput=()=>{clearTimeout(timer);const q=input.value.trim();if(!q){out.innerHTML="";return;}timer=setTimeout(async()=>{
-   const {data,error}=await sb.rpc("search_team_users",{search_term:q});
+   const {data,error}=await sb.rpc("search_staff_users",{search_term:q});
    if(error){out.textContent="Search failed: "+error.message;return;}
-   out.innerHTML=(data||[]).slice(0,12).map(x=>{
+   out.innerHTML=(data||[]).slice(0,20).map(x=>{
      const self=x.user_id===user.id;
-     const makeAdmin=!self&&x.role!=="admin"&&x.role!=="owner";
-     const makeCo=role==="owner"&&!self&&x.role!=="owner"&&x.role!=="co_owner";
-     const demote=!self&&x.role!=="member"&&(role==="owner"|| (role==="co_owner"&&x.team_id===me.team_id));
-     return "<div class='member-row'><div><strong>"+esc(x.username)+"</strong><div class='support-note'>"+esc(String(x.role).replace("_"," ").toUpperCase())+"</div></div><div class='admin-actions'>"+(makeAdmin?"<button class='button make-admin' data-id='"+esc(x.user_id)+"'>MAKE ADMIN</button>":"")+(makeCo?"<button class='button make-co' data-id='"+esc(x.user_id)+"'>MAKE CO-OWNER</button>":"")+(demote?"<button class='button demote-member' data-id='"+esc(x.user_id)+"'>DEMOTE TO MEMBER</button>":"")+"</div></div>";
-   }).join("")||"No matching team members.";
-   out.querySelectorAll(".make-admin").forEach(b=>b.onclick=async()=>{b.disabled=true;const {error}=await sb.rpc("admin_set_role",{target_user:b.dataset.id,new_role:"admin"});b.textContent=error?"FAILED":"ADMIN";});
-   out.querySelectorAll(".make-co").forEach(b=>b.onclick=async()=>{b.disabled=true;const {error}=await sb.rpc("admin_set_role",{target_user:b.dataset.id,new_role:"co_owner"});b.textContent=error?"FAILED":"CO-OWNER";});
+     const staff=x.staff_role||"member";
+     const canAdmin=!self&&role==="owner"&&staff!=="admin"&&staff!=="co_owner"&&staff!=="owner";
+     const canCo=!self&&role==="owner"&&staff!=="co_owner"&&staff!=="owner";
+     const canDemote=!self&&staff!=="member"&&staff!=="owner";
+     const canRemove=!self&&staff!=="member"&&staff!=="owner"||(!self&&role==="owner"&&staff==="co_owner");
+     const label=staff==="member"?"MEMBER":String(staff).replace("_"," ").toUpperCase();
+     return "<div class='member-row'><div><strong>"+esc(x.username)+"</strong><div class='support-note'>"+esc(x.team_name||"No team")+" · "+esc(label)+"</div></div><div class='admin-actions'>"+
+       (canAdmin?"<button class='button staff-admin' data-id='"+esc(x.user_id)+"'>MAKE ADMIN</button>":"")+
+       (canCo?"<button class='button staff-co' data-id='"+esc(x.user_id)+"'>MAKE CO-OWNER</button>":"")+
+       (canDemote||canRemove?"<button class='button staff-remove' data-id='"+esc(x.user_id)+"'>REMOVE PANEL ACCESS</button>":"")+
+       "</div></div>";
+   }).join("")||"No matching users.";
+   out.querySelectorAll(".staff-admin").forEach(b=>b.onclick=async()=>{b.disabled=true;const {error}=await sb.rpc("admin_set_staff_role",{target_user:b.dataset.id,new_role:"admin"});if(error){alert("Could not add staff: "+error.message);b.disabled=false;return;}input.dispatchEvent(new Event("input"));});
+   out.querySelectorAll(".staff-co").forEach(b=>b.onclick=async()=>{b.disabled=true;const {error}=await sb.rpc("admin_set_staff_role",{target_user:b.dataset.id,new_role:"co_owner"});if(error){alert("Could not add co-owner: "+error.message);b.disabled=false;return;}input.dispatchEvent(new Event("input"));});
+   out.querySelectorAll(".staff-remove").forEach(b=>b.onclick=async()=>{if(!confirm("Remove this user's Admin Panel access?"))return;b.disabled=true;const {error}=await sb.rpc("admin_set_staff_role",{target_user:b.dataset.id,new_role:"member"});if(error){alert("Could not remove access: "+error.message);b.disabled=false;return;}input.dispatchEvent(new Event("input"));});
  },180);};
 }
 })().catch(e=>{const s=document.getElementById("status");if(s)s.textContent="Admin panel error: "+String(e.message||e);});

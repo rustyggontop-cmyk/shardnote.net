@@ -16,7 +16,6 @@
       <a class="side-btn" href="dashboard.html"><span class="ico">⌂</span>Overview</a>
       <a class="side-btn" href="dashboard.html#members"><span class="ico">◉</span>Team Members</a><a class="side-btn" href="teammates.html"><span class="ico">⌁</span>Find Teammates</a>
       <a class="side-btn active" href="support.html"><span class="ico">?</span>Support</a>
-      <a class="side-btn" href="dashboard.html#invites"><span class="ico">◇</span>Invites</a>
       <a class="side-btn" href="report-cheater.html"><span class="ico">!</span>Report Cheater</a><a class="side-btn" href="https://steamcommunity.com/groups/shardnotecs2" target="_blank" rel="noopener"><span class="ico">◈</span>Steam Group</a><a class="side-btn" href="https://discord.gg/27tEdSCuk9" target="_blank" rel="noopener"><span class="ico">◉</span>Discord</a>
       <a id="support-admin-link" class="side-btn" style="display:none" href="admin.html"><span class="ico">⚙</span>Admin Panel</a>
     </nav>
@@ -121,8 +120,9 @@ document.addEventListener("click",e=>{if(e.target?.id==="ticket-reply-send")send
    document.getElementById("message").value="";
    await load();
  };
- document.getElementById("ticket-close").onclick=closeTicket;
- modal.addEventListener("click",e=>{if(e.target===modal)closeTicket();});
+ document.addEventListener("click",e=>{
+   if(e.target?.id==="ticket-close" || e.target?.id==="ticket-modal")closeTicket();
+ });
  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeTicket();});
  await load();
 })().catch(err=>{const m=document.getElementById("msg");if(m)m.textContent="Support error: "+String(err.message||err);});

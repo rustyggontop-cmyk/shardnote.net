@@ -66,10 +66,11 @@
  const {data:role}=await sb.rpc("current_user_role");
  if(role==="owner"||role==="co_owner"||role==="admin")document.getElementById("admin-link").style.display="flex";
  const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+ const reservedTags=new Set(["admin","owner","co_owner","co-owner"]);
  const render=rows=>{
    document.getElementById("teammate-results").innerHTML=(rows||[]).map(p=>{
      const avatar=p.avatar_url?"<img src='"+esc(p.avatar_url)+"' alt=''>":esc(String(p.username||"?").slice(0,1).toUpperCase());
-     const tag=p.tag_name?"<span class='user-tag' style='margin-left:0;color:"+esc(p.tag_color)+";border:1px solid "+esc(p.tag_color)+";background:"+esc(p.tag_color)+"22'>"+esc(p.tag_name)+"</span>":"";
+     const tag=p.tag_name&&!reservedTags.has(String(p.tag_name||"").trim().toLowerCase())?"<span class='user-tag' style='margin-left:0;color:"+esc(p.tag_color)+";border:1px solid "+esc(p.tag_color)+";background:"+esc(p.tag_color)+"22'>"+esc(p.tag_name)+"</span>":"";
      const steam=p.steam_url?"<a class='steam-link' href='"+esc(p.steam_url)+"' target='_blank' rel='noopener'>STEAM PROFILE</a>":"";
      return "<article class='teammate-card profile-link' role='link' tabindex='0' data-profile='"+encodeURIComponent(p.user_id)+"'><div class='teammate-main'><span class='teammate-avatar'>"+avatar+"</span><div class='teammate-copy'><div class='teammate-name'>"+esc(p.username)+" "+tag+"</div>"+(p.bio?"<div class='teammate-bio'>"+esc(p.bio)+"</div>":"")+"<div class='teammate-team'>"+esc(p.team_name||"Independent player")+"</div></div></div><div class='teammate-actions'>"+steam+"</div></article>";
    }).join("")||"<div class='user-search-empty' style='display:grid'><span>⌁</span><strong>No teammates found</strong><small>Try another username.</small></div>";

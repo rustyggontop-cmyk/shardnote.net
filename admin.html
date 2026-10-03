@@ -226,7 +226,8 @@ document.getElementById("report-reply-send").onclick=async()=>{const msg=documen
      const self=x.user_id===user.id;
      const makeAdmin=!self&&x.role!=="admin"&&x.role!=="owner";
      const makeCo=role==="owner"&&!self&&x.role!=="owner"&&x.role!=="co_owner";
-     return "<div class='member-row'><div><strong>"+esc(x.username)+"</strong><div class='support-note'>"+esc(String(x.role).replace("_"," ").toUpperCase())+"</div></div><div class='admin-actions'>"+(makeAdmin?"<button class='button make-admin' data-id='"+esc(x.user_id)+"'>MAKE ADMIN</button>":"")+(makeCo?"<button class='button make-co' data-id='"+esc(x.user_id)+"'>MAKE CO-OWNER</button>":"")+"</div></div>";
+     const demote=role==="owner"&&!self&&x.role!=="owner"&&x.role!=="member";
+     return "<div class='member-row'><div><strong>"+esc(x.username)+"</strong><div class='support-note'>"+esc(String(x.role).replace("_"," ").toUpperCase())+"</div></div><div class='admin-actions'>"+(makeAdmin?"<button class='button make-admin' data-id='"+esc(x.user_id)+"'>MAKE ADMIN</button>":"")+(makeCo?"<button class='button make-co' data-id='"+esc(x.user_id)+"'>MAKE CO-OWNER</button>":"")+(demote?"<button class='button demote-member' data-id='"+esc(x.user_id)+"'>DEMOTE TO MEMBER</button>":"")+"</div></div>";
    }).join("")||"No matching team members.";
    out.querySelectorAll(".make-admin").forEach(b=>b.onclick=async()=>{b.disabled=true;const {error}=await sb.rpc("admin_set_role",{target_user:b.dataset.id,new_role:"admin"});b.textContent=error?"FAILED":"ADMIN";});
    out.querySelectorAll(".make-co").forEach(b=>b.onclick=async()=>{b.disabled=true;const {error}=await sb.rpc("admin_set_role",{target_user:b.dataset.id,new_role:"co_owner"});b.textContent=error?"FAILED":"CO-OWNER";});

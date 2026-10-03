@@ -49,7 +49,7 @@
       <section id="team-create" class="dashboard-card wide" style="display:none">
         <small>TEAM SETUP</small>
         <h2>Create your team</h2>
-        <p>Choose a team name before using the dashboard.</p>
+        <p>You are currently an Independent Player. Create your own team or join one with a team invite.</p>
         <input id="team-name" class="team-name-input" maxlength="32" placeholder="Search or enter a team name">
         <button id="create-team" class="button orange">CREATE TEAM</button>
         <div class="team-or-divider"><span>OR</span></div>
@@ -135,12 +135,12 @@
     document.getElementById("dashboard-content").style.display="none";
     document.getElementById("team-create").style.display="block";
     document.getElementById("team-title").textContent="CREATE YOUR TEAM";
-    document.getElementById("member").textContent="You're signed in, but you don't belong to a team yet.";
+    document.getElementById("member").textContent="You're an Independent Player. Create your team or join an existing team with an invite.";
     document.getElementById("create-team").onclick=async()=>{
       const name=document.getElementById("team-name").value.trim(),msg=document.getElementById("team-msg");
       if(!name){msg.textContent="Enter a team name.";return;}
       msg.textContent="Creating team...";
-      const {error}=await sb.rpc("create_my_team",{team_name:name});
+      const {error}=await sb.rpc("create_team_from_independent",{team_name:name});
       if(error){msg.textContent=error.message;return;}
       location.reload();
     };

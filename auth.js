@@ -18,22 +18,21 @@ async function start(){
       const invite=document.getElementById("invite").value.trim().toUpperCase();
       msg.textContent="Checking invite...";
 
-      const {data:valid,error:ve}=await sb.rpc("consume_clan_invite",{invite_code:invite});
-      if(ve){ msg.textContent="Could not verify the invite code. Please try again."; return; } if(!valid){msg.textContent="Invalid or exhausted clan invite code.";return}
+      const {data:valid,error:ve}=await sb.rpc("check_clan_invite",{invite_code:invite});
+      if(ve){ msg.textContent="Could not verify the invite code. Please try again."; return; }
+      if(!valid){msg.textContent="Invalid or exhausted clan invite code.";return}
 
       msg.textContent="Creating account...";
       const {data,error}=await sb.auth.signUp({
-        email,password,options:{data:{username}}
+        email,password,options:{data:{username,invite_code:invite}}
       });
       if(error){
-        // If the invite was consumed but account creation failed, do not reveal
-        // backend details. The user can request another invite from an admin.
         const m=String(error.message||error);
         if(/already registered|already exists/i.test(m)) msg.textContent="That email is already registered. Try logging in instead.";
         else if(/invalid.*email|email.*invalid/i.test(m)) msg.textContent="Please enter a valid email address.";
         else if(/password/i.test(m)) msg.textContent="Password must be at least 8 characters and meet the account requirements.";
         else if(/rate limit|too many/i.test(m)) msg.textContent="Too many signup attempts. Please wait a few minutes and try again.";
-        else if(/smtp|email|sending|provider/i.test(m)) msg.textContent="Account creation worked, but the confirmation email could not be sent. Check the email service settings.";
+        else if(/smtp|email|sending|provider/i.test(m)) msg.textContent="Account creation failed because the confirmation email could not be sent. Check the Supabase Auth SMTP settings.";
         else msg.textContent="Account creation failed: "+m;
         return;
       }

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Find Teammates — SHARDNOTE</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.teammate-search{position:relative;max-width:760px}
+.teammate-search .user-search-box{background:#06040b;border:1px solid #3b2854;border-radius:999px;min-height:56px;padding:0 7px}
+.teammate-search .user-search-box:focus-within{border-color:#a970ff;box-shadow:0 0 0 4px rgba(169,112,255,.09),0 14px 34px rgba(52,25,82,.28)}
+.teammate-search .user-search-box input{height:50px!important}
+.teammate-results{display:grid;gap:12px;margin-top:20px}
+.teammate-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px;border:1px solid #29203a;border-radius:14px;background:linear-gradient(145deg,#110c1d,#090611);transition:.18s}
+.teammate-card:hover{transform:translateY(-2px);border-color:#533777;box-shadow:0 14px 34px rgba(0,0,0,.2)}
+.teammate-avatar{width:48px;height:48px;flex:0 0 48px;display:grid;place-items:center;border-radius:14px;border:1px solid #4a3567;background:#171027;color:#cbb1ff;overflow:hidden;font:800 16px/1 Space Grotesk,sans-serif}
+.teammate-avatar img{width:100%;height:100%;object-fit:cover}
+.teammate-main{display:flex;align-items:center;gap:12px;min-width:0}
+.teammate-copy{min-width:0}
+.teammate-name{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:800 15px/1.2 Space Grotesk,sans-serif}
+.teammate-bio{margin-top:5px;color:#7f758c;font-size:11px;line-height:1.35}
+.teammate-team{margin-top:5px;color:#a970ff;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+.teammate-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.teammate-actions a{font-size:11px!important}
+@media(max-width:700px){.teammate-card{align-items:flex-start;flex-direction:column}.teammate-actions{width:100%}}
+</style>
+</head>
+<body>
+<header>
+<a class="brand" href="index.html"><img src="logo.png" class="site-logo" alt="SHARDNOTE logo">CS<span>2</span><b> SHARDNOTE</b></a>
+<div style="display:flex;align-items:center;gap:8px"><a class="button" href="dashboard.html">DASHBOARD</a><button id="logout" class="button">LOGOUT</button></div>
+</header>
+<div class="panel-shell">
+<aside class="dashboard-sidebar">
+<div class="side-title">SHARDNOTE</div>
+<nav class="side-nav">
+<a class="side-btn" href="dashboard.html"><span class="ico">⌂</span>Overview</a>
+<a class="side-btn" href="dashboard.html#members"><span class="ico">◉</span>Team Members</a>
+<a class="side-btn active" href="teammates.html"><span class="ico">⌁</span>Find Teammates</a>
+<a class="side-btn" href="dashboard.html#find-user"><span class="ico">⌕</span>Find User</a>
+<a class="side-btn" href="support.html"><span class="ico">?</span>Support</a>
+<a class="side-btn" href="report-cheater.html"><span class="ico">!</span>Report Cheater</a>
+<a class="side-btn" href="dashboard.html#invites"><span class="ico">◇</span>Invites</a>
+<a class="side-btn" href="https://steamcommunity.com/groups/shardnotecs2" target="_blank" rel="noopener"><span class="ico">◈</span>Steam Group</a>
+<a id="admin-link" class="side-btn" style="display:none" href="admin.html"><span class="ico">⚙</span>Admin Panel</a>
+</nav>
+<div class="side-bottom"><a class="side-btn" href="settings.html"><span class="ico">⚙</span>Settings</a></div>
+</aside>
+<main class="panel-main"><div class="panel-wrap">
+<section class="panel-hero">
+<div><small>SHARDNOTE / COMMUNITY</small><h1>FIND TEAMMATES</h1><p>Discover players across SHARDNOTE teams and connect through their public profiles.</p></div>
+</section>
+<section class="panel-card wide">
+<small>PLAYER DIRECTORY</small><h2>Find a Teammate</h2>
+<div class="teammate-search"><div class="user-search-box"><span class="user-search-icon">⌕</span><input id="teammate-search" placeholder="Search by username..." autocomplete="off" spellcheck="false"></div></div>
+<div id="teammate-results" class="teammate-results"></div>
+</section>
+</div></main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+(async()=>{
+ const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+ const {data:{user}}=await sb.auth.getUser();
+ if(!user){location.href="login.html";return;}
+ const {data:role}=await sb.rpc("current_user_role");
+ if(role==="owner"||role==="co_owner"||role==="admin")document.getElementById("admin-link").style.display="flex";
+ const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+ const render=rows=>{
+   document.getElementById("teammate-results").innerHTML=(rows||[]).map(p=>{
+     const avatar=p.avatar_url?"<img src='"+esc(p.avatar_url)+"' alt=''>":esc(String(p.username||"?").slice(0,1).toUpperCase());
+     const tag=p.tag_name?"<span class='user-tag' style='margin-left:0;color:"+esc(p.tag_color)+";border:1px solid "+esc(p.tag_color)+";background:"+esc(p.tag_color)+"22'>"+esc(p.tag_name)+"</span>":"";
+     const steam=p.steam_url?"<a class='steam-link' href='"+esc(p.steam_url)+"' target='_blank' rel='noopener'>STEAM PROFILE</a>":"";
+     return "<article class='teammate-card'><div class='teammate-main'><span class='teammate-avatar'>"+avatar+"</span><div class='teammate-copy'><div class='teammate-name'>"+esc(p.username)+" "+tag+"</div>"+(p.bio?"<div class='teammate-bio'>"+esc(p.bio)+"</div>":"")+"<div class='teammate-team'>"+esc(p.team_name||"Independent player")+"</div></div></div><div class='teammate-actions'>"+steam+"</div></article>";
+   }).join("")||"<div class='user-search-empty' style='display:grid'><span>⌁</span><strong>No teammates found</strong><small>Try another username.</small></div>";
+ };
+ const input=document.getElementById("teammate-search"),out=document.getElementById("teammate-results");let timer;
+ input.oninput=()=>{clearTimeout(timer);const q=input.value.trim();if(!q){out.innerHTML="";return;}timer=setTimeout(async()=>{
+   const {data,error}=await sb.rpc("search_teammates",{search_term:q});
+   if(error){out.innerHTML="<p class='support-note'>Search failed: "+esc(error.message)+"</p>";return;}
+   render(data);
+ },180);};
+})().catch(e=>{document.getElementById("teammate-results").innerHTML="<p class='support-note'>Teammate search error: "+String(e.message||e).replace(/[&<>]/g,"")+"</p>";});
+</script>
+</body>
+</html>

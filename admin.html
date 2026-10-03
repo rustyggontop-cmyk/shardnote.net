@@ -267,10 +267,6 @@ setInterval(()=>{
    }
  },2000);
 
-const {data:betaCodes,error:betaError}=await sb.from("beta_access_codes").select("code_label,uses,max_uses,active,valid_until").order("created_at",{ascending:false});
-const betaBox=document.getElementById("beta-codes");
-betaBox.innerHTML=betaError?"<p class='support-note'>Could not load beta codes: "+esc(betaError.message)+"</p>":(betaCodes||[]).map(b=>"<div class='member-row'><div><strong class='invite-code'>"+esc(b.code_label)+"</strong><div class='support-note'>"+esc(String(b.uses))+" / "+esc(String(b.max_uses))+" used</div></div><span class='support-status'>"+(b.active?"ACTIVE":"USED")+"</span></div>").join("")||"<p class='support-note'>No beta codes available.</p>";
-
 const {data:reports,error:reportsError}=await sb.from("cheater_reports").select("id,reported_user_id,reported_username,reason,details,status,evidence_url,steam_url,created_at,reporter_id").eq("team_id",me.team_id).order("created_at",{ascending:false}).limit(50);
 const reportBox=document.getElementById("cheater-reports");
 if(reportsError){reportBox.innerHTML="<p class='support-note'>Could not load reports: "+esc(reportsError.message)+"</p>";}

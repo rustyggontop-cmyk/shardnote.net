@@ -1,20 +1,7 @@
--- Run this in Supabase SQL Editor after creating your project.
-create table public.clan_invites (
-  code text primary key,
-  uses integer not null default 0,
-  max_uses integer not null default 10,
-  active boolean not null default true
-);
+# SHARDNOTE DATABASE SETUP
 
--- Example invite. CHANGE THIS CODE before sharing it.
-insert into public.clan_invites(code,max_uses) values ('SHARD-2026',10);
+This file is intentionally a reference only. The live SHARDNOTE project already has its schema and migrations in Supabase.
 
-alter table public.clan_invites enable row level security;
+Do not run the old SQL that was previously stored here: it used a legacy invite table and did not match the live application.
 
-create policy "Anyone can validate active invite codes"
-on public.clan_invites for select
-to anon, authenticated
-using (active = true);
-
--- For a production deployment, use a server-side function/transaction
--- to increment uses atomically rather than relying on a browser update.
+Current production features include Supabase Auth, teams, team members, roles, custom tags, weekly one-time invites, presence, support tickets, and protected admin functions.

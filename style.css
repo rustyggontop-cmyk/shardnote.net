@@ -109,3 +109,21 @@ body:has(.dashboard-shell){overflow-x:hidden}
 .user-result-row{border-radius:13px;background:#0a0711;border:1px solid #251a35}
 .user-result-row:hover{border-color:#5b3c7e;background:#110b1c;transform:translateY(-1px)}
 .user-search-empty{display:none}
+
+.dashboard-sidebar{display:flex;flex-direction:column}
+.dashboard-sidebar .side-nav{flex:0 0 auto}
+.dashboard-sidebar .side-bottom{margin-top:auto;padding-top:22px;border-top:1px solid #251b33}
+.settings-card{position:relative;overflow:hidden}
+.settings-avatar-wrap{display:flex;align-items:center;gap:16px;margin:8px 0 22px}
+.settings-avatar,.member-avatar{display:grid;place-items:center;flex:0 0 auto;border:1px solid #4a3567;background:#100b1c;color:#cbb2ff;overflow:hidden;object-fit:cover}
+.settings-avatar{width:96px;height:96px;border-radius:24px;font:800 28px/1 Space Grotesk,sans-serif}
+.member-avatar{width:38px;height:38px;border-radius:11px;font:800 13px/1 Space Grotesk,sans-serif}
+.settings-avatar img,.member-avatar img{width:100%;height:100%;object-fit:cover}
+.settings-file{display:block;width:100%;padding:11px;border:1px dashed #493465;border-radius:10px;background:#080611;color:#a970ff;cursor:pointer;font-size:12px}
+.settings-file::-webkit-file-upload-button{margin-right:10px;padding:7px 10px;border:1px solid #4a3567;border-radius:7px;background:#171027;color:#dfd2f2;font:700 11px Inter,Arial,sans-serif;cursor:pointer}
+.profile-meta{display:flex;align-items:center;gap:10px;min-width:0}
+.profile-copy{min-width:0}
+.profile-copy strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profile-bio{margin-top:5px;color:#777083;font-size:11px;line-height:1.35;max-width:520px}
+.steam-link{color:#a970ff!important;font-size:11px!important;text-decoration:none}
+.settings-divider{height:1px;background:#251b33;margin:22px 0}

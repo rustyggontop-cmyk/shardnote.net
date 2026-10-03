@@ -60,5 +60,6 @@ async function start(){
     if(!data.user){location.href="login.html";return}
     document.getElementById("member").textContent=
       "Logged in as "+(data.user.user_metadata?.username || data.user.email)+". You are a SHARDNOTE clan member.";
+    if(window.__shardnote_auth_required){document.documentElement.style.visibility="visible";}
   }
 }

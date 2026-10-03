@@ -58,6 +58,8 @@
  const {data:p,error}=await sb.rpc("get_public_profile",{target_user:id});
  if(error||!p||!p.length){document.getElementById("profile-name").textContent="Profile unavailable";document.getElementById("profile-tagline").textContent="This player profile could not be loaded.";return;}
  const x=p[0],initial=String(x.username||"?").slice(0,1).toUpperCase();
+ const {data:selfMembership}=await sb.from("team_members").select("role,team_id").eq("user_id",user.id).maybeSingle();
+ const isFounderSelf=x.user_id===user.id&&selfMembership?.role==="owner";
  const av=document.getElementById("profile-avatar");av.innerHTML=x.avatar_url?"<img src='"+esc(x.avatar_url)+"' alt='Profile picture'>":esc(initial);
  document.getElementById("profile-name").textContent=x.username||"Unknown player";
  document.getElementById("profile-tagline").textContent=x.team_name?"Member of "+x.team_name:"Independent player";

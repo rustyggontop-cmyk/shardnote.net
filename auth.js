@@ -42,13 +42,27 @@ async function start(){
 
   const login=document.getElementById("login");
   if(login){
+    let codeSent=false;
     login.onsubmit=async e=>{
       e.preventDefault();
       const msg=document.getElementById("msg");
       const email=document.getElementById("email").value.trim();
-      const password=document.getElementById("password").value;
-      const {error}=await sb.auth.signInWithPassword({email,password});
+      if(!codeSent){
+        msg.textContent="Sending your login code...";
+        const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false}});
+        if(error){msg.textContent=error.message;return}
+        codeSent=true;
+        document.getElementById("password-wrap").style.display="none";
+        document.getElementById("otp-wrap").style.display="block";
+        document.getElementById("otp").required=true;
+        document.getElementById("login-btn").textContent="VERIFY CODE";
+        msg.textContent="Check your email for the 6-digit login code.";
+        return;
+      }
+      const token=document.getElementById("otp").value.trim();
+      const {error}=await sb.auth.verifyOtp({email,token,type:"email"});
       if(error){msg.textContent=error.message;return}
+      msg.textContent="Login successful. Opening dashboard...";
       location.href="dashboard.html";
     };
   }

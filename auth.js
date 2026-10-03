@@ -1,7 +1,11 @@
-const script=document.createElement("script");
-script.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-script.onload=()=>start();
-document.head.appendChild(script);
+const startWhenReady=()=>start();
+if(window.supabase){startWhenReady();}
+else{
+  const script=document.createElement("script");
+  script.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+  script.onload=startWhenReady;
+  document.head.appendChild(script);
+}
 
 async function start(){
   const {createClient}=supabase;

@@ -1,4 +1,5 @@
 (() => {
+  document.documentElement.style.visibility = "hidden";
   const page = () => (location.pathname.split("/").pop() || "index.html").toLowerCase();
   let currentState = { banner_text: "We've released!! 🥳", maintenance_mode: false };
 
@@ -70,7 +71,10 @@
       if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) break;
       await new Promise(resolve => setTimeout(resolve, 50));
     }
-    if (!window.supabase || !window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) return;
+    if (!window.supabase || !window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) {
+      document.documentElement.style.visibility = "visible";
+      return;
+    }
 
     const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
     window.__shardnoteApplySiteSettings = settings => applySettings(sb, settings || currentState);

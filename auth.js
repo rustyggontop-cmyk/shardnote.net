@@ -63,38 +63,20 @@ async function start(){
 
   const login=document.getElementById("login");
   if(login){
-    let codeSent=false;
     login.onsubmit=async e=>{
       e.preventDefault();
       const msg=document.getElementById("msg");
       const email=document.getElementById("email").value.trim();
-      if(!codeSent){
-        msg.textContent="Sending your login code...";
-        const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false}});
-        if(error){
-          console.error("SHARDNOTE OTP error:", error);
-          const m=String(error.message||error);
-          if(/rate limit|too many/i.test(m)) msg.textContent="Too many login-code requests. Please wait a few minutes and try again.";
-          else if(/smtp|email|sending|provider/i.test(m)) msg.textContent="Email service error: the login email could not be sent. Check the SHARDNOTE email/SMTP setup.";
-          else if(/not found|sign up|user/i.test(m)) msg.textContent="No SHARDNOTE account was found for this email.";
-          else msg.textContent="Login code could not be sent: "+m;
-          return;
-        }
-        codeSent=true;
-        document.getElementById("password-wrap").style.display="none";
-        document.getElementById("otp-wrap").style.display="block";
-        document.getElementById("otp").required=true;
-        document.getElementById("login-btn").textContent="VERIFY CODE";
-        msg.textContent="Check your email for the 6-digit login code.";
-        return;
-      }
-      const token=document.getElementById("otp").value.trim();
-      const {error}=await sb.auth.verifyOtp({email,token,type:"email"});
+      const password=document.getElementById("password").value;
+      if(!email||!password){msg.textContent="Enter your email and password.";return;}
+      msg.textContent="Signing in...";
+      const {error}=await sb.auth.signInWithPassword({email,password});
       if(error){
-        console.error("SHARDNOTE OTP verification error:", error);
+        console.error("SHARDNOTE password login error:",error);
         const m=String(error.message||error);
-        if(/expired|invalid/i.test(m)) msg.textContent="That code is invalid or expired. Request a new code.";
-        else msg.textContent="Login code verification failed: "+m;
+        if(/invalid login credentials/i.test(m)) msg.textContent="Incorrect email or password.";
+        else if(/email not confirmed/i.test(m)) msg.textContent="Please confirm your email before logging in.";
+        else msg.textContent="Login failed: "+m;
         return;
       }
       msg.textContent="Login successful. Opening dashboard...";

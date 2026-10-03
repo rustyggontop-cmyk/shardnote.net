@@ -1,6 +1,6 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard — SHARDNOTE</title><link rel="stylesheet" href="style.css"></head>
 <body><header><a class="brand" href="index.html"><img src="logo.png" alt="SHARDNOTE logo" class="site-logo" onerror="this.style.display='inline-block'">CS<span>2</span><b> SHARDNOTE</b></a><button id="logout" class="button">LOGOUT</button></header>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><main class="center"><section class="box"><small>SHARDNOTE / CLAN</small><h1>TEAM DASHBOARD</h1><p id="member">Loading...</p><hr><h2>TEAM MEMBERS</h2><div id="members">Loading team...</div><section class="box tag-panel"><small>SHARDNOTE / IDENTITY</small><h2>YOUR TAG</h2><p id="tag-status">Loading tag...</p><div id="tag-create" style="display:none"><input id="tag-name" maxlength="24" placeholder="Tag name"><div style="display:flex;gap:10px;align-items:center"><input id="tag-color" type="color" value="#A970FF" style="width:64px;height:44px;padding:2px"><button id="create-tag" class="button orange">CREATE TAG</button></div></div><div id="tag-preview"></div></section><hr><h2>INVITES</h2><p id="invite-status">Checking invite status...</p><div id="owner-panel" style="display:none"><hr><h2>OWNER CONTROLS</h2><h3>INVITE CODES</h3><div id="invite-codes">Loading...</div><h3>SEARCH / MANAGE TEAM</h3><div style="position:relative"><input id="user-search" placeholder="Search username" autocomplete="off"><div id="user-suggestions" style="display:none;position:absolute;z-index:20;left:0;right:0;background:#151026;border:1px solid #3b2556;border-radius:9px;margin-top:4px;overflow:hidden"></div></div><div id="user-results"></div></div></section></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><main class="center"><section class="box"><small>SHARDNOTE / CLAN</small><h1>TEAM DASHBOARD</h1><div id="team-create" style="display:none"><p>Create your team to unlock the dashboard.</p><input id="team-name" maxlength="32" placeholder="Team name"><button id="create-team" class="button orange">CREATE TEAM</button><p id="team-msg"></p></div><p id="member">Loading...</p><h2 id="team-title"></h2><hr><h2>TEAM MEMBERS</h2><div id="members">Loading team...</div><section class="box tag-panel"><small>SHARDNOTE / IDENTITY</small><h2>YOUR TAG</h2><p id="tag-status">Loading tag...</p><div id="tag-create" style="display:none"><input id="tag-name" maxlength="24" placeholder="Tag name"><div style="display:flex;gap:10px;align-items:center"><input id="tag-color" type="color" value="#A970FF" style="width:64px;height:44px;padding:2px"><button id="create-tag" class="button orange">CREATE TAG</button></div></div><div id="tag-preview"></div></section><hr><h2>INVITES</h2><p id="invite-status">Checking invite status...</p><div id="owner-panel" style="display:none"><hr><h2>OWNER CONTROLS</h2><h3>INVITE CODES</h3><div id="invite-codes">Loading...</div><h3>SEARCH / MANAGE TEAM</h3><div style="position:relative"><input id="user-search" placeholder="Search username" autocomplete="off"><div id="user-suggestions" style="display:none;position:absolute;z-index:20;left:0;right:0;background:#151026;border:1px solid #3b2556;border-radius:9px;margin-top:4px;overflow:hidden"></div></div><div id="user-results"></div></div></section></main>
 <script src="supabase-config.js"></script>
 <script>
 (function(){
@@ -14,6 +14,15 @@
 (async()=>{
  const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
  const {data:{user}}=await sb.auth.getUser(); if(!user)return;
+ const {data:myTeam}=await sb.rpc("my_team");
+ if(!myTeam || !myTeam.length){
+   document.getElementById("team-create").style.display="block";
+   document.getElementById("member").textContent="";
+   document.getElementById("team-title").textContent="";
+   document.getElementById("create-team").onclick=async()=>{const name=document.getElementById("team-name").value.trim();const msg=document.getElementById("team-msg");if(!name){msg.textContent="Enter a team name.";return;}const {data,error}=await sb.rpc("create_my_team",{team_name:name});if(error){msg.textContent=error.message;return;}location.reload();};
+   return;
+ }
+ document.getElementById("team-title").textContent=myTeam[0].name;
  const {data:tag}=await sb.from("user_tags").select("tag_name,color").eq("user_id",user.id).maybeSingle();
  const ts=document.getElementById("tag-status"), tc=document.getElementById("tag-create"), tp=document.getElementById("tag-preview");
  if(tag){ts.textContent="Your tag";tp.innerHTML="<span style='display:inline-block;padding:7px 12px;border-radius:999px;background:"+tag.color+"22;border:1px solid "+tag.color+";color:"+tag.color+";font-weight:900'>"+String(tag.tag_name).replace(/[&<>]/g,"")+"</span>";}
@@ -34,17 +43,7 @@
  let searchTimer;
  input.addEventListener("input",()=>{clearTimeout(searchTimer); const q=input.value.trim(); if(!q){suggestions.style.display="none";return;} searchTimer=setTimeout(async()=>{const {data}=await sb.rpc("search_team_users",{search_term:q}); const list=(data||[]).slice(0,8); suggestions.innerHTML=list.map(u=>"<button type='button' data-name='"+encodeURIComponent(u.username)+"' style='display:block;width:100%;padding:11px 13px;text-align:left;background:transparent;color:inherit;border:0;border-bottom:1px solid #2a1d39;cursor:pointer'><strong>"+String(u.username).replace(/[&<>]/g,"")+"</strong> <span style='opacity:.55;font-size:11px'>"+String(u.role).toUpperCase()+"</span></button>").join("")||"<div style='padding:11px;opacity:.55'>No users found</div>"; suggestions.style.display="block"; suggestions.querySelectorAll("button[data-name]").forEach(b=>b.onclick=()=>{input.value=decodeURIComponent(b.dataset.name);suggestions.style.display="none";});},180);});
  document.addEventListener("click",e=>{if(!e.target.closest("#user-search")&&!e.target.closest("#user-suggestions"))suggestions.style.display="none";});
- const searchBtn=document.getElementById("search-users"), input=document.getElementById("user-search"), results=document.getElementById("user-results");
-  searchBtn.onclick=async()=>{
-   const q=input.value.trim(); if(!q){results.textContent="Enter a username.";return;}
-   const {data,error}=await sb.rpc("search_team_users",{search_term:q});
-   if(error){results.textContent="Search failed: "+error.message;return;}
-   results.innerHTML=(data||[]).map(u=>"<div class='member-row'><strong>"+String(u.username).replace(/[&<>]/g,"")+"</strong><span>"+u.role.toUpperCase()+" <button class='button' data-user='"+encodeURIComponent(u.username)+"'>ADD / UPDATE</button></span></div>").join("")||"No users found.";
-   results.querySelectorAll("button[data-user]").forEach(b=>b.onclick=async()=>{
-    const username=decodeURIComponent(b.dataset.user);
-    const {error}=await sb.rpc("owner_add_team_member",{target_username:username,new_role:"member"});
-    results.lastElementChild.textContent=error?"Update failed: "+error.message:username+" added/updated as member.";
-   });
-  };
+
+
  }})();
 </script></body></html>

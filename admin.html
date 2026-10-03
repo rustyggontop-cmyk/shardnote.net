@@ -34,7 +34,7 @@
 <div id="panel" class="panel-grid" style="display:none">
 <section class="panel-card wide"><small>OVERVIEW</small><h2>Team Activity</h2><div id="admin-stats" class="member-row">Loading team activity...</div></section>
 <section class="panel-card wide"><small>TEAM MANAGEMENT</small><h2>Team Members</h2><p class="support-note">Admins can remove member tags. Only the owner can appoint a co-owner.</p><div id="admin-members">Loading team members...</div></section>
-<section class="panel-card"><small>SUPPORT</small><h2>Support Tickets</h2><div id="tickets">Loading tickets...</div></section>
+<section class="panel-card"><small>SUPPORT</small><h2>Support Tickets</h2><p class="support-note">Select a ticket to open the full request.</p><div id="tickets">Loading tickets...</div></section>
 <section class="panel-card"><small>MODERATION</small><h2>Cheater Reports</h2><div id="cheater-reports">Loading reports...</div></section>
 <section class="panel-card"><small>ROLE MANAGEMENT</small><div id="owner-invite" style="display:none" class="invitebox"><label>ADMIN INVITE</label><strong>676767</strong><small>Special admin signup code</small></div><div id="manage-roles"><h2>Manage Roles</h2><input id="admin-search" placeholder="Search a team member..." autocomplete="off"><div id="admin-results"></div></div></section>
 </div></div></main>
@@ -90,8 +90,21 @@ if(membersError){membersBox.textContent="Could not load team members: "+membersE
  });
 }
 
-const {data:tickets,error:ticketsError}=await sb.from("support_tickets").select("subject,message,status,created_at").order("created_at",{ascending:false}).limit(30);
-document.getElementById("tickets").innerHTML=ticketsError?"Could not load tickets: "+esc(ticketsError.message):(tickets||[]).map(t=>"<div class='member-row'><div><strong>"+esc(t.subject)+"</strong><div class='support-note'>"+esc(t.message).slice(0,160)+"</div></div><span class='support-status'>"+esc(t.status).toUpperCase()+"</span></div>").join("")||"No tickets.";
+const {data:tickets,error:ticketsError}=await sb.from("support_tickets").select("id,user_id,subject,message,status,created_at").order("created_at",{ascending:false}).limit(30);
+const ticketsBox=document.getElementById("tickets");
+if(ticketsError){ticketsBox.innerHTML="<p class='support-note'>Could not load tickets: "+esc(ticketsError.message)+"</p>";}
+else{
+ const ticketUsers=[...new Set((tickets||[]).map(t=>t.user_id).filter(Boolean))];
+ const {data:ticketMembers}=ticketUsers.length?await sb.from("team_members").select("user_id,username").in("user_id",ticketUsers):{data:[]};
+ const userNames=Object.fromEntries((ticketMembers||[]).map(x=>[x.user_id,x.username]));
+ ticketsBox.innerHTML=(tickets||[]).map(t=>"<div class='member-row ticket-row' tabindex='0' role='button' data-ticket='"+esc(t.id)+"'><div><strong>"+esc(t.subject)+"</strong><div class='support-note'>"+esc(userNames[t.user_id]||"Team member")+" · "+new Date(t.created_at).toLocaleString()+"</div><div class='support-note'>"+esc(t.message).slice(0,150)+(String(t.message).length>150?"…":"")+"</div></div><span class='support-status'>"+esc(t.status).toUpperCase()+"</span></div>").join("")||"No tickets.";
+ const byId=Object.fromEntries((tickets||[]).map(t=>[t.id,t]));
+ const modal=document.getElementById("ticket-modal"),close=()=>modal.classList.remove("open"),openTicket=id=>{const t=byId[id];if(!t)return;document.getElementById("ticket-modal-title").textContent=t.subject;document.getElementById("ticket-modal-meta").textContent=(userNames[t.user_id]||"Team member")+" · "+new Date(t.created_at).toLocaleString();document.getElementById("ticket-modal-message").textContent=t.message;document.getElementById("ticket-modal-status").textContent=String(t.status).toUpperCase();modal.classList.add("open");document.getElementById("ticket-close").focus();};
+ ticketsBox.querySelectorAll("[data-ticket]").forEach(el=>{el.addEventListener("click",()=>openTicket(el.dataset.ticket));el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openTicket(el.dataset.ticket);}});});
+ document.getElementById("ticket-close").onclick=close;
+ modal.addEventListener("click",e=>{if(e.target===modal)close();});
+ document.addEventListener("keydown",e=>{if(e.key==="Escape")close();});
+}
 
 const {data:reports,error:reportsError}=await sb.from("cheater_reports").select("reported_username,reason,details,status,evidence_url,steam_url,created_at").eq("team_id",me.team_id).order("created_at",{ascending:false}).limit(50);
 document.getElementById("cheater-reports").innerHTML=reportsError?"Could not load reports: "+esc(reportsError.message):(reports||[]).map(r=>"<div class='report-row'><div><strong>"+esc(r.reported_username)+"</strong><div class='support-note'>"+esc(r.reason)+"</div><div class='support-note'>"+esc(r.details).slice(0,220)+"</div>"+(r.steam_url?"<a class='report-evidence' href='"+esc(r.steam_url)+"' target='_blank' rel='noopener'>STEAM</a> ":"")+(r.evidence_url?"<a class='report-evidence' href='"+esc(r.evidence_url)+"' target='_blank' rel='noopener'>EVIDENCE</a>":"")+"</div><span class='report-status'>"+esc(r.status).toUpperCase()+"</span></div>").join("")||"No reports.";
@@ -113,5 +126,6 @@ if(role==="owner"||role==="co_owner"){
 }
 })().catch(e=>{const s=document.getElementById("status");if(s)s.textContent="Admin panel error: "+String(e.message||e);});
 </script>
+<div id="ticket-modal" class="ticket-modal" role="dialog" aria-modal="true" aria-labelledby="ticket-modal-title"><div class="ticket-dialog"><div class="ticket-dialog-header"><div><small>SUPPORT / TICKET</small><h2 id="ticket-modal-title" class="ticket-dialog-title">Ticket</h2><div id="ticket-modal-meta" class="ticket-dialog-meta"></div></div><button id="ticket-close" class="button" aria-label="Close ticket">CLOSE</button></div><div id="ticket-modal-message" class="ticket-dialog-message"></div><div class="ticket-dialog-actions"><span id="ticket-modal-status" class="support-status"></span></div></div></div>
 </body>
 </html>

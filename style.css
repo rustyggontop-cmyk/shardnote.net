@@ -166,3 +166,15 @@ body:has(.dashboard-shell){overflow-x:hidden}
 #members-list .member-steam{flex:0 0 auto}
 #members-list .member-steam .steam-link{font:800 10px/1 Inter,Arial,sans-serif;letter-spacing:.8px}
 @media(max-width:760px){#members-list{grid-template-columns:1fr}}
+
+/* Ticket detail modal */
+.ticket-row{cursor:pointer}
+.ticket-row:hover{transform:translateY(-1px);border-color:#51366f;background:rgba(169,112,255,.045)}
+.ticket-modal{position:fixed;inset:0;z-index:100;background:rgba(4,2,8,.78);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;padding:20px}
+.ticket-modal.open{display:flex}
+.ticket-dialog{width:min(720px,100%);max-height:min(760px,90vh);overflow:auto;padding:28px;border:1px solid #3a2951;border-radius:18px;background:linear-gradient(145deg,#140d20,#080611);box-shadow:0 30px 90px rgba(0,0,0,.5);animation:snRise .2s ease both}
+.ticket-dialog-header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.ticket-dialog-title{margin:5px 0 0;font:800 25px/1.08 Space Grotesk,sans-serif}
+.ticket-dialog-meta{margin-top:7px;color:#7f758c;font-size:11px}
+.ticket-dialog-message{margin-top:22px;padding:17px;border:1px solid #2a2038;border-radius:12px;background:#090711;color:#d5cddd;line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.ticket-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}

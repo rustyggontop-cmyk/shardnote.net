@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Profile — SHARDNOTE</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+<a class="brand" href="index.html"><img src="logo.png" class="site-logo" alt="SHARDNOTE logo">CS<span>2</span><b> SHARDNOTE</b></a>
+<div style="display:flex;align-items:center;gap:8px"><a class="button" href="dashboard.html">DASHBOARD</a><button id="logout" class="button">LOGOUT</button></div>
+</header>
+<div class="panel-shell">
+<aside class="dashboard-sidebar">
+<div class="side-title">SHARDNOTE</div>
+<nav class="side-nav">
+<a class="side-btn" href="dashboard.html"><span class="ico">⌂</span>Overview</a>
+<a class="side-btn" href="dashboard.html#members"><span class="ico">◉</span>Team Members</a>
+<a class="side-btn" href="teammates.html"><span class="ico">⌁</span>Find Teammates</a>
+<a class="side-btn" href="dashboard.html#find-user"><span class="ico">⌕</span>Find User</a>
+<a class="side-btn" href="support.html"><span class="ico">?</span>Support</a>
+<a class="side-btn" href="report-cheater.html"><span class="ico">!</span>Report Cheater</a>
+<a class="side-btn" href="dashboard.html#invites"><span class="ico">◇</span>Invites</a>
+<a class="side-btn" href="https://steamcommunity.com/groups/shardnotecs2" target="_blank" rel="noopener"><span class="ico">◈</span>Steam Group</a>
+<a id="profile-admin-link" class="side-btn" style="display:none" href="admin.html"><span class="ico">⚙</span>Admin Panel</a>
+</nav>
+<div class="side-bottom"><a class="side-btn" href="settings.html"><span class="ico">⚙</span>Settings</a></div>
+</aside>
+<main class="panel-main"><div class="panel-wrap">
+<section class="panel-hero"><div><small>SHARDNOTE / PROFILE</small><h1>PLAYER PROFILE</h1><p>Public profile information for this SHARDNOTE member.</p></div></section>
+<section id="profile-card" class="panel-card profile-page-card">
+<div id="profile-avatar" class="profile-page-avatar">?</div>
+<h2 id="profile-name" class="profile-page-name">Loading...</h2>
+<p id="profile-tagline" class="profile-page-tagline">Loading profile...</p>
+<div id="profile-tag" style="margin-top:14px"></div>
+<div class="profile-info-grid">
+<div class="profile-info-item"><small>TEAM</small><strong id="profile-team">—</strong></div>
+<div class="profile-info-item"><small>ROLE</small><strong id="profile-role">—</strong></div>
+<div class="profile-info-item"><small>STATUS</small><strong id="profile-status">—</strong></div>
+<div class="profile-info-item"><small>MEMBER SINCE</small><strong id="profile-joined">—</strong></div>
+<div class="profile-info-item"><small>USERNAME</small><strong id="profile-username">—</strong></div>
+<div class="profile-info-item"><small>STEAM</small><strong id="profile-steam-text">Not linked</strong></div>
+</div>
+<div id="profile-bio" class="profile-about" style="display:none"></div>
+<div id="profile-actions" class="profile-actions"></div>
+</section>
+</div></main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+(async()=>{
+ const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+ const {data:{user}}=await sb.auth.getUser();if(!user){location.href="login.html";return;}
+ document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="index.html";};
+ const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+ const {data:role}=await sb.rpc("current_user_role");if(role==="owner"||role==="co_owner"||role==="admin")document.getElementById("profile-admin-link").style.display="flex";
+ const id=new URLSearchParams(location.search).get("id");
+ if(!id){document.getElementById("profile-name").textContent="Profile not found";document.getElementById("profile-tagline").textContent="No player was specified.";return;}
+ const {data:p,error}=await sb.rpc("get_public_profile",{target_user:id});
+ if(error||!p||!p.length){document.getElementById("profile-name").textContent="Profile unavailable";document.getElementById("profile-tagline").textContent="This player profile could not be loaded.";return;}
+ const x=p[0],initial=String(x.username||"?").slice(0,1).toUpperCase();
+ const av=document.getElementById("profile-avatar");av.innerHTML=x.avatar_url?"<img src='"+esc(x.avatar_url)+"' alt='Profile picture'>":esc(initial);
+ document.getElementById("profile-name").textContent=x.username||"Unknown player";
+ document.getElementById("profile-tagline").textContent=x.team_name?"Member of "+x.team_name:"Independent player";
+ document.getElementById("profile-team").textContent=x.team_name||"Independent";
+ document.getElementById("profile-role").textContent=String(x.role||"member").replace("_"," ").toUpperCase();
+ document.getElementById("profile-status").textContent=x.is_online?"ONLINE":"OFFLINE";
+ document.getElementById("profile-joined").textContent=x.created_at?new Date(x.created_at).toLocaleDateString(): "—";
+ document.getElementById("profile-username").textContent=x.username||"—";
+ document.getElementById("profile-steam-text").textContent=x.steam_url?"Linked":"Not linked";
+ if(x.bio){const bio=document.getElementById("profile-bio");bio.textContent=x.bio;bio.style.display="block";}
+ if(x.tag_name){const t=document.getElementById("profile-tag");t.innerHTML="<span class='user-tag' style='margin-left:0;padding:7px 11px;height:auto;border-radius:8px;font-size:13px;color:"+esc(x.tag_color)+";border:1px solid "+esc(x.tag_color)+";background:"+esc(x.tag_color)+"22'>"+esc(x.tag_name)+"</span>";}
+ if(x.steam_url){const a=document.createElement("a");a.className="button orange";a.href=x.steam_url;a.target="_blank";a.rel="noopener";a.textContent="VIEW STEAM PROFILE";document.getElementById("profile-actions").appendChild(a);}
+ const back=document.createElement("a");back.className="button";back.href="teammates.html";back.textContent="BACK TO FIND TEAMMATES";document.getElementById("profile-actions").appendChild(back);
+})().catch(e=>{document.getElementById("profile-name").textContent="Profile error";document.getElementById("profile-tagline").textContent=String(e.message||e);});
+</script>
+</body>
+</html>

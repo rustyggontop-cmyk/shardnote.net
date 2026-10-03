@@ -154,3 +154,15 @@ body:has(.dashboard-shell){overflow-x:hidden}
 .profile-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:24px}
 .profile-actions .button{margin:0}
 @media(max-width:760px){.profile-info-grid{grid-template-columns:1fr}.profile-page-card{padding:26px 18px}}
+
+/* Team member directory */
+#members-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}
+#members-list .member-row{min-width:0;margin:0;padding:15px 16px;border:1px solid #29203a;border-radius:14px;background:linear-gradient(145deg,#110c1d,#090611);display:flex;align-items:center;justify-content:space-between;gap:12px;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+#members-list .member-row:hover{transform:translateY(-2px);border-color:#51366f;box-shadow:0 14px 32px rgba(0,0,0,.2)}
+#members-list .profile-meta{min-width:0}
+#members-list .profile-copy{min-width:0}
+#members-list .profile-copy strong{font:800 14px/1.2 Space Grotesk,sans-serif}
+#members-list .profile-bio{max-width:260px}
+#members-list .member-steam{flex:0 0 auto}
+#members-list .member-steam .steam-link{font:800 10px/1 Inter,Arial,sans-serif;letter-spacing:.8px}
+@media(max-width:760px){#members-list{grid-template-columns:1fr}}

@@ -132,7 +132,7 @@
     document.getElementById("dashboard-content").style.display="none";
     document.getElementById("team-create").style.display="block";
     document.getElementById("team-title").textContent="CREATE YOUR TEAM";
-    document.getElementById("member").textContent="You're an Independent Player. Create your team or join an existing team with an invite.";
+    document.getElementById("member").textContent="You're an Independent Player. Create your own team.";
     document.getElementById("create-team").onclick=async()=>{
       const name=document.getElementById("team-name").value.trim(),msg=document.getElementById("team-msg");
       if(!name){msg.textContent="Enter a team name.";return;}

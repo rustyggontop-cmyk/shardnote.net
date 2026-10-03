@@ -275,12 +275,10 @@ if(role==="owner"||role==="co_owner"){
      if(!id||!message)return;
      ticket.disabled=true;
      const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
-     const {data:{user}}=await sb.auth.getUser();
      const {error}=await sb.rpc("admin_reply_support_ticket",{p_ticket_id:id,p_message:message});
      ticket.disabled=false;
      if(error){if(status)status.textContent="Could not send reply: "+error.message;return;}
      input.value="";if(status)status.textContent="Reply sent.";
-     putBubble(document.getElementById("ticket-replies"),user?.user_metadata?.username||"You",message);
    }
  });
  document.addEventListener("keydown",e=>{

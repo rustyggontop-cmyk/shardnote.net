@@ -1,6 +1,6 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard — SHARDNOTE</title><link rel="stylesheet" href="style.css"></head>
 <body><header><a class="brand" href="index.html">CS<span>2</span><b> SHARDNOTE</b></a><button id="logout" class="button">LOGOUT</button></header>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><main class="center"><section class="box"><small>SHARDNOTE / CLAN</small><h1>TEAM DASHBOARD</h1><p id="member">Loading...</p><hr><h2>TEAM MEMBERS</h2><div id="members">Loading team...</div><hr><h2>INVITES</h2><p>Weekly clan invites are limited to 5 successful registrations. Invite codes are private and are never displayed publicly.</p><p id="invite-status">Checking invite status...</p></section></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><main class="center"><section class="box"><small>SHARDNOTE / CLAN</small><h1>TEAM DASHBOARD</h1><p id="member">Loading...</p><hr><h2>TEAM MEMBERS</h2><div id="members">Loading team...</div><hr><h2>INVITES</h2><p id="invite-status">Checking invite status...</p><div id="owner-panel" style="display:none"><hr><h2>OWNER CONTROLS</h2><h3>INVITE CODES</h3><div id="invite-codes">Loading...</div><h3>SEARCH / MANAGE TEAM</h3><input id="user-search" placeholder="Search username"><button id="search-users" class="button orange">SEARCH</button><div id="user-results"></div></div></section></main>
 <script src="supabase-config.js"></script>
 <script>
 (function(){
@@ -11,16 +11,25 @@
 </script>
 <script src="auth.js"></script>
 <script>
-setTimeout(()=>{ if(document.documentElement.style.visibility==="hidden") location.replace("login.html"); },5000);
-</script>
-<script>
-(async()=>{const {createClient}=supabase;const sb=createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
-const {data:{user}}=await sb.auth.getUser();if(!user){location.href="login.html";return}
-document.getElementById("member").textContent="Logged in as "+(user.user_metadata?.username||user.email);
-const {data:members,error}=await sb.from("team_members").select("username,role,joined_at").order("joined_at",{ascending:true});
-const box=document.getElementById("members");
-if(error){box.textContent="Unable to load team members.";return}
-box.innerHTML=members.map(m=>"<div class='member-row'><strong>"+String(m.username).replace(/[&<>]/g,"")+"</strong><span>"+m.role.toUpperCase()+"</span></div>").join("")||"No members yet.";
-document.getElementById("invite-status").textContent="Invite codes are private and validated server-side. Contact an admin for an invite.";
-})()
+(async()=>{
+ const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+ const {data:{user}}=await sb.auth.getUser(); if(!user)return;
+ const {data:me}=await sb.from("team_members").select("role").eq("user_id",user.id).maybeSingle();
+ if(me?.role!=="owner") return;
+ document.getElementById("owner-panel").style.display="block";
+ const {data:inv,error:ie}=await sb.rpc("owner_list_invites");
+ document.getElementById("invite-codes").innerHTML=ie ? "Could not load invite codes." : (inv||[]).map(x=>"<div class='member-row'><strong>"+x.code+"</strong><span>"+x.uses+"/"+(x.max_uses>1000000?"∞":x.max_uses)+"</span></div>").join("")||"No invite codes.";
+ const searchBtn=document.getElementById("search-users"), input=document.getElementById("user-search"), results=document.getElementById("user-results");
+ searchBtn.onclick=async()=>{
+   const q=input.value.trim(); if(!q){results.textContent="Enter a username.";return;}
+   const {data,error}=await sb.rpc("search_team_users",{search_term:q});
+   if(error){results.textContent="Search failed: "+error.message;return;}
+   results.innerHTML=(data||[]).map(u=>"<div class='member-row'><strong>"+String(u.username).replace(/[&<>]/g,"")+"</strong><span>"+u.role.toUpperCase()+" <button class='button' data-user='"+encodeURIComponent(u.username)+"'>ADD / UPDATE</button></span></div>").join("")||"No users found.";
+   results.querySelectorAll("button[data-user]").forEach(b=>b.onclick=async()=>{
+     const username=decodeURIComponent(b.dataset.user);
+     const {error}=await sb.rpc("owner_add_team_member",{target_username:username,new_role:"member"});
+     results.lastElementChild.textContent=error?"Update failed: "+error.message:username+" added/updated as member.";
+   });
+ };
+})();
 </script></body></html>

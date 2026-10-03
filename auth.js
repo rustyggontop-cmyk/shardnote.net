@@ -50,7 +50,15 @@ async function start(){
       if(!codeSent){
         msg.textContent="Sending your login code...";
         const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false}});
-        if(error){msg.textContent=error.message;return}
+        if(error){
+          console.error("SHARDNOTE OTP error:", error);
+          const m=String(error.message||error);
+          if(/rate limit|too many/i.test(m)) msg.textContent="Too many login-code requests. Please wait a few minutes and try again.";
+          else if(/smtp|email|sending|provider/i.test(m)) msg.textContent="Email service error: the login email could not be sent. Check the SHARDNOTE email/SMTP setup.";
+          else if(/not found|sign up|user/i.test(m)) msg.textContent="No SHARDNOTE account was found for this email.";
+          else msg.textContent="Login code could not be sent: "+m;
+          return;
+        }
         codeSent=true;
         document.getElementById("password-wrap").style.display="none";
         document.getElementById("otp-wrap").style.display="block";
@@ -61,7 +69,13 @@ async function start(){
       }
       const token=document.getElementById("otp").value.trim();
       const {error}=await sb.auth.verifyOtp({email,token,type:"email"});
-      if(error){msg.textContent=error.message;return}
+      if(error){
+        console.error("SHARDNOTE OTP verification error:", error);
+        const m=String(error.message||error);
+        if(/expired|invalid/i.test(m)) msg.textContent="That code is invalid or expired. Request a new code.";
+        else msg.textContent="Login code verification failed: "+m;
+        return;
+      }
       msg.textContent="Login successful. Opening dashboard...";
       location.href="dashboard.html";
     };

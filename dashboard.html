@@ -160,7 +160,7 @@
       const p=pm[m.user_id],avatar=p?.avatar_url?"<img src='"+escapeHtml(p.avatar_url)+"' alt=''>":escapeHtml(String(m.username||"?").slice(0,1).toUpperCase());
       const steam=p?.steam_url?"<a class='steam-link' href='"+escapeHtml(p.steam_url)+"' target='_blank' rel='noopener'>STEAM</a>":"";
       const bio=p?.bio?"<div class='profile-bio'>"+escapeHtml(p.bio)+"</div>":"";
-      return "<div class='member-row profile-link' role='link' tabindex='0' data-profile='"+encodeURIComponent(m.user_id)+"'><div class='profile-meta'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><div><strong>"+escapeHtml(m.username)+"</strong>"+tagHtml(tagMap[m.user_id])+"</div>"+bio+"</div></div><span>"+escapeHtml(String(m.role).replace("_"," ").toUpperCase())+" "+steam+"</span></a>";
+      return "<div class='member-row profile-link' role='link' tabindex='0' data-profile='"+encodeURIComponent(m.user_id)+"'><div class='profile-meta'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><div><strong>"+escapeHtml(m.username)+"</strong>"+tagHtml(tagMap[m.user_id])+"</div>"+bio+"</div></div>"+(steam?"<div class='member-steam'>"+steam+"</div>":"")+"</div>";
     }).join("")||"No team members yet.";
   };
   await loadMembers();

@@ -93,6 +93,12 @@
       await sb.rpc("sync_my_discord_identity");
       const name=ident.identity_data?.global_name||ident.identity_data?.username||ident.identity_data?.name||"Discord account";
       discordStatus.textContent="Linked Discord: "+name;
+      const {data:verifyResult}=await sb.functions.invoke("discord-sync-verified",{body:{}});
+      if(verifyResult?.role_assigned){
+        discordStatus.textContent="Linked Discord: "+name+" · [Verified] role assigned";
+      }else if(verifyResult?.error){
+        discordStatus.textContent="Linked Discord: "+name+" · "+verifyResult.error;
+      }
       linkDiscord.textContent="DISCORD LINKED";linkDiscord.disabled=true;unlinkDiscord.style.display="inline-block";
     }else{
       discordStatus.textContent="No Discord account linked.";
@@ -121,6 +127,12 @@
         discordStatus.textContent=result.role_assigned
           ? "Discord linked, joined to SHARDNOTE, and [Verified] role assigned."
           : "Discord linked and you've been added to the SHARDNOTE server. [Verified] could not be assigned yet.";
+        const {data:verifyResult}=await sb.functions.invoke("discord-sync-verified",{body:{}});
+        if(verifyResult?.role_assigned){
+          discordStatus.textContent="Discord linked, joined to SHARDNOTE, and [Verified] role assigned.";
+        }else if(verifyResult?.error){
+          discordStatus.textContent="Discord linked, joined to SHARDNOTE. "+verifyResult.error;
+        }
       }else{
         discordStatus.textContent="Discord linked, but automatic server join failed: "+(result.error||"Unknown error");
       }

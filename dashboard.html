@@ -59,11 +59,17 @@
           <div id="members-list">Loading team members...</div>
         </section>
 
-        <section id="find-user" class="dashboard-card">
-          <small>SEARCH</small>
+        <section id="find-user" class="dashboard-card user-search-card">
+          <small>SHARDNOTE / DIRECTORY</small>
           <h2>FIND USER</h2>
-          <input id="tag-user-search" placeholder="Search username..." autocomplete="off">
-          <div id="tag-user-results"></div>
+          <p class="dashboard-subtle">Search team members and see their custom tags.</p>
+          <div class="user-search-box">
+            <span class="user-search-icon">⌕</span>
+            <input id="tag-user-search" placeholder="Search by username..." autocomplete="off" spellcheck="false">
+          </div>
+          <div id="tag-user-results" class="user-search-results">
+            <div class="user-search-empty"><span>⌕</span><strong>Search the team</strong><small>Start typing a username to find a member.</small></div>
+          </div>
         </section>
 
         <section id="tag" class="dashboard-card">
@@ -169,7 +175,7 @@
     if(error){results.textContent="Search failed: "+error.message;return;}
     const ids=(data||[]).map(x=>x.user_id),{data:found}=ids.length?await sb.from("user_tags").select("user_id,tag_name,color").in("user_id",ids):{data:[]};
     const map=Object.fromEntries((found||[]).map(x=>[x.user_id,x]));
-    results.innerHTML=(data||[]).map(u=>"<div class='member-row'><strong>"+escapeHtml(u.username)+"</strong>"+tagHtml(map[u.user_id])+"</div>").join("")||"<p class='dashboard-subtle'>No users found.</p>";
+    results.innerHTML=(data||[]).map(u=>"<div class='user-result-row'><div class='user-result-name'><span class='user-avatar'>"+escapeHtml(String(u.username||"?").slice(0,1).toUpperCase())+"</span><strong>"+escapeHtml(u.username)+"</strong></div>"+(map[u.user_id]?tagHtml(map[u.user_id]):"<span class='user-no-tag'>No custom tag</span>")+"</div>").join("")||"<div class='user-search-empty'><span>⌕</span><strong>No users found</strong><small>Try a different username.</small></div>";
   },180);};
 
   await sb.from("user_presence").upsert({user_id:user.id,last_seen:new Date().toISOString()});

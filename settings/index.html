@@ -57,7 +57,6 @@
           <p class="support-note">Link your Discord account so SHARDNOTE can show your Discord name on your profile and add you to the official SHARDNOTE Discord server.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button id="link-discord" type="button" class="button orange">LINK & JOIN DISCORD</button>
-            <button id="sync-discord-verified" type="button" class="button" style="display:none">SYNC [Verified]</button>
             <button id="unlink-discord" type="button" class="button" style="display:none">UNLINK DISCORD</button>
           </div>
         </section>
@@ -89,7 +88,7 @@
   const {data:siteRole}=await sb.rpc("current_user_role");
   if(siteRole==="owner"||siteRole==="co_owner"||siteRole==="admin")document.getElementById("settings-admin-link").style.display="flex";
 
-  const discordStatus=document.getElementById("discord-status"),linkDiscord=document.getElementById("link-discord"),syncVerified=document.getElementById("sync-discord-verified"),unlinkDiscord=document.getElementById("unlink-discord");
+  const discordStatus=document.getElementById("discord-status"),linkDiscord=document.getElementById("link-discord"),unlinkDiscord=document.getElementById("unlink-discord");
   const refreshDiscord=async()=>{
     const {data:ids,error}=await sb.auth.getUserIdentities();
     if(error){discordStatus.textContent="Could not check Discord connection: "+error.message;return;}
@@ -104,32 +103,13 @@
       }else if(verifyResult?.error){
         discordStatus.textContent="Linked Discord: "+name+" · "+verifyResult.error;
       }
-      linkDiscord.textContent="DISCORD LINKED";linkDiscord.disabled=true;syncVerified.style.display="inline-block";unlinkDiscord.style.display="inline-block";
+      linkDiscord.textContent="DISCORD LINKED";linkDiscord.disabled=true;unlinkDiscord.style.display="inline-block";
     }else{
       discordStatus.textContent="No Discord account linked.";
       linkDiscord.textContent="LINK & JOIN DISCORD";linkDiscord.disabled=false;unlinkDiscord.style.display="none";
     }
   };
-  const syncVerifiedRole=async()=>{
-    syncVerified.disabled=true;
-    discordStatus.textContent="Checking Discord server and [Verified] role...";
-    const {data:result,error}=await sb.functions.invoke("discord-sync-verified",{body:{}});
-    syncVerified.disabled=false;
-    if(error){
-      discordStatus.textContent="Could not sync [Verified]: "+error.message;
-      return;
-    }
-    if(result?.role_assigned){
-      discordStatus.textContent="Discord linked · [Verified] role assigned.";
-    }else{
-      discordStatus.textContent=result?.error||"Could not assign [Verified].";
-    }
-  };
-
-  if(!syncVerified.onclick)syncVerified.onclick=syncVerifiedRole;
   await refreshDiscord();
-  if(document.getElementById("unlink-discord").style.display==="inline-block") await syncVerifiedRole();
-
   // After Discord OAuth returns, use the provider access token to join the SHARDNOTE server.
   const hashParams=new URLSearchParams(location.hash.replace(/^#/,""));
   const providerToken=hashParams.get("provider_token");
@@ -183,7 +163,6 @@
     if(!ident)return;
     if((ids?.identities||[]).length<2){alert("You need another login identity before unlinking Discord.");return;}
     unlinkDiscord.disabled=true;
-    syncVerified.style.display="none";
     const {error}=await sb.auth.unlinkIdentity(ident);
     unlinkDiscord.disabled=false;
     if(error){alert("Could not unlink Discord: "+error.message);return;}

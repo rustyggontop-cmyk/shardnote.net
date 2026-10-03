@@ -30,6 +30,9 @@
       <a class="side-btn" href="https://steamcommunity.com/groups/shardnotecs2" target="_blank" rel="noopener"><span class="ico">◈</span>Steam Group</a>
       <a id="admin-link" class="side-btn" style="display:none" href="admin.html"><span class="ico">⚙</span>Admin Panel</a>
     </nav>
+    <div class="side-bottom">
+      <a class="side-btn" href="settings.html"><span class="ico">⚙</span>Settings</a>
+    </div>
   </aside>
 
   <main class="dashboard-main">
@@ -172,8 +175,9 @@
     const {data,error}=await sb.rpc("search_team_users",{search_term:q});
     if(error){results.textContent="Search failed: "+error.message;return;}
     const ids=(data||[]).map(x=>x.user_id),{data:found}=ids.length?await sb.from("user_tags").select("user_id,tag_name,color").in("user_id",ids):{data:[]};
-    const map=Object.fromEntries((found||[]).map(x=>[x.user_id,x]));
-    results.innerHTML=(data||[]).map(u=>"<div class='user-result-row'><div class='user-result-name'><span class='user-avatar'>"+escapeHtml(String(u.username||"?").slice(0,1).toUpperCase())+"</span><strong>"+escapeHtml(u.username)+"</strong></div>"+(map[u.user_id]?tagHtml(map[u.user_id]):"<span class='user-no-tag'>No custom tag</span>")+"</div>").join("")||"<div class='user-search-empty'><span>⌕</span><strong>No users found</strong><small>Try a different username.</small></div>";
+    const {data:profiles}=ids.length?await sb.from("profiles").select("id,avatar_url,bio,steam_url").in("id",ids):{data:[]};
+    const map=Object.fromEntries((found||[]).map(x=>[x.user_id,x])),pm=Object.fromEntries((profiles||[]).map(x=>[x.id,x]));
+    results.innerHTML=(data||[]).map(u=>{const p=pm[u.user_id],avatar=p?.avatar_url?"<img src='"+escapeHtml(p.avatar_url)+"' alt=''>":escapeHtml(String(u.username||"?").slice(0,1).toUpperCase());const steam=p?.steam_url?"<a class='steam-link' href='"+escapeHtml(p.steam_url)+"' target='_blank' rel='noopener'>STEAM</a>":"";return "<div class='user-result-row'><div class='user-result-name'><span class='user-avatar'>"+avatar+"</span><div><strong>"+escapeHtml(u.username)+"</strong>"+(p?.bio?"<div class='profile-bio'>"+escapeHtml(p.bio)+"</div>":"")+"</div></div><div>"+(map[u.user_id]?tagHtml(map[u.user_id]):"<span class='user-no-tag'>No custom tag</span>")+" "+steam+"</div></div>";}).join("")||"<div class='user-search-empty'><span>⌕</span><strong>No users found</strong><small>Try a different username.</small></div>";
   },180);};
 
   await sb.from("user_presence").upsert({user_id:user.id,last_seen:new Date().toISOString()});

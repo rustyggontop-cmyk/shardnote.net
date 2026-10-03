@@ -102,7 +102,13 @@
   await refreshDiscord();
   linkDiscord.onclick=async()=>{
     linkDiscord.disabled=true;discordStatus.textContent="Opening Discord...";
-    const {error}=await sb.auth.linkIdentity({provider:"discord",options:{redirectTo:location.origin+location.pathname+"?discord=linked",scopes:"identify guilds.join"}});
+    const {error}=await sb.auth.linkIdentity({
+      provider:"discord",
+      options:{
+        redirectTo:"https://shardnote.net/settings/?discord=linked",
+        scopes:"identify guilds.join"
+      }
+    });
     if(error){discordStatus.textContent="Could not link Discord: "+error.message;linkDiscord.disabled=false;}
   };
   unlinkDiscord.onclick=async()=>{

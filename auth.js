@@ -18,20 +18,15 @@ async function start(){
       const invite=document.getElementById("invite").value.trim().toUpperCase();
       msg.textContent="Checking invite...";
 
-      const {data:code,error:ce}=await sb.from("clan_invites")
-        .select("code,uses,max_uses,active")
-        .eq("code",invite).eq("active",true).maybeSingle();
-
-      if(ce){msg.textContent="Could not validate the invite. Try again.";return}
-      if(!code || code.uses>=code.max_uses){msg.textContent="Invalid or exhausted clan invite code.";return}
+      const {data:valid,error:ve}=await sb.rpc("consume_clan_invite",{invite_code:invite});
+      if(ve || !valid){msg.textContent="Invalid or exhausted clan invite code.";return}
 
       msg.textContent="Creating account...";
       const {data,error}=await sb.auth.signUp({
-        email,password,
-        options:{data:{username,invite_code:invite}}
+        email,password,options:{data:{username,invite_code:invite}}
       });
-
       if(error){msg.textContent=error.message;return}
+
       msg.textContent=data.session
         ? "Account created. Welcome to SHARDNOTE!"
         : "Account created. Check your email to confirm, then log in.";

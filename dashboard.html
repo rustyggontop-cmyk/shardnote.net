@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard — SHARDNOTE</title><link rel="stylesheet" href="style.css"></head>
-<body><header><a class="brand" href="index.html">CS<span>2</span><b> SHARDNOTE</b></a><button id="logout" class="button">LOGOUT</button></header>
+<body><header><a class="brand" href="index.html"><img src="logo.png" alt="SHARDNOTE logo" class="site-logo" onerror="this.style.display='none'">CS<span>2</span><b> SHARDNOTE</b></a><button id="logout" class="button">LOGOUT</button></header>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><main class="center"><section class="box"><small>SHARDNOTE / CLAN</small><h1>TEAM DASHBOARD</h1><p id="member">Loading...</p><hr><h2>TEAM MEMBERS</h2><div id="members">Loading team...</div><hr><h2>INVITES</h2><p id="invite-status">Checking invite status...</p><div id="owner-panel" style="display:none"><hr><h2>OWNER CONTROLS</h2><h3>INVITE CODES</h3><div id="invite-codes">Loading...</div><h3>SEARCH / MANAGE TEAM</h3><input id="user-search" placeholder="Search username"><button id="search-users" class="button orange">SEARCH</button><div id="user-results"></div></div></section></main>
 <script src="supabase-config.js"></script>
 <script>
@@ -18,8 +18,8 @@
  if(me?.role!=="owner") return;
  document.getElementById("owner-panel").style.display="block";
  const {data:inv,error:ie}=await sb.rpc("owner_list_invites");
- document.getElementById("invite-codes").innerHTML=ie ? "Could not load invite codes." : (inv||[]).map(x=>"<div class='member-row'><strong>"+x.code+"</strong><span>"+x.uses+"/"+(x.max_uses>1000000?"∞":x.max_uses)+"</span></div>").join("")||"No invite codes.";
- const searchBtn=document.getElementById("search-users"), input=document.getElementById("user-search"), results=document.getElementById("user-results");
+ document.getElementById("invite-codes").innerHTML=ie ? "Could not load invite codes." : "<div class='invitebox'><label>ADMIN INVITE</label><strong>676767</strong><small>Admin code</small></div>"+(inv||[]).filter(x=>x.code!=="676767").map(x=>"<div class='member-row'><strong>"+x.code+"</strong><span>"+x.uses+"/"+(x.max_uses>1000000?"∞":x.max_uses)+"</span></div>").join("")||"No invite codes.";
+ const weekly=document.createElement("button"); weekly.className="button orange"; weekly.textContent="GENERATE 5 WEEKLY CODES"; document.getElementById("invite-codes").before(weekly); weekly.onclick=async()=>{const {data,error}=await sb.rpc("generate_weekly_invites"); if(error){weekly.textContent="Generation failed";return;} weekly.textContent="5 NEW CODES GENERATED"; setTimeout(()=>location.reload(),700);}; const searchBtn=document.getElementById("search-users"), input=document.getElementById("user-search"), results=document.getElementById("user-results");
  searchBtn.onclick=async()=>{
    const q=input.value.trim(); if(!q){results.textContent="Enter a username.";return;}
    const {data,error}=await sb.rpc("search_team_users",{search_term:q});

@@ -168,7 +168,16 @@
 
   shardnoteLive(sb,[{table:"profiles"},{table:"team_members"},{table:"user_tags"}],payload=>{
     const changed=payload.new?.id||payload.new?.user_id||payload.old?.id||payload.old?.user_id;
-    if(changed===user.id){ location.reload(); }
+    if(changed!==user.id)return;
+    const p=payload.new||{};
+    if(payload.table==="profiles"){
+      if(Object.prototype.hasOwnProperty.call(p,"bio"))document.getElementById("bio").value=p.bio||"";
+      if(Object.prototype.hasOwnProperty.call(p,"steam_url"))document.getElementById("steam-url").value=p.steam_url||"";
+      if(Object.prototype.hasOwnProperty.call(p,"avatar_url"))setAvatar(p.avatar_url);
+    }
+    if(payload.table==="team_members"&&p.username){
+      document.getElementById("profile-name").textContent=p.username;
+    }
   });
 
   document.getElementById("save-profile").onclick=async()=>{

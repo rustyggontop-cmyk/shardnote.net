@@ -63,7 +63,8 @@
  document.getElementById("profile-name").textContent=x.username||"Unknown player";
  document.getElementById("profile-tagline").textContent=x.team_name?"Member of "+x.team_name:"Independent player";
  document.getElementById("profile-team").textContent=x.team_name||"Independent";
- document.getElementById("profile-role").textContent=String(x.role||"member").replace("_"," ").toUpperCase();
+ const roleLabel=x.role==="owner" ? "Founder of "+(x.team_name||"this team") : String(x.role||"member").replace("_"," ").toUpperCase();
+ document.getElementById("profile-role").textContent=roleLabel;
  document.getElementById("profile-status").textContent=x.is_online?"ONLINE":"OFFLINE";
  document.getElementById("profile-joined").textContent=x.created_at?new Date(x.created_at).toLocaleDateString(): "—";
  document.getElementById("profile-username").textContent=x.username||"—";

@@ -19,11 +19,9 @@ async function start(){
       const username=document.getElementById("username").value.trim();
       const email=document.getElementById("email").value.trim();
       const password=document.getElementById("password").value;
-      const betaCode=document.getElementById("beta-code").value.trim().toUpperCase();
-      if(!betaCode){msg.textContent="A beta access code is required while SHARDNOTE is in beta.";return;}
       msg.textContent="Creating account...";
       try{
-        const response=await fetch(window.SUPABASE_URL+"/functions/v1/register-user",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,email,password,beta_code:betaCode})});
+        const response=await fetch(window.SUPABASE_URL+"/functions/v1/register-user",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,email,password})});
         const result=await response.json();
         if(!response.ok){msg.textContent=result.error||"Account creation failed.";return;}
         if(result.session){

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Report Cheater — SHARDNOTE</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header><a class="brand" href="index.html"><img src="logo.png" class="site-logo" alt="SHARDNOTE logo">CS<span>2</span><b> SHARDNOTE</b></a>
+<div style="display:flex;align-items:center;gap:8px"><a class="button" href="dashboard.html">DASHBOARD</a><button id="logout" class="button">LOGOUT</button></div></header>
+<div class="panel-shell">
+<aside class="dashboard-sidebar"><div class="side-title">SHARDNOTE</div><nav class="side-nav">
+<a class="side-btn" href="dashboard.html"><span class="ico">⌂</span>Overview</a>
+<a class="side-btn" href="dashboard.html#members"><span class="ico">◉</span>Team Members</a>
+<a class="side-btn" href="support.html"><span class="ico">?</span>Support</a>
+<a class="side-btn active" href="report-cheater.html"><span class="ico">!</span>Report Cheater</a>
+<a class="side-btn" href="dashboard.html#invites"><span class="ico">◇</span>Invites</a>
+<a class="side-btn" href="https://steamcommunity.com/groups/shardnotecs2" target="_blank" rel="noopener"><span class="ico">◈</span>Steam Group</a>
+<a id="report-admin-link" class="side-btn" style="display:none" href="admin.html"><span class="ico">⚙</span>Admin Panel</a>
+</nav><div class="side-bottom"><a class="side-btn" href="settings.html"><span class="ico">⚙</span>Settings</a></div></aside>
+<main class="panel-main"><div class="panel-wrap">
+<section class="panel-hero"><div><small>SHARDNOTE / MODERATION</small><h1>REPORT CHEATER</h1><p>Submit a report for suspected cheating or prohibited play.</p></div></section>
+<div class="panel-grid">
+<section class="panel-card wide"><small>NEW REPORT</small><h2>Player Details</h2>
+<p class="support-note">Please provide accurate information. Reports are reviewed by the SHARDNOTE moderation team.</p>
+<label class="dashboard-subtle" for="username">PLAYER USERNAME</label><input id="username" maxlength="64" placeholder="Steam username">
+<label class="dashboard-subtle" for="steam">STEAM PROFILE</label><input id="steam" type="url" maxlength="200" placeholder="https://steamcommunity.com/id/player">
+<label class="dashboard-subtle" for="reason">REASON</label><select id="reason" class="sn-select"><option value="">Select a reason</option><option>Suspected cheating</option><option>Aimbot</option><option>Wallhack / ESP</option><option>Triggerbot</option><option>Other prohibited software</option><option>Other suspicious behavior</option></select>
+<label class="dashboard-subtle" for="evidence">EVIDENCE LINK</label><input id="evidence" type="url" maxlength="500" placeholder="Video, screenshot, or other evidence URL">
+<label class="dashboard-subtle" for="details">DETAILS</label><textarea id="details" maxlength="5000" placeholder="Describe what you observed, including the match or round if known..."></textarea>
+<button id="submit-report" class="button orange">SUBMIT REPORT</button><p id="report-msg"></p>
+</section>
+<section class="panel-card"><small>YOUR REPORTS</small><h2>Report History</h2><div id="report-history">Loading reports...</div></section>
+<section class="panel-card"><small>REPORTING GUIDELINES</small><h2>Before You Submit</h2><div class="support-note" style="line-height:1.7">Only report behavior you genuinely believe violates the rules. Include evidence when available and avoid submitting duplicate reports for the same incident.</div></section>
+</div></div></main></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script>
+<script>
+(async()=>{
+const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+const {data:{user}}=await sb.auth.getUser();if(!user){location.href="login.html";return;}
+const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+const {data:role}=await sb.rpc("current_user_role");if(role==="owner"||role==="admin")document.getElementById("report-admin-link").style.display="flex";
+const {data:me}=await sb.from("team_members").select("team_id").eq("user_id",user.id).maybeSingle();
+const load=async()=>{const {data,error}=await sb.from("cheater_reports").select("reported_username,reason,status,created_at").eq("reporter_id",user.id).order("created_at",{ascending:false}).limit(20);const box=document.getElementById("report-history");if(error){box.textContent="Could not load reports: "+error.message;return;}box.innerHTML=(data||[]).map(r=>"<div class='member-row'><div><strong>"+esc(r.reported_username)+"</strong><div class='support-note'>"+esc(r.reason)+"</div></div><span class='support-status'>"+esc(r.status).toUpperCase()+"</span></div>").join("")||"<p class='support-note'>No reports submitted yet.</p>";};
+document.getElementById("submit-report").onclick=async()=>{
+const username=document.getElementById("username").value.trim(),steam=document.getElementById("steam").value.trim(),reason=document.getElementById("reason").value, evidence=document.getElementById("evidence").value.trim(),details=document.getElementById("details").value.trim(),msg=document.getElementById("report-msg");
+if(username.length<1||reason===""||details.length<5){msg.textContent="Please provide the player, a reason, and at least 5 characters of details.";return;}
+if(steam&&!/^https:\/\/steamcommunity\.com\/(profiles|id)\/[A-Za-z0-9_\-]+\/?$/i.test(steam)){msg.textContent="Enter a valid Steam profile URL.";return;}
+if(evidence&&!/^https:\/\/[^\s]+$/i.test(evidence)){msg.textContent="Enter a valid evidence URL.";return;}
+if(!me?.team_id){msg.textContent="You must belong to a team to submit a report.";return;}
+msg.textContent="Submitting report...";
+const {error}=await sb.from("cheater_reports").insert({reporter_id:user.id,team_id:me.team_id,reported_username:username,steam_url:steam||null,reason,evidence_url:evidence||null,details});
+if(error){msg.textContent="Could not submit report: "+error.message;return;}
+msg.textContent="Report submitted successfully.";["username","steam","evidence","details"].forEach(id=>document.getElementById(id).value="");document.getElementById("reason").value="";await load();
+};
+await load();
+})().catch(e=>{const m=document.getElementById("report-msg");if(m)m.textContent="Report error: "+String(e.message||e);});
+</script></body></html>

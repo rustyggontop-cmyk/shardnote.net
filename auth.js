@@ -28,7 +28,7 @@ async function start(){
           const {error:setError}=await sb.auth.setSession({access_token:result.session.access_token,refresh_token:result.session.refresh_token});
           if(setError){msg.textContent="Account created. Log in with your username and password.";return;}
           msg.textContent="Account created. You can now create your own team.";
-          setTimeout(()=>location.href="dashboard.html",500);
+          setTimeout(()=>location.href="dashboard/",500);
           return;
         }
         msg.textContent="Account created. Log in with your username and password.";
@@ -54,7 +54,7 @@ async function start(){
         const {error:setError}=await sb.auth.setSession({access_token:result.session.access_token,refresh_token:result.session.refresh_token});
         if(setError){msg.textContent="Login failed: "+setError.message;return;}
         msg.textContent="Login successful. Opening dashboard...";
-        location.href="dashboard.html";
+        location.href="dashboard/";
       }catch(err){msg.textContent="Login failed. Please try again.";console.error(err);}
     };
   }
@@ -63,7 +63,7 @@ async function start(){
   if(logout){
     logout.onclick=async()=>{await sb.auth.signOut();location.href="index.html"};
     const {data}=await sb.auth.getUser();
-    if(!data.user){location.href="login.html";return}
+    if(!data.user){location.href="login/";return}
     const memberEl=document.getElementById("member");
     if(memberEl){
       memberEl.textContent="Logged in as "+(data.user.user_metadata?.username || data.user.email)+". You are a SHARDNOTE clan member.";

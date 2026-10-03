@@ -49,6 +49,7 @@ async function start(){
       try{
         const response=await fetch(window.SUPABASE_URL+"/functions/v1/login-with-username",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})});
         const result=await response.json();
+        if(response.status===423){location.href="maintenance.html";return;}
         if(!response.ok||!result.session){msg.textContent=result.error||"Incorrect username or password.";return;}
         const {error:setError}=await sb.auth.setSession({access_token:result.session.access_token,refresh_token:result.session.refresh_token});
         if(setError){msg.textContent="Login failed: "+setError.message;return;}

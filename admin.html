@@ -140,9 +140,16 @@ membersBox.querySelectorAll(".remove-tag").forEach(b=>b.onclick=async()=>{
    b.textContent="REMOVED";b.closest(".member-row")?.querySelector(".user-tag")?.remove();
  });
  membersBox.querySelectorAll(".reset-pass").forEach(b=>b.onclick=async()=>{
-   b.disabled=true;const {data:{session}}=await sb.auth.getSession();
-   const r=await fetch(window.SUPABASE_URL+"/functions/v1/admin-reset-password",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},body:JSON.stringify({user_id:b.dataset.user,redirectTo:location.origin+"/reset-password.html"})});
-   const d=await r.json();b.disabled=false;b.textContent=d.ok?"RESET SENT":"FAILED";
+   const next=prompt("Enter a new password for "+(b.dataset.name||"this user")+" (minimum 8 characters):");
+   if(next===null)return;
+   if(next.trim().length<8){alert("Password must be at least 8 characters.");return;}
+   const {data:{session}}=await sb.auth.getSession();
+   if(!session){alert("Your session has expired. Please log in again.");return;}
+   b.disabled=true;
+   const r=await fetch(window.SUPABASE_URL+"/functions/v1/admin-reset-password",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},body:JSON.stringify({user_id:b.dataset.user,new_password:next})});
+   const d=await r.json();b.disabled=false;
+   if(!r.ok||!d.ok){alert("Could not reset password: "+(d.error||"Reset failed"));return;}
+   b.textContent="PASSWORD SET";setTimeout(()=>b.textContent="RESET PASSWORD",1200);
  });
 }
 

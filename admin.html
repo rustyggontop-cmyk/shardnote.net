@@ -41,7 +41,7 @@
 </div></div></main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-config.js"></script><script src="ban-check.js"></script>
+<script src="supabase-config.js"></script><script src="realtime.js"></script><script src="ban-check.js"></script>
 <script>
 (async()=>{
 const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
@@ -188,6 +188,29 @@ ticketsBox.querySelectorAll(".delete-ticket").forEach(btn=>btn.addEventListener(
  modal.addEventListener("click",e=>{if(e.target===modal)close();});
  document.addEventListener("keydown",e=>{if(e.key==="Escape")close();});
 }
+
+shardnoteLive(sb,[
+ {table:"support_tickets"},
+ {table:"support_replies"},
+ {table:"cheater_reports"},
+ {table:"cheater_report_replies"},
+ {table:"team_members"},
+ {table:"profiles"},
+ {table:"user_tags"},
+ {table:"user_presence"},
+ {table:"user_bans"},
+ {table:"teams"},
+ {table:"beta_access_codes"}
+],payload=>{
+ if(payload.table==="support_replies"&&window.__adminActiveTicketId){
+   const ticketId=payload.new?.ticket_id||payload.old?.ticket_id;
+   if(ticketId===window.__adminActiveTicketId&&document.getElementById("ticket-modal")?.classList.contains("open")){
+     if(typeof renderTicketReplies==="function")renderTicketReplies(ticketId);
+     return;
+   }
+ }
+ location.reload();
+});
 
 const {data:betaCodes,error:betaError}=await sb.from("beta_access_codes").select("code_label,uses,max_uses,active,valid_until").order("created_at",{ascending:false});
 const betaBox=document.getElementById("beta-codes");

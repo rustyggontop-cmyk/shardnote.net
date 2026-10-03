@@ -30,7 +30,7 @@
 <section class="panel-card"><small>YOUR REPORTS</small><h2>Report History</h2><div id="report-history">Loading reports...</div></section>
 <section class="panel-card"><small>REPORTING GUIDELINES</small><h2>Before You Submit</h2><div class="support-note" style="line-height:1.7">Only report behavior you genuinely believe violates the rules. Include evidence when available and avoid submitting duplicate reports for the same incident.</div></section>
 </div></div></main></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="ban-check.js"></script>
 <script>
 (async()=>{
 const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);const params=new URLSearchParams(location.search);document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="index.html";};

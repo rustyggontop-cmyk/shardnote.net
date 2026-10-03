@@ -64,6 +64,8 @@
  if(!user){location.href="login.html";return;}
  const {data:role}=await sb.rpc("current_user_role");
  if(role==="owner"||role==="co_owner"||role==="admin")document.getElementById("admin-link").style.display="flex";
+ const {data:myMembership}=await sb.from("team_members").select("team_id,role").eq("user_id",user.id).maybeSingle();
+ const myTeamId=myMembership?.team_id||null;
  const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
  const reservedTags=new Set(["admin","owner","co_owner","co-owner"]);
  const render=rows=>{
@@ -72,15 +74,33 @@
      const tag=p.tag_name&&!reservedTags.has(String(p.tag_name||"").trim().toLowerCase())?"<span class='user-tag' style='margin-left:0;color:"+esc(p.tag_color)+";border:1px solid "+esc(p.tag_color)+";background:"+esc(p.tag_color)+"22'>"+esc(p.tag_name)+"</span>":"";
      const steam=p.steam_url?"<a class='steam-link' href='"+esc(p.steam_url)+"' target='_blank' rel='noopener'>STEAM PROFILE</a>":"";
      const teamState=p.team_name?"IN TEAM":"AVAILABLE";
-     const inviteBtn="";
-     return "<article class='teammate-card profile-link' role='link' tabindex='0' data-profile='"+encodeURIComponent(p.user_id)+"'><div class='teammate-main'><span class='teammate-avatar'>"+avatar+"</span><div class='teammate-copy'><div class='teammate-name'>"+esc(p.username)+" "+tag+"</div>"+(p.bio?"<div class='teammate-bio'>"+esc(p.bio)+"</div>":"")+"<div class='teammate-team'>"+esc(p.team_name||"Independent player")+" · "+teamState+"</div></div></div><div class='teammate-actions'>"+steam+inviteBtn+"</div></article>";
+     const action=p.user_id===user.id?"":(!p.team_id&&myTeamId?
+       "<button type='button' class='button invite-user' data-user='"+esc(p.user_id)+"' data-name='"+esc(p.username)+"'>INVITE TO TEAM</button>":
+       (myTeamId&&p.team_id===myTeamId&&p.role!=="owner"?
+        "<button type='button' class='button kick-user' data-user='"+esc(p.user_id)+"' data-name='"+esc(p.username)+"'>KICK FROM TEAM</button>":""));
+     return "<article class='teammate-card profile-link' role='link' tabindex='0' data-profile='"+encodeURIComponent(p.user_id)+"'><div class='teammate-main'><span class='teammate-avatar'>"+avatar+"</span><div class='teammate-copy'><div class='teammate-name'>"+esc(p.username)+" "+tag+"</div>"+(p.bio?"<div class='teammate-bio'>"+esc(p.bio)+"</div>":"")+"<div class='teammate-team'>"+esc(p.team_name||"Independent player")+" · "+teamState+"</div></div></div><div class='teammate-actions'>"+steam+action+"</div></article>";
    }).join("")||"<div class='user-search-empty' style='display:grid'><span>⌁</span><strong>No teammates found</strong><small>Try another username.</small></div>";
  };
  const input=document.getElementById("teammate-search"),out=document.getElementById("teammate-results");let timer;
  input.oninput=()=>{clearTimeout(timer);const q=input.value.trim();if(!q){out.innerHTML="";return;}timer=setTimeout(async()=>{
    const {data,error}=await sb.rpc("search_teammates",{search_term:q});
    if(error){out.innerHTML="<p class='support-note'>Search failed: "+esc(error.message)+"</p>";return;}
-   render(data);out.querySelectorAll('[data-profile]').forEach(el=>{const go=()=>location.href='profile.html?id='+encodeURIComponent(el.dataset.profile);el.addEventListener('click',e=>{if(e.target.closest('a,button'))return;go();});el.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('a,button')){e.preventDefault();go();}});});
+   render(data);
+   out.querySelectorAll(".invite-user").forEach(btn=>btn.onclick=async e=>{
+     e.preventDefault();e.stopPropagation();btn.disabled=true;
+     const {error}=await sb.rpc("invite_user_to_my_team",{target_user:btn.dataset.user});
+     if(error){alert("Could not invite player: "+error.message);btn.disabled=false;return;}
+     btn.textContent="ADDED TO TEAM";setTimeout(()=>input.dispatchEvent(new Event("input")),400);
+   });
+   out.querySelectorAll(".kick-user").forEach(btn=>btn.onclick=async e=>{
+     e.preventDefault();e.stopPropagation();
+     if(!confirm("Kick "+(btn.dataset.name||"this player")+" from your team?"))return;
+     btn.disabled=true;
+     const {error}=await sb.rpc("kick_user_from_my_team",{target_user:btn.dataset.user});
+     if(error){alert("Could not kick player: "+error.message);btn.disabled=false;return;}
+     btn.textContent="KICKED";setTimeout(()=>input.dispatchEvent(new Event("input")),400);
+   });
+   out.querySelectorAll('[data-profile]').forEach(el=>{const go=()=>location.href='profile.html?id='+encodeURIComponent(el.dataset.profile);el.addEventListener('click',e=>{if(e.target.closest('a,button'))return;go();});el.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('a,button')){e.preventDefault();go();}});});
 
  },180);};
  shardnoteLive(sb,[{table:"team_members"},{table:"profiles"},{table:"user_tags"},{table:"user_presence"},{table:"teams"}],payload=>{

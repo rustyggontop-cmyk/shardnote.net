@@ -1,2 +1,16 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard — SHARDNOTE</title><link rel="stylesheet" href="style.css"></head>
-<body><header><a class="brand" href="index.html">CS<span>2</span><b> SHARDNOTE</b></a><button id="logout" class="button">LOGOUT</button></header><main class="center"><section class="box"><small>SHARDNOTE / CLAN</small><h1>MEMBER DASHBOARD</h1><p id="member">Loading...</p></section></main><script src="supabase-config.js"></script><script src="auth.js"></script></body></html>
+<body><header><a class="brand" href="index.html">CS<span>2</span><b> SHARDNOTE</b></a><button id="logout" class="button">LOGOUT</button></header>
+<main class="center"><section class="box"><small>SHARDNOTE / CLAN</small><h1>TEAM DASHBOARD</h1><p id="member">Loading...</p><hr><h2>TEAM MEMBERS</h2><div id="members">Loading team...</div><hr><h2>INVITES</h2><p>Weekly clan invites are limited to 5 successful registrations. Invite codes are private and are never displayed publicly.</p><p id="invite-status">Checking invite status...</p></section></main>
+<script src="supabase-config.js"></script><script src="auth.js"></script>
+<script>
+(async()=>{const {createClient}=supabase;const sb=createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+const {data:{user}}=await sb.auth.getUser();if(!user){location.href="login.html";return}
+document.getElementById("member").textContent="Logged in as "+(user.user_metadata?.username||user.email);
+const {data:members,error}=await sb.from("team_members").select("username,role,joined_at").order("joined_at",{ascending:true});
+const box=document.getElementById("members");
+if(error){box.textContent="Unable to load team members.";return}
+box.innerHTML=members.map(m=>"<div class='member-row'><strong>"+String(m.username).replace(/[&<>]/g,"")+"</strong><span>"+m.role.toUpperCase()+"</span></div>").join("")||"No members yet.";
+const {data:invite}=await sb.rpc("current_weekly_invite");
+document.getElementById("invite-status").textContent=invite&&invite[0]?"Weekly invite is active; 5 maximum uses are enforced server-side.":"No active weekly invite.";
+})()
+</script></body></html>

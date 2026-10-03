@@ -118,7 +118,9 @@
       });
       const result=await response.json().catch(()=>({}));
       if(response.ok&&result.ok){
-        discordStatus.textContent="Discord linked and you've been added to the SHARDNOTE server.";
+        discordStatus.textContent=result.role_assigned
+          ? "Discord linked, joined to SHARDNOTE, and [Verified] role assigned."
+          : "Discord linked and you've been added to the SHARDNOTE server. [Verified] could not be assigned yet.";
       }else{
         discordStatus.textContent="Discord linked, but automatic server join failed: "+(result.error||"Unknown error");
       }

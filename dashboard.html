@@ -152,11 +152,21 @@
   };
   await loadInvites();
 
+  // Team invitations must stay live even for independent players who return early from team setup.
+  shardnoteLive(sb,[{table:"team_invites"}],payload=>{
+    const invitee=payload.new?.invitee_id||payload.old?.invitee_id;
+    if(invitee===user.id) loadInvites();
+  });
+  window.__teamInvitePoll=true;
+  setInterval(()=>{ if(document.visibilityState==="visible") loadInvites(); },3000);
+
   const {data:myTeam,error:teamError}=await sb.rpc("my_team");
   if(teamError){document.getElementById("member").textContent="Team error: "+teamError.message;document.documentElement.style.visibility="visible";return;}
   if(!myTeam||!myTeam.length){
-    document.getElementById("dashboard-content").style.display="none";
     document.getElementById("team-create").style.display="block";
+    document.getElementById("members").style.display="none";
+    document.getElementById("find-user").style.display="none";
+    document.getElementById("tag").style.display="none";
     document.getElementById("team-title").textContent="CREATE YOUR TEAM";
     document.getElementById("member").textContent="You're an Independent Player. Create your own team.";
     document.getElementById("create-team").onclick=async()=>{
@@ -205,19 +215,12 @@ return "<div class='member-row profile-link' role='link' tabindex='0' data-profi
     }).join("")||"No team members yet.";
   };
   await loadMembers();
-  window.__teamInvitePoll=true;
-  setInterval(()=>{
-    if(document.visibilityState!=="visible")return;
-    loadInvites();
-  },3000);
-
   shardnoteLive(sb,[
     {table:"team_members"},
     {table:"user_tags"},
     {table:"profiles"},
     {table:"user_presence"},
     {table:"teams"},
-    {table:"team_invites"},
     {table:"user_bans"}
   ],payload=>{
     const teamChange =

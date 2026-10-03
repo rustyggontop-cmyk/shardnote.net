@@ -98,8 +98,8 @@ const loadAllTeams=async()=>{
    const {data:roster,error:rosterError}=await sb.rpc("admin_list_team_roster",{p_team_id:team.team_id});
    if(rosterError){rows.push("<div class='panel-card' style='margin:8px 0'><strong>"+esc(team.team_name)+"</strong><p class='support-note'>Could not load members: "+esc(rosterError.message)+"</p></div>");continue;}
    rows.push("<div class='panel-card' style='margin:10px 0;padding:14px'>"+
-     "<div class='member-row'><div><strong>"+esc(team.team_name)+"</strong><div class='support-note'>Founder: "+esc(team.founder_username)+" · "+esc(String(team.member_count))+" member"+(Number(team.member_count)===1?"":"s")+"</div></div>"+
-     "<button type='button' class='button delete-team-moderation' data-team='"+esc(team.team_id)+"' data-name='"+esc(team.team_name)+"'>DELETE TEAM</button></div>"+
+     "<div class='member-row'><div><strong class='team-name-label'>"+esc(team.team_name)+"</strong><div class='support-note'>Founder: "+esc(team.founder_username)+" · "+esc(String(team.member_count))+" member"+(Number(team.member_count)===1?"":"s")+"</div></div>"+
+     "<div class='admin-actions'><button type='button' class='button rename-team-moderation' data-team='"+esc(team.team_id)+"' data-name='"+esc(team.team_name)+"'>RENAME TEAM</button><button type='button' class='button delete-team-moderation' data-team='"+esc(team.team_id)+"' data-name='"+esc(team.team_name)+"'>DELETE TEAM</button></div></div>"+
      "<div class='team-moderation-roster'>"+
      (roster||[]).map(m=>{
        const isFounder=m.role==="owner";
@@ -116,6 +116,14 @@ const loadAllTeams=async()=>{
    btn.disabled=true;
    const {error}=await sb.rpc("moderator_remove_member_from_team",{target_user:btn.dataset.user});
    if(error){alert("Could not remove member: "+error.message);btn.disabled=false;return;}
+   await loadAllTeams();
+ });
+ allTeamsBox.querySelectorAll(".rename-team-moderation").forEach(btn=>btn.onclick=async()=>{
+   const next=prompt("Enter a new team name:",btn.dataset.name||"");
+   if(next===null||next.trim()===(btn.dataset.name||""))return;
+   btn.disabled=true;
+   const {error}=await sb.rpc("moderator_rename_team",{target_team:btn.dataset.team,new_name:next.trim()});
+   if(error){alert("Could not rename team: "+error.message);btn.disabled=false;return;}
    await loadAllTeams();
  });
  allTeamsBox.querySelectorAll(".delete-team-moderation").forEach(btn=>btn.onclick=async()=>{

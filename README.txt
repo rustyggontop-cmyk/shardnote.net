@@ -1,17 +1,14 @@
-REAL CLAN LOGIN SETUP
+SHARDNOTE — CURRENT SETUP
 
-This version uses Supabase Auth. Passwords are handled by Supabase Auth,
-not stored in the website or Google Drive.
+Frontend: GitHub Pages
+Repository: rustyggontop-cmyk/shardnote.net
+Backend: Supabase
+Email: Brevo
 
-1. Create a Supabase project.
-2. In SQL Editor, run DATABASE.sql.
-3. Put your project URL and anon/publishable key into supabase-config.js.
-4. Upload all files to your hosting (GitHub Pages works for the front end).
-5. In Supabase Auth settings, configure your site URL as https://shardnote.net
-   and add your redirect URLs as needed.
-6. Change the example invite code in DATABASE.sql before sharing it.
-
-IMPORTANT:
-- Never put a Supabase service_role/secret key in the website.
-- The invite-code counter in this simple example should be moved to a
-  server-side atomic function for strict production enforcement.
+Important:
+- supabase-config.js contains only the public Supabase browser key.
+- Never put a Supabase service-role key or Brevo secret in GitHub.
+- Supabase Auth SMTP is configured separately from the Brevo email-sending Edge Function.
+- The admin panel checks the logged-in user's role in Supabase.
+- Team invite codes are generated per member, five at a time, single-use, and expire weekly.
+- Each user can create one custom tag with a custom color.

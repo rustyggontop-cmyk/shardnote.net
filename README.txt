@@ -5,10 +5,10 @@ Frontend
 - Shared dark purple/black UI across dashboard, admin, support, settings, teammate finder, and moderation.
 
 Authentication
-- Supabase Auth handles accounts and email confirmation/login.
-- A clan invite is optional at signup.
-- With an invite code, the user joins that code's team.
-- Without an invite code, the user can create an independent team from the dashboard.
+- Supabase Auth handles accounts.
+- Registration requires a username, email, password, and beta access code.
+- Email confirmation is completed server-side; users do not need to click a confirmation email.
+- Login uses username and password.
 
 Teams
 - Every team has its own team record and owner.
@@ -16,7 +16,6 @@ Teams
 - Team members use the roles: member, admin, co_owner, owner.
 - Only the owner can appoint another co-owner.
 - Owners and co-owners can manage team roles; admins can handle moderation tasks.
-- Weekly invite codes belong to the member who receives them and are single-use.
 
 Teammate Finder
 - The Find Teammates page searches across SHARDNOTE teams.

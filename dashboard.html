@@ -163,6 +163,10 @@
     }).join("")||"No team members yet.";
   };
   await loadMembers();
+  const memberList=document.getElementById("members-list");
+  const openProfile=el=>{if(el?.dataset.profile)location.href="profile.html?id="+encodeURIComponent(el.dataset.profile);};
+  memberList.addEventListener("click",e=>{const row=e.target.closest("[data-profile]");if(row&& !e.target.closest("a,button"))openProfile(row);});
+  memberList.addEventListener("keydown",e=>{const row=e.target.closest("[data-profile]");if(row&&!e.target.closest("a,button")&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openProfile(row);}});
 
   const myTag=await sb.from("user_tags").select("tag_name,color").eq("user_id",user.id).maybeSingle();
   const ts=document.getElementById("tag-status"),tc=document.getElementById("tag-create"),tp=document.getElementById("tag-preview");
@@ -186,7 +190,9 @@
     const {data:profiles}=ids.length?await sb.from("profiles").select("id,avatar_url,bio,steam_url").in("id",ids):{data:[]};
     const map=Object.fromEntries((found||[]).map(x=>[x.user_id,x])),pm=Object.fromEntries((profiles||[]).map(x=>[x.id,x]));
     results.innerHTML=(data||[]).map(u=>{const p=pm[u.user_id],avatar=p?.avatar_url?"<img src='"+escapeHtml(p.avatar_url)+"' alt=''>":escapeHtml(String(u.username||"?").slice(0,1).toUpperCase());const steam=p?.steam_url?"<a class='steam-link' href='"+escapeHtml(p.steam_url)+"' target='_blank' rel='noopener'>STEAM</a>":"";return "<div class='user-result-row profile-link' role='link' tabindex='0' data-profile='"+encodeURIComponent(u.user_id)+"'><div class='user-result-name'><span class='user-avatar'>"+avatar+"</span><div><strong>"+escapeHtml(u.username)+"</strong>"+(p?.bio?"<div class='profile-bio'>"+escapeHtml(p.bio)+"</div>":"")+"</div></div><div>"+(map[u.user_id]?tagHtml(map[u.user_id]):"<span class='user-no-tag'>No custom tag</span>")+" "+steam+"</div></div>";}).join("")||"<div class='user-search-empty'><span>⌕</span><strong>No users found</strong><small>Try a different username.</small></div>";
-  },180);results.querySelectorAll('[data-profile]').forEach(el=>{const go=()=>location.href='profile.html?id='+encodeURIComponent(el.dataset.profile);el.addEventListener('click',e=>{if(e.target.closest('a,button'))return;go();});el.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('a,button')){e.preventDefault();go();}});});};
+  },180);};
+  results.addEventListener("click",e=>{const row=e.target.closest("[data-profile]");if(row&&!e.target.closest("a,button"))openProfile(row);});
+  results.addEventListener("keydown",e=>{const row=e.target.closest("[data-profile]");if(row&&!e.target.closest("a,button")&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openProfile(row);}});
 
   await sb.from("user_presence").upsert({user_id:user.id,last_seen:new Date().toISOString()});
   setInterval(()=>sb.from("user_presence").upsert({user_id:user.id,last_seen:new Date().toISOString()}),30000);

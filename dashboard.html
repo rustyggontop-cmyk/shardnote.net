@@ -111,10 +111,11 @@
   const tagHtml=t=>t?"<span class='user-tag' style='color:"+t.color+";border:1px solid "+t.color+";background:"+t.color+"22'>"+escapeHtml(t.tag_name)+"</span>":"";
 
   const {data:me,error:meError}=await sb.from("team_members").select("team_id,username,role").eq("user_id",user.id).maybeSingle();
-  if(meError){document.documentElement.style.visibility="visible";document.getElementById("member").textContent="Account data error: "+meError.message;return;}
+  const {data:role,error:roleError}=await sb.rpc("current_user_role");
+  if(meError || roleError){document.documentElement.style.visibility="visible";document.getElementById("member").textContent="Account access error. Please refresh the page.";return;}
 
   document.getElementById("member").textContent="Logged in as "+escapeHtml(user.user_metadata?.username||me?.username||user.email||"member");
-  if(me && (me.role==="owner"||me.role==="admin")) document.getElementById("admin-link").style.display="flex";
+  if(role==="owner"||role==="admin") document.getElementById("admin-link").style.display="flex";
 
   const {data:myTeam,error:teamError}=await sb.rpc("my_team");
   if(teamError){document.getElementById("member").textContent="Team error: "+teamError.message;document.documentElement.style.visibility="visible";return;}

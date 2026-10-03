@@ -62,7 +62,7 @@
     const {data,error}=await sb.from("support_tickets").select("subject,message,status,created_at").eq("user_id",user.id).order("created_at",{ascending:false});
     const box=document.getElementById("tickets");
     if(error){box.innerHTML="<p class='support-note'>Could not load tickets: "+esc(error.message)+"</p>";return;}
-    box.innerHTML=(data||[]).map(t=>"<div class='member-row'><div><strong>"+esc(t.subject)+"</strong><div class='support-note'>"+esc(t.message).slice(0,180)+(String(t.message).length>180?"…":"")+"</div></div><span class='support-status'>"+esc(t.status).toUpperCase()+"</span></div>").join("")||"<p class='support-note'>No support requests yet.</p>";
+    box.innerHTML=(data||[]).map(t=>"<div class='member-row ticket-row' tabindex='0' role='button' data-ticket='"+esc(t.id)+"'><div><strong>"+esc(t.subject)+"</strong><div class='support-note'>"+new Date(t.created_at).toLocaleString()+"</div><div class='support-note'>"+esc(t.message).slice(0,180)+(String(t.message).length>180?"…":"")+"</div></div><span class='support-status'>"+esc(t.status).toUpperCase()+"</span></div>").join("")||"<p class='support-note'>No support requests yet.</p>";
   };
   document.getElementById("send").onclick=async()=>{
     const subject=document.getElementById("subject").value.trim(),message=document.getElementById("message").value.trim(),msg=document.getElementById("msg");
@@ -71,7 +71,10 @@
     const {error}=await sb.from("support_tickets").insert({user_id:user.id,subject,message});
     if(error){msg.textContent="Could not send request: "+error.message;return;}
     msg.textContent="Support request sent successfully.";
-    document.getElementById("subject").value="";document.getElementById("message").value="";await load();
+    document.getElementById("subject").value="";document.getElementById("message").value="";const ticketMap=Object.fromEntries((data||[]).map(t=>[t.id,t]));
+const ticketModal=document.getElementById("ticket-modal"),closeTicket=()=>ticketModal.classList.remove("open"),openTicket=id=>{const t=ticketMap[id];if(!t)return;document.getElementById("ticket-modal-title").textContent=t.subject;document.getElementById("ticket-modal-meta").textContent=new Date(t.created_at).toLocaleString();document.getElementById("ticket-modal-message").textContent=t.message;document.getElementById("ticket-modal-status").textContent=String(t.status).toUpperCase();ticketModal.classList.add("open");document.getElementById("ticket-close").focus();};
+document.querySelectorAll("[data-ticket]").forEach(el=>{el.addEventListener("click",()=>openTicket(el.dataset.ticket));el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openTicket(el.dataset.ticket);}});});
+document.getElementById("ticket-close").onclick=closeTicket;ticketModal.addEventListener("click",e=>{if(e.target===ticketModal)closeTicket();});document.addEventListener("keydown",e=>{if(e.key==="Escape")closeTicket();});\nawait load();
   };
   await load();
 })().catch(err=>{const m=document.getElementById("msg");if(m)m.textContent="Support error: "+String(err.message||err);});

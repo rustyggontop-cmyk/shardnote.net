@@ -110,7 +110,7 @@
 <script>
 (async()=>{
   document.documentElement.style.visibility="hidden";
-  const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+  const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="index.html";};
   const {data:{user},error:userError}=await sb.auth.getUser();
   if(userError||!user){location.href="login.html";return;}
 

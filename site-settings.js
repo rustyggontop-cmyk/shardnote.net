@@ -25,7 +25,7 @@
         <h1>WE'LL BE RIGHT BACK</h1>
         <p>SHARDNOTE is currently undergoing maintenance.</p>
         <p class="support-note">Only the Site Owner and Co-owner can access the site while maintenance mode is enabled.</p>
-        <a class="button orange" href="login/">STAFF LOGIN</a>
+        <a class="button orange" href="/login/">STAFF LOGIN</a>
       </div>`;
     document.body.appendChild(overlay);
   };

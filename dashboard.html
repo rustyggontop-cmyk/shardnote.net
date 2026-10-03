@@ -24,7 +24,7 @@
     <nav class="side-nav">
       <a class="side-btn active" href="#overview"><span class="ico">⌂</span>Overview</a>
       <a class="side-btn" href="#members"><span class="ico">◉</span>Team Members</a>
-      <a class="side-btn" href="#find-user"><span class="ico">⌕</span>Find User</a><a class="side-btn" href="teammates.html"><span class="ico">⌁</span>Find Teammates</a><a class="side-btn" href="join-team.html"><span class="ico">＋</span>Join a Team</a>
+      <a class="side-btn" href="#find-user"><span class="ico">⌕</span>Find User</a><a class="side-btn" href="teammates.html"><span class="ico">⌁</span>Find Teammates</a>
       <a class="side-btn" href="#tag"><span class="ico">◆</span>Your Tag</a>
       <a class="side-btn" href="#invites"><span class="ico">◇</span>Invites</a>
       <a class="side-btn" href="report-cheater.html"><span class="ico">!</span>Report Cheater</a><a class="side-btn" href="https://steamcommunity.com/groups/shardnotecs2" target="_blank" rel="noopener"><span class="ico">◈</span>Steam Group</a>
@@ -49,12 +49,9 @@
       <section id="team-create" class="dashboard-card wide" style="display:none">
         <small>TEAM SETUP</small>
         <h2>Create your team</h2>
-        <p>You are currently an Independent Player. Create your own team or join one with a team invite.</p>
-        <input id="team-name" class="team-name-input" maxlength="32" placeholder="Search or enter a team name">
+        <p>You are currently an Independent Player. Create your own team.</p>
+        <input id="team-name" class="team-name-input" maxlength="32" placeholder="Enter a team name">
         <button id="create-team" class="button orange">CREATE TEAM</button>
-        <div class="team-or-divider"><span>OR</span></div>
-        <input id="team-invite" class="team-name-input" maxlength="64" placeholder="Enter a team invite code">
-        <button id="join-team" class="button">JOIN TEAM</button>
         <p id="team-msg"></p>
       </section>
 
@@ -89,13 +86,6 @@
             </div>
           </div>
           <div id="tag-preview"></div>
-        </section>
-
-        <section id="invites" class="dashboard-card wide">
-          <small>INVITES</small>
-          <h2>YOUR WEEKLY INVITE CODES</h2>
-          <p id="invite-status">Loading weekly invites...</p>
-          <div id="invite-codes"></div>
         </section>
 
         <section class="dashboard-card wide" style="text-align:center">
@@ -142,14 +132,6 @@
       msg.textContent="Creating team...";
       const {error}=await sb.rpc("create_team_from_independent",{team_name:name});
       if(error){msg.textContent=error.message;return;}
-      location.reload();
-    };
-    document.getElementById("join-team").onclick=async()=>{
-      const code=document.getElementById("team-invite").value.trim().toUpperCase(),msg=document.getElementById("team-msg");
-      if(!code){msg.textContent="Enter a team invite code.";return;}
-      msg.textContent="Joining team...";
-      const {data,error}=await sb.rpc("join_team_by_invite",{p_code:code});
-      if(error||!data){msg.textContent=error?.message||"That team invite is invalid or already used.";return;}
       location.reload();
     };
     document.documentElement.style.visibility="visible";return;
@@ -213,23 +195,13 @@ return "<div class='member-row profile-link' role='link' tabindex='0' data-profi
     const ids=(data||[]).map(x=>x.user_id),{data:found}=ids.length?await sb.from("user_tags").select("user_id,tag_name,color").in("user_id",ids):{data:[]};
     const {data:profiles}=ids.length?await sb.from("profiles").select("id,avatar_url,bio,steam_url").in("id",ids):{data:[]};
     const map=Object.fromEntries((found||[]).map(x=>[x.user_id,x])),pm=Object.fromEntries((profiles||[]).map(x=>[x.id,x]));
-    results.innerHTML=(data||[]).map(u=>{const p=pm[u.user_id],avatar=p?.avatar_url?"<img src='"+escapeHtml(p.avatar_url)+"' alt=''>":escapeHtml(String(u.username||"?").slice(0,1).toUpperCase());const steam=p?.steam_url?"<a class='steam-link' href='"+escapeHtml(p.steam_url)+"' target='_blank' rel='noopener'>STEAM</a>":"";const state=u.team_id?(u.team_id===teamId?"IN YOUR TEAM":"IN ANOTHER TEAM"):"AVAILABLE";const inviteBtn=(role==="owner"||role==="co_owner")&&!u.team_id&&u.user_id!==user.id?"<button type='button' class='button invite-user' data-user='"+escapeHtml(u.user_id)+"' data-name='"+escapeHtml(u.username)+"'>INVITE</button>":"";return "<div class='user-result-row profile-link' role='link' tabindex='0' data-profile='"+encodeURIComponent(u.user_id)+"'><div class='user-result-name'><span class='user-avatar'>"+avatar+"</span><div><strong>"+escapeHtml(u.username)+"</strong><div class='profile-bio'>"+escapeHtml(u.team_name||"No team")+" · "+state+"</div></div></div><div>"+(map[u.user_id]?tagHtml(map[u.user_id]):"<span class='user-no-tag'>No custom tag</span>")+" "+steam+" "+inviteBtn+"</div></div>";}).join("")||"<div class='user-search-empty'><span>⌕</span><strong>No users found</strong><small>Try a different username.</small></div>";
+    results.innerHTML=(data||[]).map(u=>{const p=pm[u.user_id],avatar=p?.avatar_url?"<img src='"+escapeHtml(p.avatar_url)+"' alt=''>":escapeHtml(String(u.username||"?").slice(0,1).toUpperCase());const steam=p?.steam_url?"<a class='steam-link' href='"+escapeHtml(p.steam_url)+"' target='_blank' rel='noopener'>STEAM</a>":"";const state=u.team_id?(u.team_id===teamId?"IN YOUR TEAM":"IN ANOTHER TEAM"):"AVAILABLE";return "<div class='user-result-row profile-link' role='link' tabindex='0' data-profile='"+encodeURIComponent(u.user_id)+"'><div class='user-result-name'><span class='user-avatar'>"+avatar+"</span><div><strong>"+escapeHtml(u.username)+"</strong><div class='profile-bio'>"+escapeHtml(u.team_name||"No team")+" · "+state+"</div></div></div><div>"+(map[u.user_id]?tagHtml(map[u.user_id]):"<span class='user-no-tag'>No custom tag</span>")+" "+steam+"</div></div>";}).join("")||"<div class='user-search-empty'><span>⌕</span><strong>No users found</strong><small>Try a different username.</small></div>";
   },180);};
   results.addEventListener("click",e=>{const row=e.target.closest("[data-profile]");if(row&&!e.target.closest("a,button"))openProfile(row);});
   results.addEventListener("keydown",e=>{const row=e.target.closest("[data-profile]");if(row&&!e.target.closest("a,button")&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openProfile(row);}});
-  results.addEventListener("click",e=>{const btn=e.target.closest(".invite-user");if(!btn)return;e.stopPropagation();});
-  results.addEventListener("click",async e=>{const btn=e.target.closest(".invite-user");if(!btn)return;btn.disabled=true;const {error}=await sb.rpc("owner_add_team_member",{target_username:btn.dataset.name,new_role:"member"});if(error){btn.disabled=false;btn.textContent="FAILED";return;}btn.textContent="INVITED";setTimeout(()=>search.dispatchEvent(new Event("input")),500);});
 
   await sb.from("user_presence").upsert({user_id:user.id,last_seen:new Date().toISOString()});
   setInterval(()=>sb.from("user_presence").upsert({user_id:user.id,last_seen:new Date().toISOString()}),30000);
-
-  const {data:weekly,error:weeklyError}=await sb.rpc("ensure_my_weekly_invites");
-  const inviteStatus=document.getElementById("invite-status"),inviteCodes=document.getElementById("invite-codes");
-  if(weeklyError){inviteStatus.textContent="Invite error: "+String(weeklyError.message||"Unknown error");}
-  else{
-    inviteStatus.textContent="Five unique one-time codes assigned to you for this week.";
-    inviteCodes.innerHTML=(weekly||[]).map(x=>"<div class='invitebox'><label>ONE-TIME INVITE</label><strong class='invite-code'>"+escapeHtml(x.code)+"</strong><small>1 use · expires "+new Date(x.valid_until).toLocaleDateString()+"</small></div>").join("")||"No active codes.";
-  }
 
   document.documentElement.style.visibility="visible";
 })().catch(err=>{

@@ -41,9 +41,9 @@ document.querySelectorAll(".reset-pass").forEach(b=>b.onclick=async()=>{b.disabl
  supportSend.onclick=async()=>{const subject=document.getElementById("support-subject").value.trim(),message=document.getElementById("support-message").value.trim(),sm=document.getElementById("support-msg");if(!subject||!message){sm.textContent="Enter a subject and message.";return;}const {error}=await sb.from("support_tickets").insert({user_id:user.id,subject,message});sm.textContent=error?"Could not send ticket: "+error.message:"Support ticket sent.";if(!error){document.getElementById("support-subject").value="";document.getElementById("support-message").value="";}};
  const {data:tickets}=await sb.from("support_tickets").select("id,subject,message,status,created_at").order("created_at",{ascending:false}).limit(10);
  document.getElementById("support-list").innerHTML=(tickets||[]).map(t=>"<div class='member-row'><strong>"+String(t.subject).replace(/[&<>]/g,"")+"</strong><span>"+t.status.toUpperCase()+"</span></div>").join("");
- const {data:me}=await sb.from("team_members").select("role").eq("user_id",user.id).maybeSingle(); const adminLink=document.getElementById("admin-link"); if(me?.role==="owner"||me?.role==="admin"){adminLink.style.display="inline-flex";adminLink.href="admin-"+user.id+".html";adminLink.textContent="ADMIN PANEL";}
- const {data:weekly}=await sb.rpc("my_weekly_invites");
- document.getElementById("invite-status").innerHTML=(weekly||[]).length ? "Your 5 unique invite codes for this week:" : "Your weekly invite codes are being generated.";
+ const {data:me}=await sb.from("team_members").select("role").eq("user_id",user.id).maybeSingle(); const {data:isAdmin}=await sb.rpc("is_admin"); const adminLink=document.getElementById("admin-link"); if(isAdmin===true){adminLink.style.display="inline-flex";adminLink.href="admin.html";adminLink.textContent="ADMIN PANEL";}
+ const {data:weekly,error:weeklyError}=await sb.rpc("ensure_my_weekly_invites");
+ document.getElementById("invite-status").innerHTML=weeklyError ? "Invite error: "+String(weeklyError.message).replace(/[&<>]/g,"") : "Your 5 unique invite codes for this week:";
  document.getElementById("invite-codes").innerHTML=(weekly||[]).map(x=>"<div class='invitebox'><label>ONE-TIME INVITE</label><strong>"+x.code+"</strong><small>1 use · expires "+new Date(x.valid_until).toLocaleDateString()+"</small></div>").join("");
  if(me?.role==="owner" || me?.role==="admin"){
   document.getElementById("owner-panel").style.display="block";

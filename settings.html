@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Settings — SHARDNOTE</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <a class="brand" href="index.html"><img src="logo.png" class="site-logo" alt="SHARDNOTE logo">CS<span>2</span><b> SHARDNOTE</b></a>
+  <div style="display:flex;align-items:center;gap:8px"><a class="button" href="dashboard.html">DASHBOARD</a><button id="logout" class="button">LOGOUT</button></div>
+</header>
+<div class="panel-shell">
+  <aside class="dashboard-sidebar">
+    <div class="side-title">SHARDNOTE</div>
+    <nav class="side-nav">
+      <a class="side-btn" href="dashboard.html"><span class="ico">⌂</span>Overview</a>
+      <a class="side-btn" href="dashboard.html#members"><span class="ico">◉</span>Team Members</a>
+      <a class="side-btn" href="dashboard.html#find-user"><span class="ico">⌕</span>Find User</a>
+      <a class="side-btn" href="support.html"><span class="ico">?</span>Support</a>
+      <a class="side-btn" href="dashboard.html#invites"><span class="ico">◇</span>Invites</a>
+      <a class="side-btn" href="https://steamcommunity.com/groups/shardnotecs2" target="_blank" rel="noopener"><span class="ico">◈</span>Steam Group</a>
+      <a id="settings-admin-link" class="side-btn" style="display:none" href="admin.html"><span class="ico">⚙</span>Admin Panel</a>
+    </nav>
+    <div class="side-bottom">
+      <a class="side-btn active" href="settings.html"><span class="ico">⚙</span>Settings</a>
+    </div>
+  </aside>
+  <main class="panel-main">
+    <div class="panel-wrap">
+      <section class="panel-hero">
+        <div><small>SHARDNOTE / PROFILE</small><h1>SETTINGS</h1><p>Manage your profile, avatar, bio, and Steam profile.</p></div>
+      </section>
+      <div class="panel-grid">
+        <section class="panel-card settings-card wide">
+          <small>PROFILE</small><h2>Your Profile</h2>
+          <div class="settings-avatar-wrap">
+            <div id="avatar-preview" class="settings-avatar">?</div>
+            <div style="flex:1;min-width:0">
+              <strong id="profile-name" style="font:800 20px/1.1 Space Grotesk,sans-serif">Loading...</strong>
+              <p class="support-note">Your profile picture appears beside your name across SHARDNOTE.</p>
+              <input id="avatar-file" class="settings-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+              <small id="avatar-msg" style="letter-spacing:0"></small>
+            </div>
+          </div>
+          <div class="settings-divider"></div>
+          <label class="dashboard-subtle" for="bio">BIO</label>
+          <textarea id="bio" maxlength="500" placeholder="Tell the team a little about yourself..."></textarea>
+          <label class="dashboard-subtle" for="steam-url">STEAM PROFILE</label>
+          <input id="steam-url" type="url" placeholder="https://steamcommunity.com/id/yourname">
+          <p class="support-note">Use your Steam profile URL. It will appear as a clickable profile link to team members.</p>
+          <button id="save-profile" class="button orange">SAVE PROFILE</button>
+          <p id="save-msg"></p>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="auth.js"></script>
+<script>
+(async()=>{
+  const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+  const {data:{user}}=await sb.auth.getUser(); if(!user){location.href="login.html";return;}
+  const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":">","\"":"&quot;"}[c]));
+  const {data:me}=await sb.from("team_members").select("username,role").eq("user_id",user.id).maybeSingle();
+  const {data:profile,error:profileError}=await sb.from("profiles").select("username,avatar_url,bio,steam_url").eq("id",user.id).maybeSingle();
+  if(profileError){document.getElementById("save-msg").textContent="Could not load profile: "+profileError.message;return;}
+  document.getElementById("profile-name").textContent=me?.username||profile?.username||user.email||"Member";
+  document.getElementById("bio").value=profile?.bio||"";
+  document.getElementById("steam-url").value=profile?.steam_url||"";
+  const preview=document.getElementById("avatar-preview");
+  const setAvatar=url=>{preview.innerHTML=url?"<img src='"+esc(url)+"' alt='Profile picture'>":esc((me?.username||"M").slice(0,1).toUpperCase());};
+  setAvatar(profile?.avatar_url);
+  if(me&&(me.role==="owner"||me.role==="admin"))document.getElementById("settings-admin-link").style.display="flex";
+
+  document.getElementById("avatar-file").onchange=async e=>{
+    const file=e.target.files?.[0]; if(!file)return;
+    if(!/^image\/(png|jpe?g|webp|gif)$/i.test(file.type)){document.getElementById("avatar-msg").textContent="Please choose a PNG, JPG, WEBP, or GIF image.";e.target.value="";return;}
+    if(file.size>5*1024*1024){document.getElementById("avatar-msg").textContent="Profile pictures must be 5 MB or smaller.";e.target.value="";return;}
+    document.getElementById("avatar-msg").textContent="Uploading...";
+    const ext=file.type.split("/")[1].replace("jpeg","jpg"),path=user.id+"/avatar-"+Date.now()+"."+ext;
+    const {error:upError}=await sb.storage.from("avatars").upload(path,file,{contentType:file.type,upsert:false});
+    if(upError){document.getElementById("avatar-msg").textContent="Upload failed: "+upError.message;return;}
+    const {data:pub}=sb.storage.from("avatars").getPublicUrl(path);
+    const {error:saveError}=await sb.from("profiles").update({avatar_url:pub.publicUrl}).eq("id",user.id);
+    if(saveError){document.getElementById("avatar-msg").textContent="Avatar uploaded but profile save failed: "+saveError.message;return;}
+    setAvatar(pub.publicUrl);document.getElementById("avatar-msg").textContent="Profile picture updated.";
+  };
+
+  document.getElementById("save-profile").onclick=async()=>{
+    const bio=document.getElementById("bio").value.trim(),steam=document.getElementById("steam-url").value.trim(),msg=document.getElementById("save-msg");
+    if(steam && !/^https:\/\/steamcommunity\.com\/(profiles|id)\/[A-Za-z0-9_\-]+\/?$/i.test(steam)){msg.textContent="Enter a valid Steam Community profile URL.";return;}
+    msg.textContent="Saving...";
+    const {error}=await sb.from("profiles").update({bio:bio||null,steam_url:steam||null}).eq("id",user.id);
+    msg.textContent=error?"Could not save profile: "+error.message:"Profile settings saved successfully.";
+  };
+})().catch(err=>{document.getElementById("save-msg").textContent="Settings error: "+String(err.message||err);});
+</script>
+</body>
+</html>

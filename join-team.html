@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Join a Team — SHARDNOTE</title><link rel="stylesheet" href="style.css">
+<style>
+.join-team-card{max-width:720px;margin:0 auto}
+.join-team-icon{width:72px;height:72px;margin:0 auto 18px;display:grid;place-items:center;border-radius:22px;border:1px solid #4b3568;background:#120b1e;color:#a970ff;font:900 30px/1 Space Grotesk,sans-serif;box-shadow:0 18px 45px rgba(80,40,120,.2)}
+.team-state{display:inline-flex;align-items:center;padding:6px 10px;border:1px solid #4b3568;border-radius:999px;background:#151026;color:#cdbbff;font:800 10px/1 Inter,sans-serif;letter-spacing:1px}
+.join-form{display:grid;gap:10px;margin-top:22px}
+.join-form input{height:54px!important;border-radius:999px!important}
+.join-help{margin-top:12px;color:#777083;font-size:11px;line-height:1.5}
+</style>
+</head>
+<body>
+<header><a class="brand" href="index.html"><img src="logo.png" class="site-logo" alt="SHARDNOTE logo">CS<span>2</span><b> SHARDNOTE</b></a>
+<div style="display:flex;align-items:center;gap:8px"><a class="button" href="dashboard.html">DASHBOARD</a><button id="logout" class="button">LOGOUT</button></div></header>
+<div class="panel-shell">
+<aside class="dashboard-sidebar"><div class="side-title">SHARDNOTE</div><nav class="side-nav">
+<a class="side-btn" href="dashboard.html"><span class="ico">⌂</span>Overview</a>
+<a class="side-btn" href="dashboard.html#members"><span class="ico">◉</span>Team Members</a>
+<a class="side-btn" href="teammates.html"><span class="ico">⌁</span>Find Teammates</a>
+<a class="side-btn" href="join-team.html"><span class="ico">＋</span>Join a Team</a>
+<a class="side-btn" href="dashboard.html#find-user"><span class="ico">⌕</span>Find User</a>
+<a class="side-btn" href="support.html"><span class="ico">?</span>Support</a>
+<a class="side-btn" href="report-cheater.html"><span class="ico">!</span>Report Cheater</a>
+<a class="side-btn" href="https://steamcommunity.com/groups/shardnotecs2" target="_blank" rel="noopener"><span class="ico">◈</span>Steam Group</a>
+<a id="admin-link" class="side-btn" style="display:none" href="admin.html"><span class="ico">⚙</span>Admin Panel</a>
+</nav><div class="side-bottom"><a class="side-btn" href="settings.html"><span class="ico">⚙</span>Settings</a></div></aside>
+<main class="panel-main"><div class="panel-wrap">
+<section class="panel-hero"><div><small>SHARDNOTE / TEAMS</small><h1>JOIN A TEAM</h1><p>Independent players can join an existing team with a team invite code.</p></div></section>
+<section class="panel-card join-team-card" style="text-align:center">
+<div class="join-team-icon">＋</div>
+<span class="team-state" id="state">INDEPENDENT PLAYER</span>
+<h2 id="title">Join an Existing Team</h2>
+<p id="copy" class="support-note">You're currently independent. Enter a valid one-time team invite code to join a team.</p>
+<div class="join-form">
+<input id="team-invite" class="team-name-input" maxlength="64" placeholder="Enter team invite code" autocomplete="off">
+<button id="join-team" class="button orange">JOIN TEAM</button>
+<p id="join-msg"></p>
+</div>
+<p class="join-help">Joining a team changes your current team membership. You cannot join a second team while already assigned to one.</p>
+</section>
+</div></main></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script><script src="ban-check.js"></script>
+<script>
+(async()=>{
+ const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+ const {data:{user}}=await sb.auth.getUser();if(!user){location.href="login.html";return;}
+ document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="index.html";};
+ const {data:role}=await sb.rpc("current_user_role");if(["owner","co_owner","admin"].includes(role))document.getElementById("admin-link").style.display="flex";
+ const {data:me}=await sb.from("team_members").select("team_id").eq("user_id",user.id).maybeSingle();
+ if(me?.team_id){
+   document.getElementById("state").textContent="ALREADY IN A TEAM";
+   document.getElementById("title").textContent="You're Already Assigned";
+   document.getElementById("copy").textContent="You already belong to a team. Team invites are disabled until your membership changes.";
+   document.getElementById("join-team").disabled=true;
+   document.getElementById("team-invite").disabled=true;
+   return;
+ }
+ document.getElementById("join-team").onclick=async()=>{
+   const code=document.getElementById("team-invite").value.trim().toUpperCase(),msg=document.getElementById("join-msg");
+   if(!code){msg.textContent="Enter a team invite code.";return;}
+   msg.textContent="Joining team...";
+   const {data,error}=await sb.rpc("join_team_by_invite",{p_code:code});
+   if(error||!data){msg.textContent=error?.message||"That team invite is invalid or already used.";return;}
+   msg.textContent="Team joined successfully. Opening dashboard...";
+   location.href="dashboard.html";
+ };
+})().catch(e=>{document.getElementById("join-msg").textContent="Join team error: "+String(e.message||e);});
+</script></body></html>

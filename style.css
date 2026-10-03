@@ -189,3 +189,11 @@ body:has(.dashboard-shell){overflow-x:hidden}
 .ban-button{border-color:#5b3041!important;color:#f0b2c4!important;background:#180b11!important}
 .ban-button:hover{border-color:#a24e69!important;background:#24101a!important}
 .delete-ticket{border-color:#5b3041!important;color:#f0b2c4!important;background:#180b11!important}
+
+/* Avatar sizing fix: keep every user image inside its intended badge */
+.user-avatar,.teammate-avatar,.member-avatar{overflow:hidden!important}
+.user-avatar img,.teammate-avatar img,.member-avatar img{display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:cover!important}
+.user-avatar{width:30px!important;height:30px!important;flex:0 0 30px!important;border-radius:9px!important}
+.teammate-avatar{width:48px!important;height:48px!important;flex:0 0 48px!important}
+.member-avatar{width:38px!important;height:38px!important;flex:0 0 38px!important}
+.all-user-directory{display:grid;gap:10px}

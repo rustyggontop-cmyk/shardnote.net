@@ -82,8 +82,11 @@
    const subject=document.getElementById("subject").value.trim(),message=document.getElementById("message").value.trim(),msg=document.getElementById("msg");
    if(subject.length<2||message.length<1){msg.textContent="Please enter a subject and a message.";return;}
    msg.textContent="Sending request...";
-   const {error}=await sb.from("support_tickets").insert({user_id:user.id,subject,message});
+   const {data:ticket,error}=await sb.from("support_tickets").insert({user_id:user.id,subject,message}).select("id").single();
    if(error){msg.textContent="Could not send request: "+error.message;return;}
+   try{
+     await fetch(window.SUPABASE_URL+"/functions/v1/notify-admin-tickets",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+(await sb.auth.getSession()).data.session?.access_token},body:JSON.stringify({type:"ticket",id:ticket.id})});
+   }catch(e){console.warn("Admin ticket notification unavailable",e);}
    msg.textContent="Support request sent successfully.";
    document.getElementById("subject").value="";
    document.getElementById("message").value="";

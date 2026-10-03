@@ -178,3 +178,14 @@ body:has(.dashboard-shell){overflow-x:hidden}
 .ticket-dialog-meta{margin-top:7px;color:#7f758c;font-size:11px}
 .ticket-dialog-message{margin-top:22px;padding:17px;border:1px solid #2a2038;border-radius:12px;background:#090711;color:#d5cddd;line-height:1.65;white-space:pre-wrap;word-break:break-word}
 .ticket-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+
+/* Consistent team setup fields */
+.team-name-input{display:block;width:100%;height:52px;margin:12px 0;padding:0 18px;background:#06040b!important;color:#f5f0ff!important;border:1px solid #3b2854!important;border-radius:999px!important;outline:none;font:500 14px Inter,Arial,sans-serif;transition:border-color .18s,box-shadow .18s,transform .18s}
+.team-name-input:focus{border-color:#a970ff!important;box-shadow:0 0 0 4px rgba(169,112,255,.09),0 14px 34px rgba(52,25,82,.2);transform:translateY(-1px)}
+.team-name-input::placeholder{color:#70677d}
+.team-or-divider{display:flex;align-items:center;gap:10px;margin:8px 0;color:#665d72;font:800 9px/1 Inter,Arial,sans-serif;letter-spacing:2px}
+.team-or-divider:before,.team-or-divider:after{content:"";height:1px;flex:1;background:#261c35}
+.team-or-divider span{padding:0 4px}
+.ban-button{border-color:#5b3041!important;color:#f0b2c4!important;background:#180b11!important}
+.ban-button:hover{border-color:#a24e69!important;background:#24101a!important}
+.delete-ticket{border-color:#5b3041!important;color:#f0b2c4!important;background:#180b11!important}

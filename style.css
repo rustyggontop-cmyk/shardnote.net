@@ -216,3 +216,10 @@ body:has(.dashboard-shell){overflow-x:hidden}
 @media(max-width:600px){.reply-bubble{max-width:94%}.reply-composer{border-radius:14px}.reply-send{padding:9px 12px!important}}
 
 .hero-logo{display:block;width:min(340px,72vw);height:auto;margin:0 auto 24px;object-fit:contain}
+
+/* Centered SHARDNOTE top branding */
+header{position:relative}
+header .brand{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;white-space:nowrap;z-index:2}
+header .brand .site-logo{height:42px;width:42px;margin-right:10px}
+header nav,header>div{position:relative;z-index:3}
+@media(max-width:700px){header{padding:0 16px}header .brand{font-size:12px}header .brand .site-logo{height:34px;width:34px;margin-right:7px}header .brand b{font-size:9px}}

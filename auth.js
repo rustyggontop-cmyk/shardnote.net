@@ -95,8 +95,10 @@ async function start(){
     logout.onclick=async()=>{await sb.auth.signOut();location.href="index.html"};
     const {data}=await sb.auth.getUser();
     if(!data.user){location.href="login.html";return}
-    document.getElementById("member").textContent=
-      "Logged in as "+(data.user.user_metadata?.username || data.user.email)+". You are a SHARDNOTE clan member.";
+    const memberEl=document.getElementById("member");
+    if(memberEl){
+      memberEl.textContent="Logged in as "+(data.user.user_metadata?.username || data.user.email)+". You are a SHARDNOTE clan member.";
+    }
     if(window.__shardnote_auth_required){document.documentElement.style.visibility="visible";}
   }
 }

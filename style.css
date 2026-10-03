@@ -201,13 +201,15 @@ body:has(.dashboard-shell){overflow-x:hidden}
 /* Chat-style reply composer */
 .reply-thread{display:grid;gap:9px;margin-top:12px}
 .reply-list{display:grid;gap:9px;max-height:360px;overflow:auto;padding:2px 1px 8px}
-.reply-bubble{max-width:88%;padding:10px 12px;border:1px solid #2d2440;border-radius:14px;background:#0c0913;color:#ddd5e5;line-height:1.5;word-break:break-word}
+.reply-bubble{max-width:88%;padding:10px 12px;border:1px solid #2d2440;border-radius:14px;background:#0c0913;color:#ffffff;line-height:1.5;word-break:break-word}
+.reply-bubble > div:not(.reply-author):not(.reply-time){color:#ffffff}
 .reply-bubble.reply-mine{justify-self:end;border-color:#573b76;background:#171023}
-.reply-author{font:800 10px/1 Inter,Arial,sans-serif;letter-spacing:.8px;text-transform:uppercase;color:#a970ff;margin-bottom:4px}
-.reply-time{margin-top:5px;font-size:9px;color:#6e6479}
+.reply-author{font:800 10px/1 Inter,Arial,sans-serif;letter-spacing:.8px;text-transform:uppercase;color:#ffffff;margin-bottom:4px}
+.reply-time{margin-top:5px;font-size:9px;color:#d9d9d9}
 .reply-composer{display:flex;align-items:flex-end;gap:8px;padding:7px;border:1px solid #302640;border-radius:16px;background:#080611;transition:border-color .18s,box-shadow .18s}
 .reply-composer:focus-within{border-color:#8b5fd3;box-shadow:0 0 0 3px rgba(169,112,255,.08)}
-.reply-composer textarea{flex:1!important;width:auto!important;min-height:42px!important;max-height:130px!important;margin:0!important;padding:10px 12px!important;border:0!important;background:transparent!important;box-shadow:none!important;transform:none!important;resize:none!important;font:500 13px/1.45 Inter,Arial,sans-serif!important}
+.reply-composer textarea{flex:1!important;width:auto!important;min-height:42px!important;max-height:130px!important;margin:0!important;padding:10px 12px!important;border:0!important;background:transparent!important;color:#ffffff!important;caret-color:#ffffff!important;box-shadow:none!important;transform:none!important;resize:none!important;font:500 13px/1.45 Inter,Arial,sans-serif!important}
+.reply-composer textarea::placeholder{color:#bdbdbd!important;opacity:1!important}
 .reply-composer textarea:focus{border:0!important;box-shadow:none!important;transform:none!important}
 .reply-send{flex:0 0 auto;margin:0!important;min-height:42px}
 .reply-msg{margin:0!important;font-size:10px}

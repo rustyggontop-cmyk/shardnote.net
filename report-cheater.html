@@ -38,7 +38,7 @@ const {data:{user}}=await sb.auth.getUser();if(!user){location.href="login.html"
 const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
 const {data:role}=await sb.rpc("current_user_role");if(role==="owner"||role==="co_owner"||role==="admin")document.getElementById("report-admin-link").style.display="flex";
 const {data:me}=await sb.from("team_members").select("team_id").eq("user_id",user.id).maybeSingle();
-const presetUser=params.get("username")||"",presetSteam=params.get("steam")||"";
+const presetUser=params.get("username")||"",presetSteam=params.get("steam")||"",presetUserId=params.get("id")||"";
 if(presetUser)document.getElementById("username").value=presetUser;
 if(presetSteam)document.getElementById("steam").value=presetSteam;
 
@@ -50,7 +50,7 @@ if(steam&&!/^https:\/\/steamcommunity\.com\/(profiles|id)\/[A-Za-z0-9_\-]+\/?$/i
 if(evidence&&!/^https:\/\/[^\s]+$/i.test(evidence)){msg.textContent="Enter a valid evidence URL.";return;}
 if(!me?.team_id){msg.textContent="You must belong to a team to submit a report.";return;}
 msg.textContent="Submitting report...";
-const {error}=await sb.from("cheater_reports").insert({reporter_id:user.id,team_id:me.team_id,reported_username:username,steam_url:steam||null,reason,evidence_url:evidence||null,details});
+const {error}=await sb.from("cheater_reports").insert({reporter_id:user.id,team_id:me.team_id,reported_user_id:presetUserId||null,reported_username:username,steam_url:steam||null,reason,evidence_url:evidence||null,details});
 if(error){msg.textContent="Could not submit report: "+error.message;return;}
 msg.textContent="Report submitted successfully.";["username","steam","evidence","details"].forEach(id=>document.getElementById(id).value="");document.getElementById("reason").value="";await load();
 };

@@ -30,7 +30,7 @@
 <section class="panel-card"><small>YOUR REPORTS</small><h2>Report History</h2><div id="report-history">Loading reports...</div></section>
 <section class="panel-card"><small>REPORTING GUIDELINES</small><h2>Before You Submit</h2><div class="support-note" style="line-height:1.7">Only report behavior you genuinely believe violates the rules. Include evidence when available and avoid submitting duplicate reports for the same incident.</div></section>
 </div></div></main></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="ban-check.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="realtime.js"></script><script src="ban-check.js"></script>
 <script>
 (async()=>{
 const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);const params=new URLSearchParams(location.search);document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="index.html";};
@@ -55,7 +55,7 @@ const renderReplies=async(reportId)=>{
 };
 let activeReportId=null;
 const openReport=async r=>{
- if(!r)return; activeReportId=r.id;
+ if(!r)return; activeReportId=r.id; window.__activeReportForLive=r.id;
  document.getElementById("report-modal-title").textContent=r.reported_username;
  document.getElementById("report-modal-meta").textContent=new Date(r.created_at).toLocaleString();
  document.getElementById("report-modal-reason").textContent=r.reason;
@@ -103,6 +103,14 @@ try{
 msg.textContent="Report submitted successfully.";["username","steam","evidence","details"].forEach(id=>document.getElementById(id).value="");document.getElementById("reason").value="";await load();
 };
 await load();
+ shardnoteLive(sb,[{table:"cheater_reports"},{table:"cheater_report_replies"}],payload=>{
+   if(payload.table==="cheater_report_replies"){
+     const reportId=payload.new?.report_id||payload.old?.report_id;
+     if(window.__activeReportForLive===reportId) renderReplies(reportId);
+   }else{
+     load();
+   }
+ });
 })().catch(e=>{const m=document.getElementById("report-msg");if(m)m.textContent="Report error: "+String(e.message||e);});
 <div id="report-modal" class="ticket-modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title"><div class="ticket-dialog"><div class="ticket-dialog-header"><div><small>MODERATION / REPORT</small><h2 id="report-modal-title" class="ticket-dialog-title">Report</h2><div id="report-modal-meta" class="ticket-dialog-meta"></div></div><button id="report-modal-close" class="button" type="button">CLOSE</button></div><div><span id="report-modal-status" class="report-status"></span><div id="report-modal-reason" class="ticket-dialog-meta"></div></div><div id="report-modal-details" class="ticket-dialog-message"></div><div id="report-modal-links" class="ticket-dialog-actions"></div><div class="ticket-dialog-message"><strong>REPLIES</strong><div id="report-replies" style="margin-top:10px"></div><div class="reply-composer"><textarea id="report-reply-message" maxlength="5000" placeholder="Write a reply..." rows="1"></textarea><button id="report-reply-send" type="button" class="button orange reply-send">SEND</button></div><p id="report-reply-msg" class="reply-msg"></p></div></div></div><script>
 document.getElementById("report-modal-close").onclick=()=>document.getElementById("report-modal").classList.remove("open");

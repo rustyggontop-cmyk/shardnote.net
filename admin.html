@@ -162,7 +162,7 @@ else{
  const userNames=Object.fromEntries((ticketMembers||[]).map(x=>[x.user_id,x.username]));
  ticketsBox.innerHTML=(tickets||[]).map(t=>"<div class='member-row ticket-row'><div><strong>"+esc(t.subject)+"</strong><div class='support-note'>"+esc(userNames[t.user_id]||"Team member")+" · "+new Date(t.created_at).toLocaleString()+"</div><div class='support-note'>"+esc(t.message).slice(0,150)+(String(t.message).length>150?"…":"")+"</div></div><div class='admin-actions'><span class='support-status'>"+esc(t.status).toUpperCase()+"</span><button type='button' class='button open-ticket' data-ticket='"+esc(t.id)+"'>VIEW TICKET</button><button type='button' class='button delete-ticket' data-ticket='"+esc(t.id)+"'>DELETE</button></div></div>").join("")||"No tickets.";
  const byId=Object.fromEntries((tickets||[]).map(t=>[t.id,t]));
- const modal=document.getElementById("ticket-modal"),close=()=>modal.classList.remove("open");let activeTicketId=null;
+ const getTicketModal=()=>document.getElementById("ticket-modal");const close=()=>getTicketModal()?.classList.remove("open");let activeTicketId=null;
 const renderTicketReplies=async(id)=>{
  const box=document.getElementById("ticket-replies"); box.textContent="Loading replies...";
  const {data,error}=await sb.from("support_replies").select("id,user_id,message,created_at").eq("ticket_id",id).order("created_at");
@@ -185,8 +185,7 @@ ticketsBox.querySelectorAll(".delete-ticket").forEach(btn=>btn.addEventListener(
  btn.closest(".ticket-row")?.remove();
 }));
 
- document.getElementById("ticket-close").onclick=close;
- modal.addEventListener("click",e=>{if(e.target===modal)close();});
+ document.addEventListener("click",e=>{if(e.target?.id==="ticket-close"||e.target?.id==="ticket-modal")close();});
  document.addEventListener("keydown",e=>{if(e.key==="Escape")close();});
 }
 
@@ -212,6 +211,14 @@ shardnoteLive(sb,[
  }
  location.reload();
 });
+
+window.__adminTicketPoll=true;
+setInterval(()=>{
+   if(document.visibilityState!=="visible")return;
+   if(window.__adminActiveTicketId&&getTicketModal()?.classList.contains("open")&&typeof window.__renderAdminTicketReplies==="function"){
+     window.__renderAdminTicketReplies(window.__adminActiveTicketId);
+   }
+ },2000);
 
 const {data:betaCodes,error:betaError}=await sb.from("beta_access_codes").select("code_label,uses,max_uses,active,valid_until").order("created_at",{ascending:false});
 const betaBox=document.getElementById("beta-codes");

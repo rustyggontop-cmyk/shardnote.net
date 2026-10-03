@@ -71,7 +71,8 @@ else{
    const banAction=u.is_banned
     ? "<button type='button' class='button unban-user' data-user='"+esc(u.user_id)+"' data-name='"+esc(u.username)+"'>UNBAN</button>"
     : (u.user_id!==user.id&&!(role==="admin"&&u.role==="co_owner")?"<button type='button' class='button ban-button ban-directory-user' data-user='"+esc(u.user_id)+"' data-name='"+esc(u.username)+"'>BAN PLAYER</button>":"");
-   return "<div class='member-row'><a class='profile-link' href='profile.html?id="+encodeURIComponent(u.user_id)+"'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><strong>"+esc(u.username)+"</strong><div class='profile-bio'>"+team+" · "+esc(String(u.role||"member").replace("_"," "))+"</div></div></a><div class='admin-actions'><span class='role-pill'>"+esc(state.toUpperCase())+"</span>"+banAction+"</div></div>";
+   const tagActions=(u.user_id!==user.id?"<button type='button' class='button directory-rename' data-user='"+esc(u.user_id)+"' data-name='"+esc(u.username)+"'>RENAME</button><button type='button' class='button directory-remove-tag' data-user='"+esc(u.user_id)+"'>REMOVE TAG</button>":"");
+   return "<div class='member-row'><a class='profile-link' href='profile.html?id="+encodeURIComponent(u.user_id)+"'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><strong>"+esc(u.username)+"</strong><div class='profile-bio'>"+team+" · "+esc(String(u.role||"member").replace("_"," "))+"</div></div></a><div class='admin-actions'><span class='role-pill'>"+esc(state.toUpperCase())+"</span>"+tagActions+banAction+"</div></div>";
  }).join("")||"No registered users.";
 }
 allUsersBox.querySelectorAll(".unban-user").forEach(b=>b.onclick=async()=>{
@@ -117,10 +118,9 @@ membersBox.querySelectorAll(".rename-user").forEach(b=>b.onclick=async()=>{
  const current=b.dataset.name||"",next=prompt("Enter a new username:",current);
  if(next===null)return;
  const name=next.trim();
- if(name.length<2||name.length>32){alert("Username must be 2-32 characters.");return;}
  if(name===current)return;
  b.disabled=true;
- const {error}=await sb.from("team_members").update({username:name}).eq("user_id",b.dataset.user).eq("team_id",me.team_id);
+ const {error}=await sb.rpc("admin_rename_user",{target_user:b.dataset.user,new_username:name});
  if(error){alert("Could not rename user: "+error.message);b.disabled=false;return;}
  b.textContent="RENAMED";setTimeout(()=>location.reload(),500);
 });

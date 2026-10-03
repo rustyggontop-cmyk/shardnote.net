@@ -71,7 +71,7 @@
      const avatar=p.avatar_url?"<img src='"+esc(p.avatar_url)+"' alt=''>":esc(String(p.username||"?").slice(0,1).toUpperCase());
      const tag=p.tag_name?"<span class='user-tag' style='margin-left:0;color:"+esc(p.tag_color)+";border:1px solid "+esc(p.tag_color)+";background:"+esc(p.tag_color)+"22'>"+esc(p.tag_name)+"</span>":"";
      const steam=p.steam_url?"<a class='steam-link' href='"+esc(p.steam_url)+"' target='_blank' rel='noopener'>STEAM PROFILE</a>":"";
-     return "<article class='teammate-card'><div class='teammate-main'><span class='teammate-avatar'>"+avatar+"</span><div class='teammate-copy'><div class='teammate-name'>"+esc(p.username)+" "+tag+"</div>"+(p.bio?"<div class='teammate-bio'>"+esc(p.bio)+"</div>":"")+"<div class='teammate-team'>"+esc(p.team_name||"Independent player")+"</div></div></div><div class='teammate-actions'>"+steam+"</div></article>";
+     return "<a class='teammate-card profile-link' href='profile.html?id="+encodeURIComponent(p.user_id)+"'><div class='teammate-main'><span class='teammate-avatar'>"+avatar+"</span><div class='teammate-copy'><div class='teammate-name'>"+esc(p.username)+" "+tag+"</div>"+(p.bio?"<div class='teammate-bio'>"+esc(p.bio)+"</div>":"")+"<div class='teammate-team'>"+esc(p.team_name||"Independent player")+"</div></div></div><div class='teammate-actions'>"+steam+"</div></a>";
    }).join("")||"<div class='user-search-empty' style='display:grid'><span>⌁</span><strong>No teammates found</strong><small>Try another username.</small></div>";
  };
  const input=document.getElementById("teammate-search"),out=document.getElementById("teammate-results");let timer;

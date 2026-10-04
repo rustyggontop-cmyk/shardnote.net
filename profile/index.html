@@ -139,31 +139,40 @@ if(isModerator){
     testBan.disabled=true;
     testBan.textContent="TESTING...";
     try{
-      const {data:{session}}=await sb.auth.getSession();
-      if(!session)throw new Error("Your session has expired. Please log in again.");
+      const {data:requestId,error}=await sb.rpc("admin_queue_discord_test_ban",{p_user_id:x.user_id});
+      if(error)throw new Error(error.message);
 
-      const response=await fetch(window.SUPABASE_URL+"/functions/v1/test-discord-ban",{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          "Authorization":"Bearer "+session.access_token,
-          "apikey":window.SUPABASE_ANON_KEY
-        },
-        body:JSON.stringify({user_id:x.user_id})
-      });
+      const id=Number(requestId);
+      if(!Number.isFinite(id))throw new Error("Test ban was not queued correctly.");
 
-      const result=await response.json().catch(()=>({}));
-      if(!response.ok||!result.ok)throw new Error(result.error||"Test ban failed.");
+      let done=false;
+      for(let i=0;i<15;i++){
+        await new Promise(resolve=>setTimeout(resolve,1000));
+        const {data:result,error:resultError}=await sb.rpc("admin_get_bot_test_result",{p_request_id:id});
+        if(resultError)throw new Error(resultError.message);
+        if(!result?.ready)continue;
+        done=true;
 
-      testBan.textContent="TEST SENT";
-      setTimeout(()=>testBan.textContent="TEST BAN",1500);
+        let payload=result.content;
+        if(typeof payload==="string"){try{payload=JSON.parse(payload)}catch(_){}}
+
+        if(Number(result.status_code)>=400||payload?.ok===false){
+          throw new Error(payload?.error||result.error_msg||"Test ban failed.");
+        }
+
+        testBan.textContent="TEST SENT";
+        setTimeout(()=>testBan.textContent="TEST BAN",1500);
+        break;
+      }
+
+      if(!done)throw new Error("Test is still processing. Try again in a moment.");
     }catch(error){
       alert("Could not send test ban message: "+(error?.message||error));
       testBan.textContent="TEST BAN";
     }finally{
       testBan.disabled=false;
     }
-  };
+  };;
   document.getElementById("profile-actions").appendChild(testBan);
 }
 

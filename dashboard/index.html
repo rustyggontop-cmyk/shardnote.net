@@ -258,8 +258,6 @@ return "<div class='member-row profile-link' role='link' tabindex='0' data-profi
     myProfile=profileRes.data||{};
     return true;
   };
-  await loadMyTags();
-
   const renderTags=()=>{
     const tags=myTags||[];
     slots.innerHTML=tags.length ? tags.map(t=>"<div style='display:flex;align-items:center;gap:12px;margin:8px 0'>"+tagHtml(t)+"<button type='button' class='button tag-use' data-tag='"+esc(t.id)+"'>"+(t.is_active?"ACTIVE":"USE")+"</button><button type='button' class='button tag-remove' data-tag='"+esc(t.id)+"'>REMOVE</button></div>").join("") : "<div style='opacity:.7'>No custom tags yet.</div>";
@@ -276,6 +274,7 @@ slots.querySelectorAll(".tag-remove").forEach(b=>b.onclick=async()=>{if(!confirm
     }
   };
   renderTags();
+  loadMyTags().then(ok=>{ if(ok) renderTags(); }).catch(e=>{console.error(e);ts.textContent="Could not load tags.";});
   document.getElementById("create-tag").onclick=async()=>{
     const name=document.getElementById("tag-name").value.trim(),color=document.getElementById("tag-color").value;
     if(!name){ts.textContent="Enter a tag name.";return;}

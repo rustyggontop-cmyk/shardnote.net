@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Report Cheater — SHARDNOTE</title><link rel="stylesheet" href="/style.css"></head>
+<title>Report Cheater — SHARDNOTE</title><link rel="stylesheet" href="/style.css"><script src="/supabase-config.js?v=3"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/site-gate.js?v=3"></script></head>
 <body><header><a class="brand" href="/"><img src="/logo.png" class="site-logo" alt="SHARDNOTE logo">CS<span>2</span><b> SHARDNOTE</b></a>
 <div style="display:flex;align-items:center;gap:8px"><a class="button" href="/dashboard/">DASHBOARD</a><button id="logout" class="button">LOGOUT</button></div></header>
 <div class="panel-shell">
@@ -29,7 +29,7 @@
 <section class="panel-card"><small>YOUR REPORTS</small><h2>Report History</h2><div id="report-history">Loading reports...</div></section>
 <section class="panel-card"><small>REPORTING GUIDELINES</small><h2>Before You Submit</h2><div class="support-note" style="line-height:1.7">Only report behavior you genuinely believe violates the rules. Include evidence when available and avoid submitting duplicate reports for the same incident.</div></section>
 </div></div></main></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/supabase-config.js"></script><script src="/realtime.js"></script><script src="/ban-check.js"></script>
+<script src="/realtime.js"></script><script src="/ban-check.js"></script>
 <script>
 (async()=>{
 const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);const params=new URLSearchParams(location.search);document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="/";};
@@ -115,5 +115,4 @@ await load();
 <div id="report-modal" class="ticket-modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title"><div class="ticket-dialog"><div class="ticket-dialog-header"><div><small>MODERATION / REPORT</small><h2 id="report-modal-title" class="ticket-dialog-title">Report</h2><div id="report-modal-meta" class="ticket-dialog-meta"></div></div><button id="report-modal-close" class="button" type="button">CLOSE</button></div><div><span id="report-modal-status" class="report-status"></span><div id="report-modal-reason" class="ticket-dialog-meta"></div></div><div id="report-modal-details" class="ticket-dialog-message"></div><div id="report-modal-links" class="ticket-dialog-actions"></div><div class="ticket-dialog-message"><strong>REPLIES</strong><div id="report-replies" style="margin-top:10px"></div><div class="reply-composer"><textarea id="report-reply-message" maxlength="5000" placeholder="Write a reply..." rows="1"></textarea><button id="report-reply-send" type="button" class="button orange reply-send">SEND</button></div><p id="report-reply-msg" class="reply-msg"></p></div></div></div><script>
 document.getElementById("report-modal-close").onclick=()=>document.getElementById("report-modal").classList.remove("open");
 document.getElementById("report-modal").addEventListener("click",e=>{if(e.target.id==="report-modal")e.currentTarget.classList.remove("open");});
-</script><script src="/site-settings.js"></script>
-</body></html>
+</script></body></html>

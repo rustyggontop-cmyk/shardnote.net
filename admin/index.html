@@ -32,16 +32,7 @@
 <section class="panel-hero"><div><small>SHARDNOTE / ADMINISTRATION</small><h1>ADMIN PANEL</h1><p id="status">Checking admin access...</p></div><div class="dashboard-subtle">Team administration</div></section>
 <div id="panel" class="panel-grid" style="display:none">
 <section class="panel-card wide"><small>OVERVIEW</small><h2>Team Activity</h2><div id="admin-stats" class="member-row">Loading team activity...</div></section>
-<section class="panel-card wide" id="site-controls" style="display:none">
-  <small>SITE CONTROLS</small>
-  <h2>Announcement Banner</h2>
-  <p class="support-note">Only the Site Owner and Co-owner can change these settings.</p>
-  <label style="display:block;margin:12px 0 6px;font-size:11px;font-weight:800;color:#a970ff;letter-spacing:1px">TOP BANNER</label>
-  <input id="site-banner-text" class="team-name-input" maxlength="160" placeholder="Banner text">
-  <button id="save-site-settings" type="button" class="button orange">SAVE SITE SETTINGS</button>
-  <span id="site-settings-msg" class="support-note"></span>
-</section>
- <section class="panel-card wide" id="service-controls" style="display:none"><small>SERVICE CONTROLS</small><h2>Service Availability</h2><p class="support-note">Disable individual services for members. Authorized staff can still access the site. Changes are reflected on /status/ and in Discord automatically.</p><div id="service-controls-list">Loading service controls...</div></section><section class="panel-card wide"><small>DIRECTORY</small><h2>ALL REGISTERED USERS</h2><p class="support-note">Every registered profile is shown here, including users without a team.</p><div id="all-users">Loading all users...</div></section>
+<section class="panel-card wide" id="service-controls" style="display:none"><small>SERVICE CONTROLS</small><h2>Service Availability</h2><p class="support-note">Disable individual services for members. Authorized staff can still access the site. Changes are reflected on /status/ and in Discord automatically.</p><div id="service-controls-list">Loading service controls...</div></section><section class="panel-card wide"><small>DIRECTORY</small><h2>ALL REGISTERED USERS</h2><p class="support-note">Every registered profile is shown here, including users without a team.</p><div id="all-users">Loading all users...</div></section>
 <section class="panel-card wide"><small>TEAM MODERATION</small><h2>ALL TEAMS</h2><p class="support-note">Admins, co-owners, and owners can remove inappropriate members from any team or delete an inappropriate team.</p><div id="all-teams">Loading teams...</div></section>
 <section class="panel-card wide"><small>TEAM MANAGEMENT</small><h2>Team Members</h2><p class="support-note">Admins can remove member tags. Only the owner can appoint a co-owner.</p><div id="admin-members">Loading team members...</div></section>
 <section class="panel-card"><small>SUPPORT</small><h2>Support Tickets</h2><p class="support-note">Select a ticket to open the full request.</p><div id="tickets">Loading tickets...</div></section>
@@ -67,31 +58,6 @@ if(!role||!["owner","co_owner","admin"].includes(role)){status.textContent="Acce
 status.textContent="Authorized as "+role.replace("_"," ").toUpperCase()+".";
 document.getElementById("panel").style.display="grid";
 
-if(role==="owner"||role==="co_owner"){
-  const controls=document.getElementById("site-controls");
-  if(controls)controls.style.display="block";
-  const bannerInput=document.getElementById("site-banner-text");
-  const siteMsg=document.getElementById("site-settings-msg");
-  const {data:siteSettings,error:siteSettingsError}=await sb.rpc("get_site_settings");
-  const siteData=Array.isArray(siteSettings)?siteSettings[0]:siteSettings;
-  if(siteSettingsError){siteMsg.textContent="Could not load site settings: "+siteSettingsError.message;}
-  if(siteData){
-    bannerInput.value=siteData.banner_text||"";
-  }
-  document.getElementById("save-site-settings").onclick=async()=>{
-    siteMsg.textContent="Saving...";
-    const {error}=await sb.rpc("update_site_settings",{
-      p_banner_text:bannerInput.value.trim(),
-      p_maintenance_mode:false
-    });
-    siteMsg.textContent=error?"Could not save: "+error.message:"Site settings saved.";
-    if(!error&&window.__shardnoteApplySiteSettings){
-      await window.__shardnoteApplySiteSettings({
-        banner_text:document.getElementById("site-banner-text").value.trim(),
-      });
-    }
-  };
-}
 if(role==="owner"||role==="co_owner"||role==="admin"){
   const sc=document.getElementById("service-controls"); sc.style.display="block";
   const box=document.getElementById("service-controls-list");

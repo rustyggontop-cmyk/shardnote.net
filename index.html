@@ -16,6 +16,29 @@
 })();
 </script>
 <script src="auth.js"></script><footer class="site-footer">Shardnote ™️ 2026 — All rights reserved to Shardnote.net</footer>
-<div id="live-status" class="live-status">Checking status…</div><script src="site-settings.js"></script><script>
-(async()=>{const el=document.getElementById("live-status");const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);async function update(){const {data,error}=await sb.rpc("get_service_statuses");if(error){el.textContent="Status unavailable";return}const down=(data||[]).filter(x=>x.manually_disabled);el.textContent=down.length?"Some services are currently down":"All systems operational";el.classList.toggle("down",down.length>0)}await update();setInterval(update,10000);try{sb.channel("live-service-status").on("postgres_changes",{event:"*",schema:"public",table:"service_status"},update).subscribe()}catch(e){}})();</script>
+<div id="live-status" class="live-status" role="status" aria-live="polite">Checking status…</div><script>
+(async()=>{
+ const el=document.getElementById("live-status");
+ const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+ let last="";
+ async function update(){
+   try{
+     const {data,error}=await sb.rpc("get_service_statuses");
+     if(error) throw error;
+     const services=Array.isArray(data)?data:[];
+     const down=services.filter(x=>x.manually_disabled);
+     const next=down.length?("Some services are currently down · "+down.map(x=>x.display_name).join(", ")):"All systems operational";
+     if(next!==last){el.textContent=next;last=next}
+     el.classList.toggle("down",down.length>0);
+   }catch(e){el.textContent="Status unavailable"}
+ }
+ await update();
+ setInterval(update,2000);
+ try{
+   sb.channel("live-service-status-"+Date.now())
+    .on("postgres_changes",{event:"*",schema:"public",table:"service_status"},()=>update())
+    .subscribe();
+ }catch(e){}
+})();
+</script></script>
 </body></html>

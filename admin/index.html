@@ -68,8 +68,22 @@ if(role==="owner"||role==="co_owner"||role==="admin"){
       const disable=btn.dataset.disabled!=="1"; btn.disabled=true;
       const msg=disable?prompt("Optional message for users:","This service is temporarily unavailable."):null;
       if(disable&&msg===null){btn.disabled=false;return;}
-      const {error}=await sb.rpc("update_service_status",{p_service_key:btn.dataset.key,p_manually_disabled:disable,p_maintenance_message:msg||"This service is temporarily unavailable."});
+      const {data:updated,error}=await sb.rpc("update_service_status",{p_service_key:btn.dataset.key,p_manually_disabled:disable,p_maintenance_message:msg||"This service is temporarily unavailable."});
       if(error){alert("Could not update service: "+error.message);btn.disabled=false;return;}
+      if(!updated || updated.service_key!==btn.dataset.key || Boolean(updated.manually_disabled)!==disable){
+        alert("The database did not confirm the requested status change.");
+        btn.disabled=false;
+        return;
+      }
+      // Verify with a fresh database read before reloading the panel.
+      const {data:verify,error:verifyError}=await sb.rpc("get_service_statuses");
+      if(verifyError){alert("Status changed, but verification failed: "+verifyError.message);btn.disabled=false;return;}
+      const row=Array.isArray(verify)?verify.find(x=>x.service_key===btn.dataset.key):null;
+      if(!row || Boolean(row.manually_disabled)!==disable){
+        alert("The service status did not persist in the database.");
+        btn.disabled=false;
+        return;
+      }
       await fetch(window.SUPABASE_URL+"/functions/v1/status-discord-bot",{method:"POST",headers:{"Content-Type":"application/json","apikey":window.SUPABASE_ANON_KEY},body:"{}"}).catch(()=>{});
       location.reload();
     });

@@ -248,16 +248,16 @@ return "<div class='member-row profile-link' role='link' tabindex='0' data-profi
   });
 
   const {data:myTags,error:myTagsError}=await sb.from("user_tags").select("id,tag_name,color,tag_slot").eq("user_id",user.id).order("tag_slot");
-  const {data:myProfile}=await sb.from("profiles").select("cat_found").eq("id",user.id).maybeSingle();
+  const {data:myProfile}=await sb.from("profiles").select("cat_found,shardnote_pro").eq("id",user.id).maybeSingle();
   const ts=document.getElementById("tag-status"),tc=document.getElementById("tag-create"),slots=document.getElementById("tag-slots");
   const renderTags=()=>{
     const tags=myTags||[];
     slots.innerHTML=tags.map(t=>"<div style='display:flex;align-items:center;gap:12px;margin:8px 0'>"+tagHtml(t)+"</div>").join("");
-    if(tags.length<2 && (tags.length===0 || myProfile?.cat_found)){
-      ts.textContent=tags.length===0?"Create your custom tag.":"You unlocked a second custom tag by finding the cat!";
+    if(tags.length<4 && (tags.length===0 || myProfile?.cat_found || myProfile?.shardnote_pro)){
+      ts.textContent=myProfile?.shardnote_pro?"Shardnote Pro: you can have up to 4 custom tags.":(tags.length===0?"Create your custom tag.":"You unlocked a second custom tag by finding the cat!");
       tc.style.display="block";
     }else{
-      ts.textContent=myProfile?.cat_found?"You have 2 custom tag slots.":"Find the secret cat to unlock a second tag.";
+      ts.textContent=myProfile?.shardnote_pro?"Shardnote Pro: you have 4 custom tag slots.":(myProfile?.cat_found?"You have 2 custom tag slots.":"Find the secret cat to unlock a second tag.");
       tc.style.display="none";
     }
   };
@@ -266,7 +266,8 @@ return "<div class='member-row profile-link' role='link' tabindex='0' data-profi
     const name=document.getElementById("tag-name").value.trim(),color=document.getElementById("tag-color").value;
     if(!name){ts.textContent="Enter a tag name.";return;}
     const slot=(myTags||[]).length+1;
-    if(slot===2&&!myProfile?.cat_found){ts.textContent="Find the secret cat first to unlock a second tag.";return;}
+    const maxTags=myProfile?.shardnote_pro?4:(myProfile?.cat_found?2:1);
+    if(slot>maxTags){ts.textContent=myProfile?.shardnote_pro?"Shardnote Pro allows up to 4 custom tags.":"Find the secret cat first to unlock a second tag.";return;}
     const {data,error}=await sb.rpc("create_my_tag",{p_name:name,p_color:color});
     if(error){ts.textContent=error.message;return;}
     myTags.push(data);document.getElementById("tag-name").value="";ts.textContent="Tag created!";

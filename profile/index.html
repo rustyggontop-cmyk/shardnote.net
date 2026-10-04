@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Profile — SHARDNOTE</title><link rel="stylesheet" href="/style.css">
 <style>.profile-verified{display:inline-block;margin-left:7px;color:#a970ff;font:800 10px/1 Inter,Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;vertical-align:middle}</style>
-</head>
+<script src="/supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/site-settings.js"></script></head>
 <body><header>
 <a class="brand" href="/"><img src="/logo.png" class="site-logo" alt="SHARDNOTE logo">CS<span>2</span><b> SHARDNOTE</b></a>
 <div style="display:flex;align-items:center;gap:8px"><a class="button" href="/dashboard/">DASHBOARD</a><button id="logout" class="button">LOGOUT</button></div>
@@ -44,8 +44,7 @@
 </section>
 </div></main>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/supabase-config.js"></script><script src="/realtime.js"></script><script src="/ban-check.js"></script>
+<script src="/realtime.js"></script><script src="/ban-check.js"></script>
 <script>
 (async()=>{
  const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
@@ -198,5 +197,4 @@ if(x.user_id!==user.id&&isModerator){
  const back=document.createElement("a");back.className="button";back.href="/teammates/";back.textContent="BACK TO FIND TEAMMATES";document.getElementById("profile-actions").appendChild(back);
 })().catch(e=>{document.getElementById("profile-name").textContent="Profile error";document.getElementById("profile-tagline").textContent=String(e.message||e);});
 </script>
-<script src="/site-settings.js"></script>
 </body></html>

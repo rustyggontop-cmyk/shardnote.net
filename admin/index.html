@@ -8,7 +8,7 @@
 .admin-actions .button{margin:0;padding:8px 10px;font-size:10px}
 .role-pill{display:inline-flex;align-items:center;padding:4px 7px;border:1px solid #4a3567;border-radius:999px;background:#151026;color:#cdb9ff;font:800 10px/1 Inter,Arial,sans-serif}
 </style>
-</head>
+<script src="/supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/site-settings.js"></script></head>
 <body><header>
 <a class="brand" href="/"><img src="/logo.png" class="site-logo" alt="SHARDNOTE logo">CS<span>2</span><b> SHARDNOTE</b></a>
 <div style="display:flex;align-items:center;gap:8px"><a class="button" href="/dashboard/">DASHBOARD</a><button id="logout" class="button">LOGOUT</button></div>
@@ -40,8 +40,7 @@
 <section class="panel-card"><small>STAFF ACCESS</small><div id="manage-roles"><h2>Manage Staff</h2><p class="support-note">Only designated staff can access this panel. Team Founder/Member status does not grant moderation access.</p><input id="admin-search" placeholder="Search a user..." autocomplete="off"><div id="admin-results"></div></div></section>
 </div></div></main>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/supabase-config.js"></script><script src="/realtime.js"></script><script src="/ban-check.js"></script>
+<script src="/realtime.js"></script><script src="/ban-check.js"></script>
 <script>
 (async()=>{
 const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
@@ -364,5 +363,4 @@ if(role==="owner"||role==="co_owner"){
  });
 })();
 </script>
-<script src="/site-settings.js"></script>
 </body></html>

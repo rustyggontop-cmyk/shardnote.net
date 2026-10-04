@@ -23,7 +23,7 @@
 .teammate-actions a{font-size:11px!important}
 @media(max-width:700px){.teammate-card{align-items:flex-start;flex-direction:column}.teammate-actions{width:100%}}
 </style>
-</head>
+<script src="/supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/site-settings.js"></script></head>
 <body><header>
 <a class="brand" href="/"><img src="/logo.png" class="site-logo" alt="SHARDNOTE logo">CS<span>2</span><b> SHARDNOTE</b></a>
 <div style="display:flex;align-items:center;gap:8px"><a class="button" href="/dashboard/">DASHBOARD</a><button id="logout" class="button">LOGOUT</button></div>
@@ -54,8 +54,7 @@
 </section>
 </div></main>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/supabase-config.js"></script><script src="/realtime.js"></script><script src="/ban-check.js"></script>
+<script src="/realtime.js"></script><script src="/ban-check.js"></script>
 <script>
 (async()=>{
  const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="/";};
@@ -107,5 +106,4 @@
  });
 })().catch(e=>{document.getElementById("teammate-results").innerHTML="<p class='support-note'>Teammate search error: "+String(e.message||e).replace(/[&<>]/g,"")+"</p>";});
 </script>
-<script src="/site-settings.js"></script>
 </body></html>

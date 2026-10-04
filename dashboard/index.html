@@ -251,7 +251,7 @@ return "<div class='member-row profile-link' role='link' tabindex='0' data-profi
   const ts=document.getElementById("tag-status"),tc=document.getElementById("tag-create"),slots=document.getElementById("tag-slots");
   const loadMyTags=async()=>{
     const tagRes=await sb.from("user_tags").select("id,tag_name,color,tag_slot,is_active").eq("user_id",user.id).order("tag_slot");
-    if(tagRes.error){console.error("Could not load tags:",tagRes.error);ts.textContent="Could not load tags: "+tagRes.error.message;return false;}
+    if(tagRes.error){console.error("Could not load tags:",tagRes.error);ts.textContent="Could not load tags: "+(tagRes.error.message||"Unknown error");return false;}
     myTags=tagRes.data||[];
     const profileRes=await sb.from("profiles").select("cat_found,shardnote_pro").eq("id",user.id).maybeSingle();
     if(profileRes.error){console.error("Could not load tag profile:",profileRes.error);ts.textContent="Could not load tag settings: "+profileRes.error.message;return false;}

@@ -47,7 +47,7 @@
   <button id="save-site-settings" type="button" class="button orange">SAVE SITE SETTINGS</button>
   <span id="site-settings-msg" class="support-note"></span>
 </section>
- <section class="panel-card wide"><small>DIRECTORY</small><h2>ALL REGISTERED USERS</h2><p class="support-note">Every registered profile is shown here, including users without a team.</p><div id="all-users">Loading all users...</div></section>
+ <section class="panel-card wide" id="service-controls" style="display:none"><small>SERVICE CONTROLS</small><h2>Service Availability</h2><p class="support-note">Disable individual services for members. Authorized staff can still access the site. Changes are reflected on /status/ and in Discord automatically.</p><div id="service-controls-list">Loading service controls...</div></section><section class="panel-card wide"><small>DIRECTORY</small><h2>ALL REGISTERED USERS</h2><p class="support-note">Every registered profile is shown here, including users without a team.</p><div id="all-users">Loading all users...</div></section>
 <section class="panel-card wide"><small>TEAM MODERATION</small><h2>ALL TEAMS</h2><p class="support-note">Admins, co-owners, and owners can remove inappropriate members from any team or delete an inappropriate team.</p><div id="all-teams">Loading teams...</div></section>
 <section class="panel-card wide"><small>TEAM MANAGEMENT</small><h2>Team Members</h2><p class="support-note">Admins can remove member tags. Only the owner can appoint a co-owner.</p><div id="admin-members">Loading team members...</div></section>
 <section class="panel-card"><small>SUPPORT</small><h2>Support Tickets</h2><p class="support-note">Select a ticket to open the full request.</p><div id="tickets">Loading tickets...</div></section>
@@ -101,6 +101,25 @@ if(role==="owner"||role==="co_owner"){
     }
   };
 }
+if(role==="owner"||role==="co_owner"||role==="admin"){
+  const sc=document.getElementById("service-controls"); sc.style.display="block";
+  const box=document.getElementById("service-controls-list");
+  const {data:services,error:servicesError}=await sb.rpc("get_service_statuses");
+  if(servicesError){box.textContent="Could not load service controls: "+servicesError.message;}
+  else{
+    box.innerHTML=(services||[]).map(s=>"<div class='member-row' style='margin:8px 0'><div class='profile-copy'><strong>"+esc(s.display_name)+"</strong><div class='profile-bio'>"+esc(s.description||"")+"</div></div><div class='admin-actions'><span class='role-pill'>"+(s.manually_disabled?"DOWN":"ONLINE")+"</span><button type='button' class='button service-toggle' data-key='"+esc(s.service_key)+"' data-disabled='"+(s.manually_disabled?"1":"0")+"'>"+(s.manually_disabled?"ENABLE":"SHUT DOWN")+"</button></div></div>").join("");
+    box.querySelectorAll(".service-toggle").forEach(btn=>btn.onclick=async()=>{
+      const disable=btn.dataset.disabled!=="1"; btn.disabled=true;
+      const msg=disable?prompt("Optional message for users:","This service is temporarily unavailable."):null;
+      if(disable&&msg===null){btn.disabled=false;return;}
+      const {error}=await sb.rpc("update_service_status",{p_service_key:btn.dataset.key,p_manually_disabled:disable,p_maintenance_message:msg||"This service is temporarily unavailable."});
+      if(error){alert("Could not update service: "+error.message);btn.disabled=false;return;}
+      await fetch(window.SUPABASE_URL+"/functions/v1/status-discord-bot",{method:"POST",headers:{"Content-Type":"application/json","apikey":window.SUPABASE_ANON_KEY},body:"{}"}).catch(()=>{});
+      location.reload();
+    });
+  }
+}
+
 if(role!=="owner"&&role!=="co_owner")document.getElementById("manage-roles").style.display="none";
 
 const {data:allUsers,error:allUsersError}=await sb.rpc("admin_list_all_users");

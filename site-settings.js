@@ -36,6 +36,16 @@
   };
 
   const hideMaintenance = () => document.getElementById("maintenance-screen")?.remove();
+  const serviceForPage = () => {
+    const p=page();
+    return ({index:"website",login:"login",register:"registration",profile:"profiles",teammates:"teams",dashboard:"dashboard",support:"support","report-cheater":"cheater_reports"})[p]||null;
+  };
+  const showServiceDown=(name,message)=>{
+    if(document.getElementById("service-down-screen"))return;
+    const overlay=document.createElement("div"); overlay.id="service-down-screen";
+    overlay.innerHTML='<div class="maintenance-card"><small>SHARDNOTE / SERVICE</small><h1>'+String(name||"SERVICE").toUpperCase()+' IS OFFLINE</h1><p>'+String(message||"This service is temporarily unavailable.")+'</p><p class="support-note">Staff can still access SHARDNOTE.</p><a class="button orange" href="/status/">VIEW STATUS</a></div>';
+    document.body.appendChild(overlay);
+  };
 
   const applySettings = async (sb, settings) => {
     currentState = settings || currentState;
@@ -54,6 +64,12 @@
       canBypass = !error && data === true;
     }
 
+    const serviceKey=serviceForPage();
+    if(serviceKey && !canBypass){
+      const {data:services}=await sb.rpc("get_service_statuses").catch(()=>({data:null}));
+      const service=Array.isArray(services)?services.find(x=>x.service_key===serviceKey):null;
+      if(service?.manually_disabled){showServiceDown(service.display_name,service.maintenance_message);document.documentElement.style.visibility="visible";return;}
+    }
     if (canBypass) {
       hideMaintenance();
     } else {

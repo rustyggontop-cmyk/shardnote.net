@@ -20,7 +20,7 @@
 <main class="status-page"><div class="status-wrap">
 <div class="status-head"><div><small>SHARDNOTE.NET</small><h1>System <span>Status</span></h1><p>Live checks for the services that keep SHARDNOTE running.</p></div></div>
 <div class="overall" id="overall"><i class="dot" id="overallDot"></i><div><strong id="overallText">Checking systems…</strong><span id="overallSub">Running live health checks</span></div></div>
-<div class="status-card" id="checks"></div>
+<div class="status-card" id="checks"></div><div class="refresh">Staff-controlled shutdowns are shown as DOWN even when the website itself is reachable.</div>
 <div class="refresh">Last checked <span id="last">—</span> · <button onclick="runChecks()">Check again</button></div>
 </div></main>
 <footer class="site-footer">Shardnote ™️ 2026 — All rights reserved to Shardnote.net</footer>
@@ -41,16 +41,22 @@ async function pageCheck(path){
  const r=await fetch(path,{method:'GET',cache:'no-store'}); return r.ok;
 }
 async function runChecks(){
+ const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+ const {data:serviceStates}=await sb.rpc("get_service_statuses");
+ const stateMap=new Map((serviceStates||[]).map(s=>[s.service_key,s]));
  const box=document.getElementById('checks'); box.innerHTML=checks.map(c=>'<div class="status-row" id="row-'+c[0].replace(/\W/g,'')+'"><i class="dot warn"></i><div class="status-info"><strong>'+c[0]+'</strong><small>'+c[1]+'</small></div><span class="status-pill warn">CHECKING</span></div>').join('');
  const results=await Promise.all(checks.map(async c=>{
+   const key=c[0]==='Cheater Reports'?'cheater_reports':c[0].toLowerCase();
+   const state=stateMap.get(key);
+   if(state?.manually_disabled) return [c[0],false,state.maintenance_message||'Disabled by staff'];
    try{
-    if(c[3]==='page') return [c[0],await pageCheck(c[2])];
+    if(c[3]==='page') return [c[0],await pageCheck(c[2]),''];
     const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
-    const {error}=await sb.from('profiles').select('id').limit(1); return [c[0],!error||!String(error.message).toLowerCase().includes('network')];
-   }catch(e){return [c[0],false]}
+    const {error}=await sb.from('profiles').select('id').limit(1); return [c[0],!error||!String(error.message).toLowerCase().includes('network'),''];
+   }catch(e){return [c[0],false,e?.message||'Request failed']}
  }));
  let good=0;
- results.forEach(([name,ok])=>{const row=document.getElementById('row-'+name.replace(/\W/g,''));const d=row.querySelector('.dot'),p=row.querySelector('.status-pill');d.className='dot '+(ok?'':'down');p.className='status-pill '+(ok?'ok':'down');p.textContent=ok?'OPERATIONAL':'DOWN';if(ok)good++;});
+ results.forEach(([name,ok,error])=>{const row=document.getElementById('row-'+name.replace(/\W/g,''));const d=row.querySelector('.dot'),p=row.querySelector('.status-pill');d.className='dot '+(ok?'':'down');p.className='status-pill '+(ok?'ok':'down');p.textContent=ok?'OPERATIONAL':'DOWN';if(!ok&&error) row.querySelector('.status-info small').textContent=error;if(ok)good++;});
  const dot=document.getElementById('overallDot'),text=document.getElementById('overallText'),sub=document.getElementById('overallSub');
  if(good===results.length){dot.className='dot';text.textContent='All systems operational';sub.textContent=good+' of '+results.length+' services are responding normally.'}
  else if(good>0){dot.className='dot warn';text.textContent='Some systems are experiencing issues';sub.textContent=good+' of '+results.length+' services are responding normally.'}

@@ -28,17 +28,11 @@ p{color:#c4b5fd;font-size:18px;margin:0}#sound{margin-top:18px;padding:10px 18px
  try{
   const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
   const {data:{session}}=await sb.auth.getSession();
-  if(!session){reward.textContent="Log in to Shardnote to unlock the two secret cat tags!";return;}
-  const tags=[
-   {tag_name:"Maxwell",color:"#a855f7"},
-   {tag_name:"Spinning Cat",color:"#c084fc"}
-  ];
-  for(const tag of tags){
-   const {data:existing}=await sb.from("user_tags").select("id").eq("user_id",session.user.id).eq("tag_name",tag.tag_name).limit(1);
-   if(!existing?.length) await sb.from("user_tags").insert({user_id:session.user.id,tag_name:tag.tag_name,color:tag.color});
-  }
-  reward.textContent="🎉 You unlocked 2 secret tags: Maxwell + Spinning Cat!";
- }catch(e){console.error(e);reward.textContent="Could not unlock the secret tags. Please try again while logged in.";}
+  if(!session){reward.textContent="Log in to Shardnote to unlock your second custom tag!";return;}
+  const {error}=await sb.from("profiles").update({cat_found:true}).eq("id",session.user.id);
+  if(error) throw error;
+  reward.textContent="🎉 Secret found! You can now create a second custom tag.";
+ }catch(e){console.error(e);reward.textContent="Could not unlock the second tag. Please try again."; }
 })();
 </script>
 </body>

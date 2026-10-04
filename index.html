@@ -16,17 +16,10 @@
 })();
 </script>
 <script src="auth.js"></script><footer class="site-footer">Shardnote ™️ 2026 — All rights reserved to Shardnote.net</footer>
-<div id="live-status" class="live-status" role="status" aria-live="polite"><span class="live-status-badge"><i></i><span id="live-status-text">CHECKING STATUS</span></span><span class="live-trademark">SHARDNOTE ™️</span></div><script>
+<div id="live-status" class="live-status" role="status" aria-live="polite"><a class="live-status-badge" href="/status/"><i></i><span id="live-status-text">CHECKING STATUS</span></a></div><script>
 (function(){
- const el=document.getElementById("live-status-text"), root=document.getElementById("live-status");
- async function check(){
-  try{
-   const res=await fetch(window.SUPABASE_URL+"/rest/v1/rpc/get_service_statuses",{method:"POST",headers:{apikey:window.SUPABASE_ANON_KEY,Authorization:"Bearer "+window.SUPABASE_ANON_KEY,"Content-Type":"application/json"},body:"{}"});
-   if(!res.ok)throw 0; const rows=await res.json(), down=(Array.isArray(rows)?rows:[]).filter(x=>x.manually_disabled);
-   el.textContent=down.length?"SOME SERVICES ARE DOWN":"ALL SYSTEMS OPERATIONAL"; root.classList.toggle("down",down.length>0);
-  }catch(e){el.textContent="STATUS UNAVAILABLE";root.classList.remove("down")}
- }
- check(); setInterval(check,1000);
+ const el=document.getElementById("live-status-text"),root=document.getElementById("live-status");
+ async function check(){try{const res=await fetch(window.SUPABASE_URL+"/rest/v1/rpc/get_service_statuses",{method:"POST",headers:{apikey:window.SUPABASE_ANON_KEY,Authorization:"Bearer "+window.SUPABASE_ANON_KEY,"Content-Type":"application/json"},body:"{}"});if(!res.ok)throw 0;const rows=await res.json(),down=(Array.isArray(rows)?rows:[]).filter(x=>x.manually_disabled);el.textContent=down.length?"SOME SERVICES ARE DOWN":"ALL SYSTEMS OPERATIONAL";root.classList.toggle("down",down.length>0)}catch(e){el.textContent="STATUS UNAVAILABLE";root.classList.remove("down")}}check();setInterval(check,1000);
 })();
 </script>
 </body></html>

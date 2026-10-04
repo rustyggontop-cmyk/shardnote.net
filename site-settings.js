@@ -16,10 +16,10 @@ const serviceForPage=()=>({index:"website",login:"login",register:"registration"
 const maintenancePage=()=>page()==="maintenance";
 const redirectIfWebsiteDown=async sb=>{
  if(maintenancePage()) return true;
- const {data:userData}=await sb.auth.getUser().catch(()=>({data:{user:null}}));
+ try{const {data:userData}=await sb.auth.getUser().catch(()=>({data:{user:null}}));
  if(userData?.user){const {data:role}=await sb.rpc("current_user_role").catch(()=>({data:null}));if(["owner","co_owner","admin"].includes(role))return false}
- const {data:sv,error}=await sb.rpc("get_service_statuses").catch(()=>({data:null,error:null}));
- if(!error&&Array.isArray(sv)){const website=sv.find(x=>x.service_key==="website");if(website?.manually_disabled){location.replace("/maintenance");return true}}
+ const res=await fetch(window.SUPABASE_URL+"/rest/v1/rpc/get_service_statuses",{method:"POST",headers:{apikey:window.SUPABASE_ANON_KEY,Authorization:"Bearer "+window.SUPABASE_ANON_KEY,"Content-Type":"application/json"},body:"{}"});
+ if(res.ok){const sv=await res.json();const website=(Array.isArray(sv)?sv:[]).find(x=>x.service_key==="website");if(website?.manually_disabled){location.replace("/maintenance/");return true}}}catch(e){console.error("Website status check failed",e)}
  return false;
 };
 const showServiceDown=(n,m)=>{if(document.getElementById("service-down-screen"))return;const o=document.createElement("div");o.id="service-down-screen";o.innerHTML='<div class="maintenance-card"><small>SHARDNOTE / SERVICE</small><h1>'+String(n||"SERVICE").toUpperCase()+' IS OFFLINE</h1><p>'+String(m||"This service is temporarily unavailable.")+'</p><p class="support-note">Staff can still access SHARDNOTE.</p><a class="button orange" href="/status/">VIEW STATUS</a></div>';document.body.appendChild(o)};

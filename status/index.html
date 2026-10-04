@@ -23,44 +23,35 @@
 <div class="refresh">Last checked <span id="last">—</span> · <button type="button" id="again">Check again</button></div>
 </div></main>
 <footer class="site-footer">Shardnote ™️ 2026 — All rights reserved to Shardnote.net</footer>
-<script src="/supabase-config.js?v=6"></script>
+
 <script>
+const SUPABASE_URL="https://urgnvgchzajvnxiwyckc.supabase.co";
+const SUPABASE_KEY="sb_publishable_O6bwaV-LOdtT0BeAlhph7A__mbDDtM9";
 async function runChecks(){
  const dot=document.getElementById("overallDot"),title=document.getElementById("overallText"),sub=document.getElementById("overallSub");
+ dot.className="dot warn";title.textContent="Checking website…";sub.textContent="Reading the current website status";
  try{
-  const r=await fetch(window.SUPABASE_URL+"/rest/v1/rpc/get_service_statuses?ts="+Date.now(),{
-   method:"POST",
-   cache:"no-store",
-   headers:{
-    "apikey":window.SUPABASE_ANON_KEY,
-    "Authorization":"Bearer "+window.SUPABASE_ANON_KEY,
-    "Content-Type":"application/json",
-    "Cache-Control":"no-cache"
-   },
+  const r=await fetch(SUPABASE_URL+"/rest/v1/rpc/get_service_statuses?ts="+Date.now(),{
+   method:"POST",cache:"no-store",
+   headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json","Cache-Control":"no-cache"},
    body:"{}"
   });
+  const raw=await r.text();
   if(!r.ok)throw new Error("Status request failed (HTTP "+r.status+").");
-  const data=await r.json();
+  let data;try{data=JSON.parse(raw)}catch{throw new Error("Invalid status response.");}
   const website=Array.isArray(data)?data.find(x=>x.service_key==="website"):null;
   if(!website)throw new Error("Website status is unavailable.");
   if(website.manually_disabled){
-   dot.className="dot down";
-   title.textContent="Website is offline";
-   sub.textContent=website.maintenance_message||"Disabled by staff.";
+   dot.className="dot down";title.textContent="Website is offline";sub.textContent="Disabled by staff.";
   }else{
-   dot.className="dot";
-   title.textContent="Website is operational";
-   sub.textContent="SHARDNOTE is online.";
+   dot.className="dot";title.textContent="Website is operational";sub.textContent="SHARDNOTE is online.";
   }
  }catch(e){
-  dot.className="dot warn";
-  title.textContent="Status unavailable";
-  sub.textContent=e?.message||"Could not read website status.";
+  dot.className="dot warn";title.textContent="Status unavailable";sub.textContent=e?.message||"Could not read website status.";
  }
  document.getElementById("last").textContent=new Date().toLocaleTimeString();
 }
 document.getElementById("again").onclick=runChecks;
-runChecks();
-setInterval(runChecks,1000);
+runChecks();setInterval(runChecks,3000);
 </script>
 </body></html>

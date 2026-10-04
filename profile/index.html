@@ -159,6 +159,41 @@ if(x.user_id!==user.id&&isModerator){
       }
     };
     document.getElementById("profile-actions").appendChild(modButton);
+
+    const deleteButton=document.createElement("button");
+    deleteButton.type="button";
+    deleteButton.className="button ban-button";
+    deleteButton.textContent="DELETE PLAYER";
+    deleteButton.onclick=async()=>{
+      const name=x.username||"this player";
+      if(!confirm("Permanently delete "+name+"? This removes their SHARDNOTE account and cannot be undone."))return;
+      const typed=prompt('Type DELETE to permanently remove '+name+'.');
+      if(typed!=="DELETE")return;
+      deleteButton.disabled=true;
+      deleteButton.textContent="DELETING...";
+      const {data:{session}}=await sb.auth.getSession();
+      if(!session){
+        alert("Your session has expired. Please log in again.");
+        deleteButton.disabled=false;deleteButton.textContent="DELETE PLAYER";return;
+      }
+      const response=await fetch(window.SUPABASE_URL+"/functions/v1/admin-delete-user",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":"Bearer "+session.access_token
+        },
+        body:JSON.stringify({user_id:x.user_id})
+      });
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok||!result.ok){
+        alert("Could not delete player: "+(result.error||"Deletion failed."));
+        deleteButton.disabled=false;deleteButton.textContent="DELETE PLAYER";
+        return;
+      }
+      deleteButton.textContent="DELETED";
+      location.href="/teammates/";
+    };
+    document.getElementById("profile-actions").appendChild(deleteButton);
   }
 }
  const back=document.createElement("a");back.className="button";back.href="/teammates/";back.textContent="BACK TO FIND TEAMMATES";document.getElementById("profile-actions").appendChild(back);

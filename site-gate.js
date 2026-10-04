@@ -1,13 +1,17 @@
 (() => {
   document.documentElement.style.visibility = "hidden";
 
-  const path = location.pathname.replace(/\/+/g, "/");
-  const page = (() => {
-    const parts = path.split("/").filter(Boolean);
-    return (parts[parts.length - 1] || "index").replace(/\.html$/i, "").toLowerCase();
-  })();
+  const parts = location.pathname.split("/").filter(Boolean);
+  const page = (parts[parts.length - 1] || "index").replace(/\.html$/i, "").toLowerCase();
 
-  const exempt = page === "maintenance" || page === "status" || page === "banned";
+  // These pages must remain reachable while the rest of SHARDNOTE is disabled.
+  if (page === "maintenance" || page === "status" || page === "banned") {
+    document.documentElement.style.visibility = "visible";
+    return;
+  }
+
+  const SUPABASE_URL = window.SUPABASE_URL;
+  const SUPABASE_KEY = window.SUPABASE_ANON_KEY;
 
   const serviceForPage = {
     index: "website",
@@ -20,86 +24,72 @@
     "report-cheater": "cheater_reports"
   };
 
-  const reveal = () => {
-    document.documentElement.style.visibility = "visible";
+  const maintenance = () => location.replace("/maintenance/");
+
+  const rpc = async (name, body = {}) => {
+    const response = await fetch(
+      SUPABASE_URL + "/rest/v1/rpc/" + encodeURIComponent(name),
+      {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": "Bearer " + SUPABASE_KEY,
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache"
+        },
+        body: JSON.stringify(body)
+      }
+    );
+    if (!response.ok) throw new Error("RPC " + name + " returned HTTP " + response.status);
+    return response.json();
   };
 
-  const waitForSupabase = async () => {
-    for (let i = 0; i < 200; i++) {
-      if (
-        window.supabase &&
-        typeof window.supabase.createClient === "function" &&
-        window.SUPABASE_URL &&
-        window.SUPABASE_ANON_KEY
-      ) return true;
-      await new Promise(r => setTimeout(r, 25));
+  const currentRole = async () => {
+    try {
+      // Use the Supabase client only for identifying the signed-in user/role.
+      if (!window.supabase?.createClient) return null;
+      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const { data: { user } = {} } = await sb.auth.getUser();
+      if (!user) return null;
+      const { data: role } = await sb.rpc("current_user_role");
+      return role || null;
+    } catch (error) {
+      console.error("SHARDNOTE role lookup failed:", error);
+      return null;
     }
-    return false;
-  };
-
-  const getClient = () =>
-    window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-
-  const roleOf = async (sb) => {
-    const { data: { user } = {} } = await sb.auth.getUser().catch(() => ({ data: { user: null } }));
-    if (!user) return { user: null, role: null };
-    const { data: role } = await sb.rpc("current_user_role").catch(() => ({ data: null }));
-    return { user, role: role || null };
-  };
-
-  const redirectToMaintenance = () => {
-    location.replace("/maintenance/");
-    return true;
   };
 
   const run = async () => {
-    if (exempt) {
-      reveal();
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      console.error("SHARDNOTE: Supabase configuration missing.");
       return;
     }
 
-    if (!(await waitForSupabase())) {
-      console.error("SHARDNOTE: Supabase failed to initialize.");
-      reveal();
-      return;
-    }
+    let services;
+    try {
+      services = await rpc("get_service_statuses");
+    } catch (error) {
+      console.error("SHARDNOTE: Status service unavailable:", error);
 
-    const sb = getClient();
-    const { user, role } = await roleOf(sb);
-
-    // Only the site Owner and Co-owner may bypass a full Website shutdown.
-    const privileged = role === "owner" || role === "co_owner";
-
-    // Bans always win over normal site access.
-    if (user) {
-      const { data: banned } = await sb.rpc("is_current_user_banned").catch(() => ({ data: false }));
-      if (banned === true) {
-        location.replace("/banned/");
-        return;
-      }
-    }
-
-    const { data: services, error } = await sb.rpc("get_service_statuses");
-
-    // Do not silently treat a failed status read as "online" on protected pages.
-    if (error) {
-      console.error("SHARDNOTE: Could not read service status:", error);
-      reveal();
+      // Fail closed for all protected pages. Login is the only controlled
+      // escape route when status data itself cannot be read.
+      if (page !== "login") maintenance();
       return;
     }
 
     const list = Array.isArray(services) ? services : [];
     const website = list.find(x => x.service_key === "website");
+    const role = await currentRole();
+    const privileged = role === "owner" || role === "co_owner";
 
-    if (website?.manually_disabled && !privileged) {
-      // Login remains available as the controlled authentication escape hatch;
-      // the login Edge Function separately rejects non-staff users in maintenance.
-      if (page !== "login") {
-        redirectToMaintenance();
-        return;
-      }
+    if (website?.manually_disabled && !privileged && page !== "login") {
+      maintenance();
+      return;
     }
 
+    // Login itself is allowed to load so staff can authenticate, but the
+    // login Edge Function rejects non-staff users while Website is disabled.
     const serviceKey = serviceForPage[page];
     if (serviceKey && serviceKey !== "website" && !privileged) {
       const service = list.find(x => x.service_key === serviceKey);
@@ -110,8 +100,8 @@
         overlay.innerHTML =
           '<div class="maintenance-card">' +
           '<small>SHARDNOTE / SERVICE</small>' +
-          '<h1>' + escapeHtml(service.display_name || "SERVICE").toUpperCase() + ' IS OFFLINE</h1>' +
-          '<p>' + escapeHtml(service.maintenance_message || "This service is temporarily unavailable.") + '</p>' +
+          '<h1>' + String(service.display_name || "SERVICE").replace(/[&<>"]/g, "") + ' IS OFFLINE</h1>' +
+          '<p>' + String(service.maintenance_message || "This service is temporarily unavailable.").replace(/[&<>"]/g, "") + '</p>' +
           '<a class="button orange" href="/status/">VIEW STATUS</a>' +
           '</div>';
         document.documentElement.appendChild(overlay);
@@ -119,25 +109,12 @@
       }
     }
 
-    reveal();
+    document.documentElement.style.visibility = "visible";
   };
 
-  const escapeHtml = v =>
-    String(v ?? "").replace(/[&<>"]/g, c => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;"
-    }[c]));
-
   run().catch(error => {
-    console.error("SHARDNOTE gate error:", error);
-    reveal();
-  });
-
-  window.addEventListener("pageshow", () => {
-    if (!exempt && document.documentElement.style.visibility !== "hidden") {
-      run().catch(() => reveal());
-    }
+    console.error("SHARDNOTE site gate failed:", error);
+    if (page !== "login") maintenance();
+    else document.documentElement.style.visibility = "visible";
   });
 })();

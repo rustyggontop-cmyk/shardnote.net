@@ -48,6 +48,8 @@ async function runChecks(){
   if(!website)throw new Error("Website status is unavailable.");
   if(website.manually_disabled){
    overall.className="overall down";dot.className="dot down";title.textContent="Website is offline";sub.textContent="Disabled by staff.";
+  }else if(website.last_ok===false){
+   overall.className="overall warn";dot.className="dot warn";title.textContent="Website has issues";sub.textContent="A health check is failing.";
   }else{
    overall.className="overall ok";dot.className="dot";title.textContent="Website is operational";sub.textContent="SHARDNOTE is online.";
   }

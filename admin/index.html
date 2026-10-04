@@ -7,6 +7,13 @@
 .admin-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
 .admin-actions .button{margin:0;padding:8px 10px;font-size:10px}
 .role-pill{display:inline-flex;align-items:center;padding:4px 7px;border:1px solid #4a3567;border-radius:999px;background:#151026;color:#cdb9ff;font:800 10px/1 Inter,Arial,sans-serif}
+.audit-list{display:grid;gap:8px;max-height:620px;overflow:auto}
+.audit-row{display:flex;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid #21182f}
+.audit-main{min-width:0}
+.audit-action{font-weight:800;color:#eee}
+.audit-meta{color:#8f8599;font-size:11px;margin-top:4px}
+.audit-time{color:#6f6678;font-size:10px;white-space:nowrap}
+.audit-details{color:#aaa1b0;font-size:10px;margin-top:5px;word-break:break-word}
 </style>
 <script src="/supabase-config.js?v=3"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/site-gate.js?v=5"></script><script src="/i18n.js?v=3"></script></head>
 <body><header>
@@ -50,7 +57,13 @@
     <button type="button" class="button" id="test-discord-bot">TEST BOT</button>
     <span id="bot-test-result" class="support-note">Ready to test.</span>
   </div>
-</section><section class="panel-card wide"><small>DIRECTORY</small><h2>ALL REGISTERED USERS</h2><p class="support-note">Every registered profile is shown here, including users without a team.</p><div id="all-users">Loading all users...</div></section>
+</section><section class="panel-card wide" id="audit-log-section">
+  <small>AUDIT LOG</small>
+  <h2>Admin Activity</h2>
+  <p class="support-note">Every tracked website and admin change is recorded here with the person who made it.</p>
+  <div id="audit-log" class="audit-list">Loading audit log...</div>
+</section>
+<section class="panel-card wide"><small>DIRECTORY</small><h2>ALL REGISTERED USERS</h2><p class="support-note">Every registered profile is shown here, including users without a team.</p><div id="all-users">Loading all users...</div></section>
 <section class="panel-card wide"><small>TEAM MODERATION</small><h2>ALL TEAMS</h2><p class="support-note">Admins, co-owners, and owners can remove inappropriate members from any team or delete an inappropriate team.</p><div id="all-teams">Loading teams...</div></section>
 <section class="panel-card wide"><small>TEAM MANAGEMENT</small><h2>Team Members</h2><p class="support-note">Admins can remove member tags. Only the owner can appoint a co-owner.</p><div id="admin-members">Loading team members...</div></section>
 <section class="panel-card"><small>SUPPORT</small><h2>Support Tickets</h2><p class="support-note">Select a ticket to open the full request.</p><div id="tickets">Loading tickets...</div></section>
@@ -135,6 +148,20 @@ const renderAuditLogs=async()=>{
 };
 document.getElementById("refresh-audit-logs").onclick=renderAuditLogs;
 await renderAuditLogs();
+
+const loadAuditLog=async()=>{
+  const box=document.getElementById("audit-log");
+  const {data,error}=await sb.rpc("admin_get_audit_logs",{p_limit:200});
+  if(error){
+    box.innerHTML="<p class='support-note'>Could not load audit log: "+esc(error.message)+"</p>";
+    return;
+  }
+  box.innerHTML=(data||[]).map(log=>{
+    const details=log.details&&typeof log.details==="object"?JSON.stringify(log.details):String(log.details||"");
+    return "<div class='audit-row'><div class='audit-main'><div class='audit-action'>"+esc(String(log.action||"").replaceAll("_"," ").toUpperCase())+"</div><div class='audit-meta'>"+esc(log.actor_username||"Unknown")+" · "+esc(log.target_type||"")+" · "+esc(log.target_id||"")+"</div>"+(details&&details!=="{}"?"<div class='audit-details'>"+esc(details)+"</div>":"")+"</div><div class='audit-time'>"+new Date(log.created_at).toLocaleString()+"</div></div>";
+  }).join("")||"<p class='support-note'>No audit events yet.</p>";
+};
+await loadAuditLog();
 
 document.getElementById("test-discord-bot").onclick=async()=>{
   const btn=document.getElementById("test-discord-bot");

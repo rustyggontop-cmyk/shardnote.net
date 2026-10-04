@@ -48,7 +48,7 @@ async function runChecks(){
   const website=Array.isArray(data)?data.find(x=>x.service_key==="website"):null;
   if(!website)throw new Error("Website status is unavailable.");
   if(website.manually_disabled){
-   overall.className="overall down";dot.className="dot down";title.textContent="Website is offline";sub.textContent="Disabled by staff.";
+   overall.className="overall down";dot.className="dot down";title.textContent="Website is offline";sub.textContent="SHARDNOTE is offline.";
   }else{
    overall.className="overall ok";dot.className="dot";title.textContent="Website is operational";sub.textContent="SHARDNOTE is online.";
   }

@@ -2,7 +2,7 @@
 document.documentElement.style.visibility="hidden";
 const page=()=>{const p=location.pathname.split("/").filter(Boolean);return(p[p.length-1]||"index").replace(/\.html$/i,"").toLowerCase()};
 let currentState={banner_text:"We've released!! 🥳"};
-const setBanner=text=>{const v=String(text??"").trim();document.querySelectorAll(".release-banner").forEach(el=>{if(!v){el.remove();return}el.style.display="";let target=el.querySelector("strong");if(!target){target=document.createElement("strong");el.replaceChildren(target)}target.textContent=v})};
+const setBanner=text=>{const v=String(text??"").trim();let els=[...document.querySelectorAll(".release-banner")];if(!v){els.forEach(el=>el.remove());return}if(!els.length){const el=document.createElement("div");el.className="release-banner";el.innerHTML="<strong></strong>";const header=document.querySelector("header");if(header&&header.parentNode)header.parentNode.insertBefore(el,header);else document.body.prepend(el);els=[el]}els.forEach(el=>{el.style.display="";let target=el.querySelector("strong");if(!target){target=document.createElement("strong");el.replaceChildren(target)}target.textContent=v})};document.querySelectorAll(".release-banner").forEach(el=>{if(!v){el.remove();return}el.style.display="";let target=el.querySelector("strong");if(!target){target=document.createElement("strong");el.replaceChildren(target)}target.textContent=v})};
 const isBannedPage=()=>page()==="banned";
 const redirectIfBanned=async sb=>{
  if(isBannedPage())return true;

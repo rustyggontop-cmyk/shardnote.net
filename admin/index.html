@@ -33,6 +33,15 @@
 <div id="panel" class="panel-grid" style="display:none">
 <section class="panel-card wide"><small>OVERVIEW</small><h2>Team Activity</h2><div id="admin-stats" class="member-row">Loading team activity...</div></section>
 <section class="panel-card wide" id="service-controls" style="display:none"><small>WEBSITE</small><h2>Website Availability</h2><div id="service-controls-list">Loading website control...</div></section>
+<section class="panel-card wide" id="audit-log-card">
+  <small>AUDIT LOG</small>
+  <h2>Admin Activity</h2>
+  <p class="support-note">See who changed website controls and when.</p>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+    <button type="button" class="button" id="refresh-audit-logs">REFRESH LOGS</button>
+  </div>
+  <div id="audit-log-list">Loading audit logs...</div>
+</section>
 <section class="panel-card wide" id="bot-tester">
   <small>DISCORD BOT</small>
   <h2>Bot Tester</h2>
@@ -104,6 +113,28 @@ if(role==="owner"||role==="co_owner"||role==="admin"){
     };
   }
 }
+
+const auditBox=document.getElementById("audit-log-list");
+const renderAuditLogs=async()=>{
+  auditBox.textContent="Loading audit logs...";
+  const {data,error}=await sb.rpc("admin_get_audit_logs",{p_limit:100});
+  if(error){
+    auditBox.innerHTML="<p class='support-note'>Could not load audit logs: "+esc(error.message)+"</p>";
+    return;
+  }
+  if(!data?.length){
+    auditBox.innerHTML="<p class='support-note'>No admin changes have been recorded yet.</p>";
+    return;
+  }
+  auditBox.innerHTML=data.map(log=>{
+    const details=log.details||{};
+    let action=String(log.action||"").replaceAll("_"," ").toUpperCase();
+    const state=details.new_state? " · "+esc(String(details.previous_state||"").toUpperCase())+" → "+esc(String(details.new_state||"").toUpperCase()):"";
+    return "<div class='member-row' style='margin:6px 0'><div><strong>"+esc(log.actor_username||"Unknown")+"</strong><div class='support-note'>"+esc(action)+(details.display_name?" · "+esc(details.display_name):"")+state+"</div></div><div class='support-note' style='text-align:right'>"+new Date(log.created_at).toLocaleString()+"</div></div>";
+  }).join("");
+};
+document.getElementById("refresh-audit-logs").onclick=renderAuditLogs;
+await renderAuditLogs();
 
 document.getElementById("test-discord-bot").onclick=async()=>{
   const btn=document.getElementById("test-discord-bot");

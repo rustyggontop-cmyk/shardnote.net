@@ -29,8 +29,15 @@ p{color:#c4b5fd;font-size:18px;margin:0}#sound{margin-top:18px;padding:10px 18px
   const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
   const {data:{session}}=await sb.auth.getSession();
   if(!session){reward.textContent="Log in to Shardnote to unlock your second custom tag!";return;}
+  const {data:profile,error:profileError}=await sb.from("profiles").select("cat_found").eq("id",session.user.id).maybeSingle();
+  if(profileError) throw profileError;
+  if(profile?.cat_found){
+    reward.textContent="🐈 You already found Maxwell. Have fun!";
+    return;
+  }
   const {error}=await sb.from("profiles").update({cat_found:true}).eq("id",session.user.id);
   if(error) throw error;
+  localStorage.setItem("shardnote_cat_claimed","1");
   reward.innerHTML='<div style="position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:99998;padding:20px"><div style="max-width:430px;width:100%;background:#15101f;border:1px solid #7c3aed;border-radius:18px;padding:28px;text-align:center;box-shadow:0 20px 70px rgba(0,0,0,.6)"><div style="font-size:46px">🐈</div><h2 style="margin:10px 0 8px">You found the secret cat!</h2><p style="color:#c4b5fd;line-height:1.5">🎉 You unlocked a second custom tag slot. Create your new tag now!</p><button id="create-secret-tag" type="button" style="margin-top:10px;padding:12px 22px;border:0;border-radius:10px;background:#7c3aed;color:#fff;font-weight:700;cursor:pointer">Create My Tag</button></div></div>';
 document.getElementById("create-secret-tag")?.addEventListener("click",()=>location.href="/");
  }catch(e){console.error(e);reward.textContent="Could not unlock the second tag. Please try again."; }

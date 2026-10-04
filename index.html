@@ -16,21 +16,21 @@
 })();
 </script>
 <script src="auth.js"></script><footer class="site-footer">Shardnote ™️ 2026 — All rights reserved to Shardnote.net</footer>
-<div id="live-status" class="live-status" role="status" aria-live="polite">Checking status…</div><script>
+<div id="live-status" class="live-status" role="status" aria-live="polite">Checking status...</div><script>
 (async()=>{
  const el=document.getElementById("live-status");
  const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
  let last="";
  async function update(){
    try{
-     const {data,error}=await sb.rpc("get_service_statuses");
+     const result=await sb.rpc("get_service_statuses"); const data=result.data,error=result.error;
      if(error) throw error;
      const services=Array.isArray(data)?data:[];
      const down=services.filter(x=>x.manually_disabled);
      const next=down.length?("Some services are currently down · "+down.map(x=>x.display_name).join(", ")):"All systems operational";
      if(next!==last){el.textContent=next;last=next}
      el.classList.toggle("down",down.length>0);
-   }catch(e){el.textContent="Status unavailable"}
+   }catch(e){el.textContent="Status unavailable"; last="Status unavailable"}
  }
  await update();
  setInterval(update,2000);

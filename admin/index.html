@@ -358,7 +358,7 @@ membersBox.querySelectorAll(".remove-tag").forEach(b=>b.onclick=async()=>{
    const selected=allTags[n-1];
    if(!confirm("Remove tag \""+selected.tag_name+"\"?"))return;
    b.disabled=true;
-   const {error}=await sb.rpc("admin_remove_user_tag",{target_user:b.dataset.user,target_tag:selected.id});
+   const {error}=await sb.rpc("admin_remove_specific_tag",{p_target_user:b.dataset.user,p_tag_id:selected.id});
    if(error){alert("Could not remove tag: "+error.message);b.disabled=false;return;}
    b.textContent="REMOVED";
    b.closest(".member-row")?.querySelectorAll(".user-tag")?.forEach((el,j)=>{if(j===n-1)el.remove();});

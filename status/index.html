@@ -22,8 +22,7 @@
 <header><a class="brand" href="/"><img src="/logo.png" class="site-logo" alt="SHARDNOTE logo">CS<span>2</span><b> SHARDNOTE</b></a><nav><a href="/socials/">SOCIALS</a><a href="/login/">LOGIN</a><a class="orange" href="/register/">REGISTER</a></nav></header>
 <main class="status-page"><div class="status-wrap">
 <div class="status-head"><small>SHARDNOTE.NET</small><h1>System <span>Status</span></h1><p>Live status for the SHARDNOTE website.</p></div>
-<div class="overall" id="overall"><i class="dot warn" id="overallDot"></i><div><strong id="overallText">Checking website…</strong><span id="overallSub">Reading the current website status</span></div></div>
-<div class="refresh">Last checked <span id="last">—</span> · <button type="button" id="again">Check again</button></div>
+<div class="overall ok" id="overall"><i class="dot" id="overallDot"></i><div><strong id="overallText">Website is operational</strong><span id="overallSub">SHARDNOTE is online.</span></div></div>
 </div></main>
 <footer class="site-footer">Shardnote ™️ 2026 — All rights reserved to Shardnote.net</footer>
 
@@ -33,10 +32,10 @@ const SUPABASE_KEY="sb_publishable_O6bwaV-LOdtT0BeAlhph7A__mbDDtM9";
 async function runChecks(){
  const dot=document.getElementById("overallDot"),title=document.getElementById("overallText"),sub=document.getElementById("overallSub");
  const overall=document.getElementById("overall");
- overall.className="overall";
+ overall.className="overall ok";
  dot.className="dot";
- title.textContent="Checking website…";
- sub.textContent="Reading the current website status";
+ title.textContent="Website is operational";
+ sub.textContent="SHARDNOTE is online.";
  try{
   const r=await fetch(SUPABASE_URL+"/rest/v1/rpc/get_service_statuses",{
    method:"POST",cache:"no-store",
@@ -56,9 +55,8 @@ async function runChecks(){
  }catch(e){
   overall.className="overall ok";dot.className="dot";title.textContent="Website is operational";sub.textContent="SHARDNOTE is online.";
  }
- document.getElementById("last").textContent=new Date().toLocaleTimeString();
+
 }
-document.getElementById("again").onclick=runChecks;
 runChecks();setInterval(runChecks,3000);
 </script>
 </body></html>

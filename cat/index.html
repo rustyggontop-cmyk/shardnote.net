@@ -10,7 +10,7 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden}
 .wrap{text-align:center;padding:30px}
 .cat{width:min(420px,80vw);height:min(420px,80vw);object-fit:contain;animation:spin 2.2s linear infinite;filter:drop-shadow(0 0 25px rgba(168,85,247,.45))}
 h1{font-size:clamp(28px,5vw,48px);margin:24px 0 8px}
-p{color:#c4b5fd;font-size:18px;margin:0}
+p{color:#c4b5fd;font-size:18px;margin:0}#sound{margin-top:18px;padding:10px 18px;border:0;border-radius:10px;background:#7c3aed;color:#fff;font-weight:700;cursor:pointer}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
@@ -18,7 +18,7 @@ p{color:#c4b5fd;font-size:18px;margin:0}
 <div class="wrap">
 <img class="cat" src="/top-secret/maxwell.gif" alt="Maxwell spinning">
 <h1>You found the spinning cat! 🐈</h1>
-<p>Have fun! :3</p>
+<p>Have fun! :3</p><button id="sound" type="button">🔊 Play Maxwell</button>
 </div>
-<audio id="maxwell-audio" src="/top-secret/maxwell.mp3" preload="auto" loop></audio><button id="sound" type="button" style="margin-top:18px;padding:10px 18px;border:0;border-radius:10px;background:#7c3aed;color:#fff;font-weight:700;cursor:pointer">🔊 Play Maxwell</button><script>document.getElementById("sound").addEventListener("click",function(){const a=document.getElementById("maxwell-audio");a.play();this.textContent="🔊 Maxwell is playing";});</script></body>
+<audio id="maxwell-audio" preload="auto" loop><source src="/top-secret/maxwell.mp3" type="audio/mpeg"></audio><script>const a=document.getElementById("maxwell-audio"),b=document.getElementById("sound");b.addEventListener("click",async()=>{try{await a.play();b.textContent="🔊 Maxwell is playing";}catch(e){b.textContent="⚠️ Audio could not play";console.error(e);}});</script></body>
 </html>

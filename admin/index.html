@@ -162,6 +162,7 @@ const loadAuditLog=async()=>{
   }).join("")||"<p class='support-note'>No audit events yet.</p>";
 };
 await loadAuditLog();
+setInterval(loadAuditLog,5000);
 
 document.getElementById("test-discord-bot").onclick=async()=>{
   const btn=document.getElementById("test-discord-bot");

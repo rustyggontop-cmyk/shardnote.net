@@ -115,4 +115,14 @@ await load();
 <div id="report-modal" class="ticket-modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title"><div class="ticket-dialog"><div class="ticket-dialog-header"><div><small>MODERATION / REPORT</small><h2 id="report-modal-title" class="ticket-dialog-title">Report</h2><div id="report-modal-meta" class="ticket-dialog-meta"></div></div><button id="report-modal-close" class="button" type="button">CLOSE</button></div><div><span id="report-modal-status" class="report-status"></span><div id="report-modal-reason" class="ticket-dialog-meta"></div></div><div id="report-modal-details" class="ticket-dialog-message"></div><div id="report-modal-links" class="ticket-dialog-actions"></div><div class="ticket-dialog-message"><strong>REPLIES</strong><div id="report-replies" style="margin-top:10px"></div><div class="reply-composer"><textarea id="report-reply-message" maxlength="5000" placeholder="Write a reply..." rows="1"></textarea><button id="report-reply-send" type="button" class="button orange reply-send">SEND</button></div><p id="report-reply-msg" class="reply-msg"></p></div></div></div><script>
 document.getElementById("report-modal-close").onclick=()=>document.getElementById("report-modal").classList.remove("open");
 document.getElementById("report-modal").addEventListener("click",e=>{if(e.target.id==="report-modal")e.currentTarget.classList.remove("open");});
-</script></body></html>
+</script><script>
+(function(){
+ if(localStorage.getItem("shardnote_cookie_consent")==="accepted") return;
+ const box=document.createElement("div");
+ box.id="shardnote-cookie-consent";
+ box.innerHTML='<div style="position:fixed;left:20px;right:20px;bottom:20px;z-index:99999;max-width:720px;margin:auto;padding:18px 20px;background:#111827;border:1px solid #374151;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.45);color:#fff;font-family:inherit"><div style="font-size:17px;font-weight:700;margin-bottom:6px">🍪 We use cookies</div><div style="font-size:14px;line-height:1.5;color:#cbd5e1">Shardnote uses cookies and local storage to keep you signed in, remember your preferences, and make the site work properly.</div><button id="shardnote-cookie-accept" type="button" style="margin-top:12px;padding:9px 18px;border:0;border-radius:9px;background:#7c3aed;color:#fff;font-weight:700;cursor:pointer">Accept</button></div>';
+ document.body.appendChild(box);
+ document.getElementById("shardnote-cookie-accept").onclick=function(){localStorage.setItem("shardnote_cookie_consent","accepted");box.remove();};
+})();
+</script>
+</body></html>

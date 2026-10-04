@@ -82,7 +82,8 @@ if(role==="owner"||role==="co_owner"){
   document.getElementById("save-site-settings").onclick=async()=>{
     siteMsg.textContent="Saving...";
     const {error}=await sb.rpc("update_site_settings",{
-      p_banner_text:bannerInput.value.trim()
+      p_banner_text:bannerInput.value.trim(),
+      p_maintenance_mode:false
     });
     siteMsg.textContent=error?"Could not save: "+error.message:"Site settings saved.";
     if(!error&&window.__shardnoteApplySiteSettings){

@@ -56,7 +56,24 @@
  if(!id){document.getElementById("profile-name").textContent="Profile not found";document.getElementById("profile-tagline").textContent="No player was specified.";return;}
  const {data:p,error}=await sb.rpc("get_public_profile",{target_user:id});
  if(error||!p||!p.length){document.getElementById("profile-name").textContent="Profile unavailable";document.getElementById("profile-tagline").textContent="This player profile could not be loaded.";return;}
- const x=p[0],initial=String(x.username||"?").slice(0,1).toUpperCase();
+ const x=p[0];
+ // Profile data is loaded from the canonical profile RPC first, then we explicitly
+ // hydrate team/status so the profile UI still works if an older RPC response is cached.
+ let teamName=x.team_name||null, teamId=x.team_id||null, profileRole=x.role||"member", online=!!x.is_online;
+ try {
+   const {data:tm}=await sb.from("team_members").select("team_id,role").eq("user_id",x.user_id).maybeSingle();
+   if(tm?.team_id){
+     teamId=tm.team_id; profileRole=tm.role||profileRole;
+     const {data:t}=await sb.from("teams").select("name").eq("id",tm.team_id).maybeSingle();
+     if(t?.name)teamName=t.name;
+   }
+ } catch(e) { console.warn("Profile team fallback failed",e); }
+ try {
+   const {data:presence}=await sb.from("user_presence").select("last_seen").eq("user_id",x.user_id).maybeSingle();
+   if(presence?.last_seen) online=new Date(presence.last_seen).getTime()>Date.now()-5*60*1000;
+ } catch(e) { console.warn("Profile status fallback failed",e); }
+ x.team_name=teamName; x.team_id=teamId; x.role=profileRole; x.is_online=online;
+ const initial=String(x.username||"?").slice(0,1).toUpperCase();
  const {data:selfMembership}=await sb.from("team_members").select("role,team_id").eq("user_id",user.id).maybeSingle();
  const isFounderSelf=x.user_id===user.id&&selfMembership?.role==="owner";
  const av=document.getElementById("profile-avatar");av.innerHTML=x.avatar_url?"<img src='"+esc(x.avatar_url)+"' alt='Profile picture'>":esc(initial);

@@ -126,12 +126,25 @@
 
   const removeTag=document.createElement("button");removeTag.type="button";removeTag.className="button";removeTag.textContent="REMOVE TAG";
   removeTag.onclick=async()=>{
-    if(!x.tag_name||["admin","owner","co_owner","co-owner"].includes(String(x.tag_name).trim().toLowerCase())){alert("This user has no removable custom tag.");return;}
-    if(!confirm("Remove "+(isFounderSelf?"your":"this user's")+" custom tag?"))return;
+    const {data:tags,error:tagError}=await sb.from("user_tags").select("id,tag_name,color,tag_slot").eq("user_id",x.user_id).order("tag_slot");
+    if(tagError){alert("Could not load tags: "+tagError.message);return;}
+    const removable=(tags||[]).filter(t=>!["admin","owner","co_owner","co-owner"].includes(String(t.tag_name||"").trim().toLowerCase()));
+    if(!removable.length){alert("This user has no removable custom tags.");return;}
+    let choice=removable.length===1?removable[0].id:null;
+    if(removable.length>1){
+      const list=removable.map((t,i)=>(i+1)+". "+t.tag_name).join("\n");
+      const answer=prompt("Which tag do you want to remove?\n\n"+list+"\n\nEnter the number:");
+      if(answer===null)return;
+      const n=Number(answer);
+      if(!Number.isInteger(n)||n<1||n>removable.length){alert("Invalid tag selection.");return;}
+      choice=removable[n-1].id;
+    }
+    const selected=removable.find(t=>t.id===choice);
+    if(!confirm("Remove the tag \""+selected.tag_name+"\" from "+(x.username||"this user")+"?"))return;
     removeTag.disabled=true;
     const result=isFounderSelf
       ? await sb.rpc("remove_my_tag")
-      : await sb.rpc("admin_remove_user_tag",{target_user:x.user_id});
+      : await sb.rpc("admin_remove_user_tag",{target_user:x.user_id,target_tag:choice});
     removeTag.disabled=false;
     if(result.error){alert("Could not remove tag: "+result.error.message);return;}
     removeTag.textContent="REMOVED";setTimeout(()=>location.reload(),400);

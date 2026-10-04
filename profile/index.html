@@ -129,6 +129,48 @@ if(x.user_id!==user.id){
   document.getElementById("profile-actions").appendChild(report);
 }
 const isModerator=["owner","co_owner","admin"].includes(role);
+if(isModerator){
+  const testBan=document.createElement("button");
+  testBan.type="button";
+  testBan.className="button";
+  testBan.textContent="TEST BAN";
+  testBan.title="Send a safe test DM to this linked Discord account. No ban is applied.";
+  testBan.onclick=async()=>{
+    if(!x.discord_id){
+      alert("This player does not have a linked Discord account.");
+      return;
+    }
+    testBan.disabled=true;
+    testBan.textContent="TESTING...";
+    try{
+      const {data:{session}}=await sb.auth.getSession();
+      if(!session)throw new Error("Your session has expired. Please log in again.");
+
+      const response=await fetch(window.SUPABASE_URL+"/functions/v1/test-discord-ban",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":"Bearer "+session.access_token,
+          "apikey":window.SUPABASE_ANON_KEY
+        },
+        body:JSON.stringify({user_id:x.user_id})
+      });
+
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok||!result.ok)throw new Error(result.error||"Test ban failed.");
+
+      testBan.textContent="TEST SENT";
+      setTimeout(()=>testBan.textContent="TEST BAN",1500);
+    }catch(error){
+      alert("Could not send test ban message: "+(error?.message||error));
+      testBan.textContent="TEST BAN";
+    }finally{
+      testBan.disabled=false;
+    }
+  };
+  document.getElementById("profile-actions").appendChild(testBan);
+}
+
 if(x.user_id!==user.id&&isModerator){
   const {data:banned,error:banStatusError}=await sb.rpc("admin_user_ban_status",{target_user:x.user_id});
   if(!banStatusError){
@@ -157,44 +199,6 @@ if(x.user_id!==user.id&&isModerator){
       }
     };
     document.getElementById("profile-actions").appendChild(modButton);
-
-    const testBan=document.createElement("button");
-    testBan.type="button";
-    testBan.className="button";
-    testBan.textContent="TEST BAN";
-    testBan.onclick=async()=>{
-      if(!x.discord_id){
-        alert("This player does not have a linked Discord account.");
-        return;
-      }
-      testBan.disabled=true;
-      testBan.textContent="TESTING...";
-      try{
-        const {data:{session}}=await sb.auth.getSession();
-        if(!session){throw new Error("Your session has expired. Please log in again.");}
-        const response=await fetch(window.SUPABASE_URL+"/functions/v1/test-discord-ban",{
-          method:"POST",
-          headers:{
-            "Content-Type":"application/json",
-            "Authorization":"Bearer "+session.access_token,
-            "apikey":window.SUPABASE_ANON_KEY
-          },
-          body:JSON.stringify({user_id:x.user_id})
-        });
-        const result=await response.json().catch(()=>({}));
-        if(!response.ok||!result.ok){
-          throw new Error(result.error||"Test ban failed.");
-        }
-        testBan.textContent="TEST SENT";
-        setTimeout(()=>testBan.textContent="TEST BAN",1500);
-      }catch(error){
-        alert("Could not send test ban message: "+(error?.message||error));
-        testBan.textContent="TEST BAN";
-      }finally{
-        testBan.disabled=false;
-      }
-    };
-    document.getElementById("profile-actions").appendChild(testBan);
 
     const deleteButton=document.createElement("button");
     deleteButton.type="button";

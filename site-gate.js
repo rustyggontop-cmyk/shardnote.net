@@ -114,7 +114,7 @@
           '<p>' + escapeHtml(service.maintenance_message || "This service is temporarily unavailable.") + '</p>' +
           '<a class="button orange" href="/status/">VIEW STATUS</a>' +
           '</div>';
-        document.body.appendChild(overlay);
+        document.documentElement.appendChild(overlay);
         return;
       }
     }

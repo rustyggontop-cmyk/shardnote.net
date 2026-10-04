@@ -110,28 +110,36 @@ document.getElementById("test-discord-bot").onclick=async()=>{
   const out=document.getElementById("bot-test-result");
   btn.disabled=true;
   btn.textContent="TESTING…";
-  out.textContent="Running Discord status bot…";
+  out.textContent="Queueing Discord bot test…";
   try{
-    const {data:{session}}=await sb.auth.getSession();
-    if(!session)throw new Error("Your session has expired. Please log in again.");
-    const response=await fetch(window.SUPABASE_URL+"/functions/v1/status-discord-bot",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":"Bearer "+session.access_token,
-        "apikey":window.SUPABASE_ANON_KEY
-      },
-      body:JSON.stringify({admin_test:true})
-    });
-    const result=await response.json().catch(()=>({}));
-    if(!response.ok||result?.ok===false){
-      throw new Error(result?.error||("Bot test failed (HTTP "+response.status+")"));
+    const {data:requestId,error}=await sb.rpc("admin_test_status_bot");
+    if(error)throw new Error(error.message);
+
+    out.textContent="⏳ Bot test queued. Waiting for result…";
+
+    let found=false;
+    for(let i=0;i<15;i++){
+      await new Promise(resolve=>setTimeout(resolve,1000));
+      const {data:state,error:stateError}=await sb
+        .from("status_bot_state")
+        .select("last_status,last_error,last_run_at")
+        .eq("id",true)
+        .maybeSingle();
+
+      if(stateError)throw new Error(stateError.message);
+
+      if(state?.last_run_at){
+        found=true;
+        if(state.last_error){
+          out.textContent="❌ Bot error: "+state.last_error;
+        }else{
+          out.textContent="✅ Bot OK · current status: "+(state.last_status||"unknown");
+        }
+        break;
+      }
     }
-    if(result?.target){
-      out.textContent="✅ Bot OK · target: "+result.target+(result.changed===false?" · no rename needed":" · rename sent");
-    }else{
-      out.textContent="✅ Bot responded successfully.";
-    }
+
+    if(!found)out.textContent="⏳ Test queued (request #"+String(requestId||"?")+"). The bot has not returned a result yet.";
   }catch(error){
     out.textContent="❌ "+(error?.message||"Bot test failed.");
   }finally{

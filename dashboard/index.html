@@ -195,10 +195,11 @@
     };
   }
 
-  const {data:tags}=await sb.from("user_tags").select("user_id,tag_name,color").in("user_id",
+  const {data:tags}=await sb.from("user_tags").select("user_id,tag_name,color,is_active").in("user_id",
     (await sb.from("team_members").select("user_id").eq("team_id",teamId)).data?.map(x=>x.user_id)||[]
   );
-  const tagMap=Object.fromEntries((tags||[]).map(t=>[t.user_id,t]));
+  const tagMap={}; (tags||[]).filter(t=>t.is_active).forEach(t=>{(tagMap[t.user_id]||(tagMap[t.user_id]=[])).push(t);});
+  const memberTagsHtml=u=> (tagMap[u]||[]).map(t=>tagHtml(t)).join(" ");
 
   const loadMembers=async()=>{
     const {data:members,error}=await sb.from("team_members").select("user_id,username,role").eq("team_id",teamId).order("username");
@@ -211,7 +212,7 @@
       const steam=p?.steam_url?"<a class='steam-link' href='"+escapeHtml(p.steam_url)+"' target='_blank' rel='noopener'>STEAM</a>":"";
       const bio=p?.bio?"<div class='profile-bio'>"+escapeHtml(p.bio)+"</div>":"";
       const leaveAction=m.user_id===user.id&&m.role!=="owner"?"<button type='button' class='button leave-team'>LEAVE TEAM</button>":(m.user_id===user.id&&m.role==="owner"?"<span class='role-pill'>FOUNDER CANNOT LEAVE</span>":"");
-return "<div class='member-row profile-link' role='link' tabindex='0' data-profile='"+encodeURIComponent(m.user_id)+"'><div class='profile-meta'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><div><strong>"+escapeHtml(m.username)+"</strong>"+tagHtml(tagMap[m.user_id])+"</div>"+bio+"</div></div><div class='member-actions'>"+(steam?"<div class='member-steam'>"+steam+"</div>":"")+leaveAction+"</div></div>";
+return "<div class='member-row profile-link' role='link' tabindex='0' data-profile='"+encodeURIComponent(m.user_id)+"'><div class='profile-meta'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><div><strong>"+escapeHtml(m.username)+"</strong>"+memberTagsHtml(m.user_id)+"</div>"+bio+"</div></div><div class='member-actions'>"+(steam?"<div class='member-steam'>"+steam+"</div>":"")+leaveAction+"</div></div>";
     }).join("")||"No team members yet.";
   };
   await loadMembers();
@@ -260,11 +261,10 @@ return "<div class='member-row profile-link' role='link' tabindex='0' data-profi
   };
   const renderTags=()=>{
     const tags=myTags||[];
-    slots.innerHTML=tags.length ? tags.map(t=>"<div style='display:flex;align-items:center;gap:12px;margin:8px 0'>"+tagHtml(t)+"<button type='button' class='button tag-use' data-tag='"+esc(t.id)+"'>"+(t.is_active?"ACTIVE":"USE")+"</button><button type='button' class='button tag-remove' data-tag='"+esc(t.id)+"'>REMOVE</button></div>").join("") : "<div style='opacity:.7'>No custom tags yet.</div>";
-    const active=tags.filter(t=>t.is_active);
-    if(active.length===0 && tags.length>0){ tags[0].is_active=true; }
-slots.querySelectorAll(".tag-use").forEach(b=>b.onclick=async()=>{const {error}=await sb.rpc("set_my_active_tag",{p_tag_id:b.dataset.tag});if(error){ts.textContent=error.message;return;}myTags.forEach(t=>t.is_active=t.id===b.dataset.tag);renderTags();await loadMembers();});
-slots.querySelectorAll(".tag-remove").forEach(b=>b.onclick=async()=>{if(!confirm("Remove this tag?"))return;const {error}=await sb.rpc("delete_my_tag",{p_tag_id:b.dataset.tag});if(error){ts.textContent=error.message;return;}myTags=myTags.filter(t=>t.id!==b.dataset.tag);if(myTags.length&&!myTags.some(t=>t.is_active))myTags[0].is_active=true;renderTags();await loadMembers();});
+    slots.innerHTML=tags.length ? tags.map(t=>"<div style='display:flex;align-items:center;gap:12px;margin:8px 0'>"+tagHtml(t)+"<button type='button' class='button tag-use' data-tag='"+escapeHtml(t.id)+"'>"+(t.is_active?"HIDE":"SHOW")+"</button><button type='button' class='button tag-remove' data-tag='"+escapeHtml(t.id)+"'>REMOVE</button></div>").join("") : "<div style='opacity:.7'>No custom tags yet.</div>";
+    
+slots.querySelectorAll(".tag-use").forEach(b=>b.onclick=async()=>{const tag=myTags.find(t=>t.id===b.dataset.tag);if(!tag)return;const {error}=await sb.rpc("set_my_tag_display",{p_tag_id:tag.id,p_display:!tag.is_active});if(error){ts.textContent=error.message;return;}tag.is_active=!tag.is_active;renderTags();await loadMembers();});
+slots.querySelectorAll(".tag-remove").forEach(b=>b.onclick=async()=>{if(!confirm("Remove this tag?"))return;const {error}=await sb.rpc("delete_my_tag",{p_tag_id:b.dataset.tag});if(error){ts.textContent=error.message;return;}myTags=myTags.filter(t=>t.id!==b.dataset.tag);renderTags();await loadMembers();});
     if(tags.length<5 && (tags.length===0 || myProfile?.cat_found || myProfile?.shardnote_pro)){
       ts.textContent=myProfile?.shardnote_pro?"Shardnote Pro: you can have up to 5 custom tags.":(tags.length===0?"Create your custom tag.":"You unlocked a second custom tag by finding the cat!");
       tc.style.display="block";

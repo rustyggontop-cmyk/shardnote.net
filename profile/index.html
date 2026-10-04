@@ -90,7 +90,10 @@
  document.getElementById("profile-username").textContent=x.username||"—";
  document.getElementById("profile-steam-text").textContent=x.steam_url?"Linked":"Not linked";
  if(x.bio){const bio=document.getElementById("profile-bio");bio.textContent=x.bio;bio.style.display="block";}
- if(x.tag_name&&!["admin","owner","co_owner","co-owner"].includes(String(x.tag_name).trim().toLowerCase())){const t=document.getElementById("profile-tag");t.innerHTML="<span class='user-tag' style='margin-left:0;padding:7px 11px;height:auto;border-radius:8px;font-size:13px;color:"+esc(x.tag_color)+";border:1px solid "+esc(x.tag_color)+";background:"+esc(x.tag_color)+"22'>"+esc(x.tag_name)+"</span>";}
+ const tagBox=document.getElementById("profile-tag");
+ const {data:profileTags}=await sb.from("user_tags").select("id,tag_name,color,is_active").eq("user_id",x.user_id).order("tag_slot");
+ const visibleTags=(profileTags||[]).filter(t=>t.is_active&&!["admin","owner","co_owner","co-owner"].includes(String(t.tag_name||"").trim().toLowerCase()));
+ tagBox.innerHTML=visibleTags.map(t=>"<span class='user-tag' style='margin-right:6px;margin-bottom:6px;display:inline-block;padding:7px 11px;height:auto;border-radius:8px;font-size:13px;color:"+esc(t.color)+";border:1px solid "+esc(t.color)+";background:"+esc(t.color)+"22'>"+esc(t.tag_name)+"</span>").join("");
  if(x.steam_url){const a=document.createElement("a");a.className="button orange";a.href=x.steam_url;a.target="_blank";a.rel="noopener";a.textContent="VIEW STEAM PROFILE";document.getElementById("profile-actions").appendChild(a);}
  if(["owner","co_owner","admin"].includes(role) || isFounderSelf){
   if(["owner","co_owner","admin"].includes(role)){

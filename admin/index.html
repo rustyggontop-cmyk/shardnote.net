@@ -32,7 +32,7 @@
 <section class="panel-hero"><div><small>SHARDNOTE / ADMINISTRATION</small><h1>ADMIN PANEL</h1><p id="status">Checking admin access...</p></div><div class="dashboard-subtle">Team administration</div></section>
 <div id="panel" class="panel-grid" style="display:none">
 <section class="panel-card wide"><small>OVERVIEW</small><h2>Team Activity</h2><div id="admin-stats" class="member-row">Loading team activity...</div></section>
-<section class="panel-card wide" id="service-controls" style="display:none"><small>SERVICE CONTROLS</small><h2>Service Availability</h2><p class="support-note">Disable individual services for members. Authorized staff can still access the site. Changes are reflected on /status/ and in Discord automatically.</p><div id="service-controls-list">Loading service controls...</div></section><section class="panel-card wide"><small>DIRECTORY</small><h2>ALL REGISTERED USERS</h2><p class="support-note">Every registered profile is shown here, including users without a team.</p><div id="all-users">Loading all users...</div></section>
+<section class="panel-card wide" id="service-controls" style="display:none"><small>WEBSITE</small><h2>Website Availability</h2><div id="service-controls-list">Loading website control...</div></section><section class="panel-card wide"><small>DIRECTORY</small><h2>ALL REGISTERED USERS</h2><p class="support-note">Every registered profile is shown here, including users without a team.</p><div id="all-users">Loading all users...</div></section>
 <section class="panel-card wide"><small>TEAM MODERATION</small><h2>ALL TEAMS</h2><p class="support-note">Admins, co-owners, and owners can remove inappropriate members from any team or delete an inappropriate team.</p><div id="all-teams">Loading teams...</div></section>
 <section class="panel-card wide"><small>TEAM MANAGEMENT</small><h2>Team Members</h2><p class="support-note">Admins can remove member tags. Only the owner can appoint a co-owner.</p><div id="admin-members">Loading team members...</div></section>
 <section class="panel-card"><small>SUPPORT</small><h2>Support Tickets</h2><p class="support-note">Select a ticket to open the full request.</p><div id="tickets">Loading tickets...</div></section>
@@ -61,51 +61,40 @@ if(role==="owner"||role==="co_owner"||role==="admin"){
   const sc=document.getElementById("service-controls"); sc.style.display="block";
   const box=document.getElementById("service-controls-list");
   const {data:services,error:servicesError}=await sb.rpc("get_service_statuses");
-  if(servicesError){box.textContent="Could not load service controls: "+servicesError.message;}
+  if(servicesError){box.textContent="Could not load website control: "+servicesError.message;}
   else{
-    box.innerHTML=(services||[]).map(s=>"<div class='member-row' style='margin:8px 0'><div class='profile-copy'><strong>"+esc(s.display_name)+"</strong><div class='profile-bio'>"+esc(s.description||"")+"</div></div><div class='admin-actions'><span class='role-pill'>"+(s.manually_disabled?"DOWN":"ONLINE")+"</span><button type='button' class='button service-toggle' data-key='"+esc(s.service_key)+"' data-disabled='"+(s.manually_disabled?"1":"0")+"'>"+(s.manually_disabled?"ENABLE":"SHUT DOWN")+"</button></div></div>").join("");
-    box.querySelectorAll(".service-toggle").forEach(btn=>btn.onclick=async()=>{
+    const s=(services||[]).find(x=>x.service_key==="website");
+    if(!s){box.textContent="Website status unavailable.";return;}
+    box.innerHTML="<div class='member-row' style='margin:8px 0'><div class='profile-copy'><strong>"+esc(s.display_name)+"</strong><div class='profile-bio'>Main SHARDNOTE website</div></div><div class='admin-actions'><span class='role-pill'>"+(s.manually_disabled?"DOWN":"ONLINE")+"</span><button type='button' class='button service-toggle' data-key='website' data-disabled='"+(s.manually_disabled?"1":"0")+"'>"+(s.manually_disabled?"ENABLE":"SHUT DOWN")+"</button></div></div>";
+    const btn=box.querySelector(".service-toggle");
+    btn.onclick=async()=>{
       const disable=btn.dataset.disabled!=="1";
-      btn.disabled=true;
-      btn.textContent=disable?"SAVING…":"SAVING…";
-
+      btn.disabled=true; btn.textContent="SAVING…";
       const {data:updated,error}=await sb.rpc("update_service_status",{
-        p_service_key:btn.dataset.key,
+        p_service_key:"website",
         p_manually_disabled:disable,
         p_maintenance_message:"This service is temporarily unavailable."
       });
-
-      if(error){
-        alert("Could not update service: "+error.message);
-        btn.disabled=false;
-        btn.textContent=disable?"SHUT DOWN":"ENABLE";
-        return;
-      }
-
+      if(error){alert("Could not update website: "+error.message);btn.disabled=false;btn.textContent=disable?"SHUT DOWN":"ENABLE";return;}
       const returned=Array.isArray(updated)?updated[0]:updated;
-      if(!returned || returned.service_key!==btn.dataset.key || Boolean(returned.manually_disabled)!==disable){
-        alert("Supabase did not confirm the requested change.");
-        btn.disabled=false;
-        btn.textContent=disable?"SHUT DOWN":"ENABLE";
-        return;
+      if(!returned || returned.service_key!=="website" || Boolean(returned.manually_disabled)!==disable){
+        alert("The database did not confirm the website status change.");btn.disabled=false;btn.textContent=disable?"SHUT DOWN":"ENABLE";return;
       }
-
-      // Update this row immediately from the confirmed database result.
-      const row=btn.closest(".member-row");
-      const pill=row?.querySelector(".role-pill");
-      if(pill){pill.textContent=disable?"DOWN":"ONLINE";}
+      const {data:verify,error:verifyError}=await sb.rpc("get_service_statuses");
+      if(verifyError){alert("Website changed, but verification failed: "+verifyError.message);btn.disabled=false;btn.textContent=disable?"SHUT DOWN":"ENABLE";return;}
+      const row=Array.isArray(verify)?verify.find(x=>x.service_key==="website"):null;
+      if(!row || Boolean(row.manually_disabled)!==disable){
+        alert("The website status did not persist.");btn.disabled=false;btn.textContent=disable?"SHUT DOWN":"ENABLE";return;
+      }
+      const pill=btn.parentElement.querySelector(".role-pill");
+      if(pill)pill.textContent=disable?"DOWN":"ONLINE";
       btn.dataset.disabled=disable?"1":"0";
       btn.textContent=disable?"ENABLE":"SHUT DOWN";
       btn.disabled=false;
-
-      // Discord status update is secondary and must never block the service toggle.
-      fetch(window.SUPABASE_URL+"/functions/v1/status-discord-bot",{
-        method:"POST",
-        headers:{"Content-Type":"application/json","apikey":window.SUPABASE_ANON_KEY},
-        body:"{}"
-      }).catch(()=>{});
-    });
+      fetch(window.SUPABASE_URL+"/functions/v1/status-discord-bot",{method:"POST",headers:{"Content-Type":"application/json","apikey":window.SUPABASE_ANON_KEY},body:"{}"}).catch(()=>{});
+    };
   }
+}
 }
 
 if(role!=="owner"&&role!=="co_owner")document.getElementById("manage-roles").style.display="none";

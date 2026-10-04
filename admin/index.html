@@ -115,31 +115,36 @@ document.getElementById("test-discord-bot").onclick=async()=>{
     const {data:requestId,error}=await sb.rpc("admin_test_status_bot");
     if(error)throw new Error(error.message);
 
-    out.textContent="⏳ Bot test queued. Waiting for result…";
+    const id=Number(requestId);
+    if(!Number.isFinite(id))throw new Error("Bot test was not queued correctly.");
 
-    let found=false;
+    out.textContent="⏳ Test queued. Waiting for Discord…";
+
     for(let i=0;i<15;i++){
       await new Promise(resolve=>setTimeout(resolve,1000));
-      const {data:state,error:stateError}=await sb
-        .from("status_bot_state")
-        .select("last_status,last_error,last_run_at")
-        .eq("id",true)
-        .maybeSingle();
+      const {data:result,error:resultError}=await sb.rpc("admin_get_bot_test_result",{p_request_id:id});
+      if(resultError)throw new Error(resultError.message);
+      if(!result?.ready)continue;
 
-      if(stateError)throw new Error(stateError.message);
-
-      if(state?.last_run_at){
-        found=true;
-        if(state.last_error){
-          out.textContent="❌ Bot error: "+state.last_error;
-        }else{
-          out.textContent="✅ Bot OK · current status: "+(state.last_status||"unknown");
-        }
-        break;
+      let payload=result.content;
+      if(typeof payload==="string"){
+        try{payload=JSON.parse(payload)}catch(_){}
       }
+
+      if(Number(result.status_code)>=400){
+        out.textContent="❌ Bot request failed (HTTP "+result.status_code+"): "+(payload?.error||result.error_msg||"Unknown error");
+      }else if(payload?.ok===false){
+        out.textContent="❌ Bot error: "+(payload.error||"Unknown error");
+      }else{
+        const target=payload?.target||payload?.channel_name||"completed";
+        out.textContent="✅ Bot OK · "+target;
+      }
+      break;
     }
 
-    if(!found)out.textContent="⏳ Test queued (request #"+String(requestId||"?")+"). The bot has not returned a result yet.";
+    if(out.textContent.startsWith("⏳")){
+      out.textContent="⏳ Test is still running. Check Discord/status shortly.";
+    }
   }catch(error){
     out.textContent="❌ "+(error?.message||"Bot test failed.");
   }finally{

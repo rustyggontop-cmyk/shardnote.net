@@ -355,7 +355,7 @@ membersBox.querySelectorAll(".remove-tag").forEach(b=>b.onclick=async()=>{
  });
 }
 
-const {data:tickets,error:ticketsError}=await sb.from("support_tickets").select("id,user_id,subject,message,status,created_at").order("created_at",{ascending:false}).limit(30);
+const {data:tickets,error:ticketsError}=await sb.rpc("admin_list_support_tickets");
 const ticketsBox=document.getElementById("tickets");
 if(ticketsError){ticketsBox.innerHTML="<p class='support-note'>Could not load tickets: "+esc(ticketsError.message)+"</p>";}
 else{
@@ -421,7 +421,7 @@ setInterval(()=>{
    }
  },2000);
 
-const {data:reports,error:reportsError}=await sb.from("cheater_reports").select("id,reported_user_id,reported_username,reason,details,status,evidence_url,steam_url,created_at,reporter_id").eq("team_id",me.team_id).order("created_at",{ascending:false}).limit(50);
+const {data:reports,error:reportsError}=await sb.rpc("admin_list_cheater_reports");
 const reportBox=document.getElementById("cheater-reports");
 if(reportsError){reportBox.innerHTML="<p class='support-note'>Could not load reports: "+esc(reportsError.message)+"</p>";}
 else{

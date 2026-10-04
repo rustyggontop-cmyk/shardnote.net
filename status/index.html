@@ -18,52 +18,26 @@
 <body>
 <header><a class="brand" href="/"><img src="/logo.png" class="site-logo" alt="SHARDNOTE logo">CS<span>2</span><b> SHARDNOTE</b></a><nav><a href="/socials/">SOCIALS</a><a href="/login/">LOGIN</a><a class="orange" href="/register/">REGISTER</a></nav></header>
 <main class="status-page"><div class="status-wrap">
-<div class="status-head"><div><small>SHARDNOTE.NET</small><h1>System <span>Status</span></h1><p>Live checks for the services that keep SHARDNOTE running.</p></div></div>
-<div class="overall" id="overall"><i class="dot" id="overallDot"></i><div><strong id="overallText">Checking systems…</strong><span id="overallSub">Running live health checks</span></div></div>
-<div class="status-card" id="checks"></div><div class="refresh">Staff-controlled shutdowns are shown as DOWN even when the website itself is reachable.</div>
-<div class="refresh">Last checked <span id="last">—</span> · <button onclick="runChecks()">Check again</button></div>
+<div class="status-head"><small>SHARDNOTE.NET</small><h1>System <span>Status</span></h1><p>Live status for the SHARDNOTE website.</p></div>
+<div class="overall" id="overall"><i class="dot warn" id="overallDot"></i><div><strong id="overallText">Checking website…</strong><span id="overallSub">Reading the current website status</span></div></div>
+<div class="refresh">Last checked <span id="last">—</span> · <button type="button" id="again">Check again</button></div>
 </div></main>
 <footer class="site-footer">Shardnote ™️ 2026 — All rights reserved to Shardnote.net</footer>
 <script src="/supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/site-settings.js"></script>
 <script>
-const checks=[
- ['Website','Main SHARDNOTE website','/', 'page'],
- ['Login','Account login page','/login/','page'],
- ['Registration','Account registration page','/register/','page'],
- ['Profiles','Player profile service','/profile/','page'],
- ['Teams','Find teammates & teams','/teammates/','page'],
- ['Dashboard','Player dashboard','/dashboard/','page'],
- ['Support','Support ticket system','/support/','page'],
- ['Cheater Reports','Cheater reporting system','/report-cheater/','page'],
- ['Supabase','Database & authentication backend',null,'supabase']
-];
-async function pageCheck(path){
- const r=await fetch(path,{method:'GET',cache:'no-store'}); return r.ok;
-}
 async function runChecks(){
- const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
- const {data:serviceStates}=await sb.rpc("get_service_statuses");
- const stateMap=new Map((serviceStates||[]).map(s=>[s.service_key,s]));
- const box=document.getElementById('checks'); box.innerHTML=checks.map(c=>'<div class="status-row" id="row-'+c[0].replace(/\W/g,'')+'"><i class="dot warn"></i><div class="status-info"><strong>'+c[0]+'</strong><small>'+c[1]+'</small></div><span class="status-pill warn">CHECKING</span></div>').join('');
- const results=await Promise.all(checks.map(async c=>{
-   const key=c[0]==='Cheater Reports'?'cheater_reports':c[0].toLowerCase();
-   const state=stateMap.get(key);
-   if(state?.manually_disabled) return [c[0],false,state.maintenance_message||'Disabled by staff'];
-   try{
-    if(c[3]==='page') return [c[0],await pageCheck(c[2]),''];
-    const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
-    const {error}=await sb.from('profiles').select('id').limit(1); return [c[0],!error||!String(error.message).toLowerCase().includes('network'),''];
-   }catch(e){return [c[0],false,e?.message||'Request failed']}
- }));
- let good=0;
- results.forEach(([name,ok,error])=>{const row=document.getElementById('row-'+name.replace(/\W/g,''));const d=row.querySelector('.dot'),p=row.querySelector('.status-pill');d.className='dot '+(ok?'':'down');p.className='status-pill '+(ok?'ok':'down');p.textContent=ok?'OPERATIONAL':'DOWN';if(!ok&&error) row.querySelector('.status-info small').textContent=error;if(ok)good++;});
- const dot=document.getElementById('overallDot'),text=document.getElementById('overallText'),sub=document.getElementById('overallSub');
- if(good===results.length){dot.className='dot';text.textContent='All systems operational';sub.textContent=good+' of '+results.length+' services are responding normally.'}
- else if(good>0){dot.className='dot warn';text.textContent='Some systems are experiencing issues';sub.textContent=good+' of '+results.length+' services are responding normally.'}
- else{dot.className='dot down';text.textContent='Major system outage';sub.textContent='No checked services are responding normally.'}
- document.getElementById('last').textContent=new Date().toLocaleTimeString();
+ const dot=document.getElementById("overallDot"),title=document.getElementById("overallText"),sub=document.getElementById("overallSub");
+ try{
+  const sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+  const {data,error}=await sb.rpc("get_service_statuses");
+  if(error)throw error;
+  const website=Array.isArray(data)?data.find(x=>x.service_key==="website"):null;
+  if(!website)throw new Error("Website status is unavailable.");
+  if(website.manually_disabled){dot.className="dot down";title.textContent="Website is offline";sub.textContent=website.maintenance_message||"Disabled by staff."}
+  else{dot.className="dot";title.textContent="Website is operational";sub.textContent="SHARDNOTE is online."}
+ }catch(e){dot.className="dot warn";title.textContent="Status unavailable";sub.textContent=e?.message||"Could not read website status."}
+ document.getElementById("last").textContent=new Date().toLocaleTimeString();
 }
-runChecks();
-setInterval(runChecks,3000);
+document.getElementById("again").onclick=runChecks;runChecks();setInterval(runChecks,3000);
 </script>
 </body></html>

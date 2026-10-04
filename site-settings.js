@@ -9,7 +9,7 @@ const redirectIfBanned=async sb=>{
  const {data:userData}=await sb.auth.getUser().catch(()=>({data:{user:null}}));
  if(!userData?.user)return false;
  const {data:banned,error}=await sb.rpc("is_current_user_banned").catch(()=>({data:false,error:null}));
- if(!error&&banned===true){location.replace("/banned.html");return true}
+ if(!error&&banned===true){location.replace("/banned");return true}
  return false;
 };
 const serviceForPage=()=>({index:"website",login:"login",register:"registration",profile:"profiles",teammates:"teams",dashboard:"dashboard",support:"support","report-cheater":"cheater_reports"})[page()]||null;

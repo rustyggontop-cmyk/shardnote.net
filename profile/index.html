@@ -147,7 +147,7 @@
     removeTag.disabled=true;
     const result=isFounderSelf
       ? await sb.rpc("delete_my_tag",{p_tag_id:choice})
-      : await sb.rpc("admin_remove_user_tag",{target_user:x.user_id,target_tag:choice});
+      : await sb.rpc("admin_remove_specific_tag",{p_target_user:x.user_id,p_tag_id:choice});
     removeTag.disabled=false;
     if(result.error){alert("Could not remove tag: "+result.error.message);return;}
     removeTag.textContent="REMOVED";setTimeout(()=>location.reload(),400);

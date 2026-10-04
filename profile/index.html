@@ -136,10 +136,6 @@ if(isModerator){
   testBan.textContent="TEST BAN";
   testBan.title="Send a safe test DM to this linked Discord account. No ban is applied.";
   testBan.onclick=async()=>{
-    if(!x.discord_id){
-      alert("This player does not have a linked Discord account.");
-      return;
-    }
     testBan.disabled=true;
     testBan.textContent="TESTING...";
     try{

@@ -51,6 +51,20 @@
           <p id="save-msg"></p>
         </section>
         <section class="panel-card settings-card">
+          <small>LANGUAGE</small><h2>Language</h2>
+          <p class="support-note">Choose the language used for your SHARDNOTE account preference.</p>
+          <label class="dashboard-subtle" for="language">LANGUAGE</label>
+          <select id="language" style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid #312443;background:#100c18;color:#eee">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="ru">Русский</option>
+            <option value="da">Dansk</option>
+            <option value="de">Deutsch</option>
+          </select>
+          <button id="save-language" type="button" class="button orange" style="margin-top:12px">SAVE LANGUAGE</button>
+          <p id="language-msg"></p>
+        </section>
+        <section class="panel-card settings-card">
           <small>DISCORD</small><h2>LINK DISCORD</h2>
           <p id="discord-status" class="support-note">Checking Discord connection...</p>
           <p class="support-note">Link your Discord account so SHARDNOTE can show your Discord name on your profile and add you to the official SHARDNOTE Discord server.</p>
@@ -75,7 +89,7 @@
   const {data:{user}}=await sb.auth.getUser(); if(!user){location.href="/login/";return;}
   const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
   const {data:me}=await sb.from("team_members").select("username,role").eq("user_id",user.id).maybeSingle();
-  const {data:profile,error:profileError}=await sb.from("profiles").select("username,avatar_url,bio,steam_url").eq("id",user.id).maybeSingle();
+  const {data:profile,error:profileError}=await sb.from("profiles").select("username,avatar_url,bio,steam_url,language").eq("id",user.id).maybeSingle();
   if(profileError){document.getElementById("save-msg").textContent="Could not load profile: "+profileError.message;return;}
   document.getElementById("profile-name").textContent=me?.username||profile?.username||user.email||"Member";
   document.getElementById("bio").value=profile?.bio||"";
@@ -85,6 +99,23 @@
   setAvatar(profile?.avatar_url);
   const {data:siteRole}=await sb.rpc("current_user_role");
   if(siteRole==="owner"||siteRole==="co_owner"||siteRole==="admin")document.getElementById("settings-admin-link").style.display="flex";
+
+  const languageSelect=document.getElementById("language");
+  const languageMsg=document.getElementById("language-msg");
+  languageSelect.value=["en","es","ru","da","de"].includes(profile?.language)?profile.language:"en";
+  document.documentElement.lang=languageSelect.value;
+
+  document.getElementById("save-language").onclick=async()=>{
+    const value=languageSelect.value;
+    languageMsg.textContent="Saving...";
+    const {error}=await sb.from("profiles").update({language:value}).eq("id",user.id);
+    if(error){
+      languageMsg.textContent="Could not save language: "+error.message;
+      return;
+    }
+    document.documentElement.lang=value;
+    languageMsg.textContent="Language saved.";
+  };
 
   const discordStatus=document.getElementById("discord-status"),linkDiscord=document.getElementById("link-discord"),unlinkDiscord=document.getElementById("unlink-discord");
   const refreshDiscord=async()=>{

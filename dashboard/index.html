@@ -249,10 +249,13 @@ return "<div class='member-row profile-link' role='link' tabindex='0' data-profi
 
   const {data:myTags,error:myTagsError}=await sb.from("user_tags").select("id,tag_name,color,tag_slot,is_active").eq("user_id",user.id).order("tag_slot");
   const {data:myProfile}=await sb.from("profiles").select("cat_found,shardnote_pro").eq("id",user.id).maybeSingle();
+  if(myTagsError){console.error("Could not load tags:",myTagsError);}
   const ts=document.getElementById("tag-status"),tc=document.getElementById("tag-create"),slots=document.getElementById("tag-slots");
   const renderTags=()=>{
     const tags=myTags||[];
-    slots.innerHTML=tags.map(t=>"<div style='display:flex;align-items:center;gap:12px;margin:8px 0'>"+tagHtml(t)+"<button type='button' class='button tag-use' data-tag='"+esc(t.id)+"'>"+(t.is_active?"ACTIVE":"USE")+"</button><button type='button' class='button tag-remove' data-tag='"+esc(t.id)+"'>REMOVE</button></div>").join("");
+    slots.innerHTML=tags.length ? tags.map(t=>"<div style='display:flex;align-items:center;gap:12px;margin:8px 0'>"+tagHtml(t)+"<button type='button' class='button tag-use' data-tag='"+esc(t.id)+"'>"+(t.is_active?"ACTIVE":"USE")+"</button><button type='button' class='button tag-remove' data-tag='"+esc(t.id)+"'>REMOVE</button></div>").join("") : "<div style='opacity:.7'>No custom tags yet.</div>";
+    const active=tags.filter(t=>t.is_active);
+    if(active.length===0 && tags.length>0){ tags[0].is_active=true; }
 slots.querySelectorAll(".tag-use").forEach(b=>b.onclick=async()=>{const {error}=await sb.rpc("set_my_active_tag",{p_tag_id:b.dataset.tag});if(error){ts.textContent=error.message;return;}myTags.forEach(t=>t.is_active=t.id===b.dataset.tag);renderTags();await loadMembers();});
 slots.querySelectorAll(".tag-remove").forEach(b=>b.onclick=async()=>{if(!confirm("Remove this tag?"))return;const {error}=await sb.rpc("delete_my_tag",{p_tag_id:b.dataset.tag});if(error){ts.textContent=error.message;return;}myTags=myTags.filter(t=>t.id!==b.dataset.tag);if(myTags.length&&!myTags.some(t=>t.is_active))myTags[0].is_active=true;renderTags();await loadMembers();});
     if(tags.length<5 && (tags.length===0 || myProfile?.cat_found || myProfile?.shardnote_pro)){

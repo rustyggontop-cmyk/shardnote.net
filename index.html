@@ -8,8 +8,8 @@
  const {data:{session}}=await sb.auth.getSession();
  const nav=document.getElementById("nav"), actions=document.getElementById("hero-actions");
  if(session){
-   nav.innerHTML='<a class="button orange" href="/dashboard/"">DASHBOARD</a>';
-   actions.innerHTML='<a class="button orange" href="/dashboard/"">GO TO DASHBOARD</a>';
+   nav.innerHTML='<a class="button orange" href="/dashboard/">DASHBOARD</a>';
+   actions.innerHTML='<a class="button orange" href="/dashboard/">GO TO DASHBOARD</a>';
  }
  document.documentElement.style.visibility="visible";
 })();

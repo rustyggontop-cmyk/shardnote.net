@@ -9,6 +9,7 @@
   const page = getPage();
   const maintenancePage = page === "maintenance";
   const statusPage = page === "status";
+  window.__shardnoteWebsiteDown = false;
   const bannedPage = page === "banned";
 
   const serviceForPage = () => ({
@@ -79,6 +80,10 @@
       : null;
 
     if (website?.manually_disabled) {
+      window.__shardnoteWebsiteDown = true;
+      // Logged-out users need the login page as the controlled staff escape hatch.
+      if (page === "login") return false;
+      if (role === "owner" || role === "co_owner") return false;
       location.replace("/maintenance/");
       return true;
     }
@@ -116,6 +121,7 @@
 
     const key = serviceForPage();
     if (!key || key === "website") return false;
+    if (page === "login" && window.__shardnoteWebsiteDown) return false;
 
     const { data: { user } = {} } = await sb.auth.getUser().catch(() => ({ data: { user: null } }));
     const role = await getRole(sb, user);

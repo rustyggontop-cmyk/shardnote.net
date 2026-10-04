@@ -226,10 +226,21 @@ else{
     ? "<button type='button' class='button unban-user' data-user='"+esc(u.user_id)+"' data-name='"+esc(u.username)+"'>UNBAN</button>"
     : (u.user_id!==user.id&&!(role==="admin"&&u.role==="co_owner")?"<button type='button' class='button ban-button ban-directory-user' data-user='"+esc(u.user_id)+"' data-name='"+esc(u.username)+"'>BAN PLAYER</button>":"");
    const tagActions=(u.user_id!==user.id?"<button type='button' class='button directory-rename' data-user='"+esc(u.user_id)+"' data-name='"+esc(u.username)+"'>RENAME</button><button type='button' class='button directory-remove-tag' data-user='"+esc(u.user_id)+"'>REMOVE TAG</button>":"");
+   const proAction=(role==="owner"||role==="co_owner") ? "<button type='button' class='button pro-toggle' data-user='"+esc(u.user_id)+"' data-pro='"+(u.shardnote_pro?"1":"0")+"' data-name='"+esc(u.username)+"'>"+(u.shardnote_pro?"REMOVE PRO":"ADD PRO")+"</button>" : "";
    const discord=u.discord_username?"<div class='support-note'>Discord: "+esc(u.discord_global_name||u.discord_username)+" <span style='color:#a970ff'>@"+esc(u.discord_username)+"</span></div>":"<div class='support-note'>Discord: Not linked</div>";
-   return "<div class='member-row'><a class='profile-link' href='/profile/?id="+encodeURIComponent(u.user_id)+"'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><strong>"+esc(u.username)+"</strong><div class='profile-bio'>"+team+" · "+esc(String(u.role||"member").replace("_"," "))+"</div>"+discord+"</div></a><div class='admin-actions'><span class='role-pill'>"+esc(state.toUpperCase())+"</span>"+tagActions+banAction+"</div></div>";
+   return "<div class='member-row'><a class='profile-link' href='/profile/?id="+encodeURIComponent(u.user_id)+"'><span class='member-avatar'>"+avatar+"</span><div class='profile-copy'><strong>"+esc(u.username)+"</strong><div class='profile-bio'>"+team+" · "+esc(String(u.role||"member").replace("_"," "))+"</div>"+discord+"</div></a><div class='admin-actions'><span class='role-pill'>"+esc(state.toUpperCase())+"</span>"+(u.shardnote_pro?"<span class='role-pill' style='color:#c084fc;border-color:#7c3aed'>SHARDNOTE PRO</span>":"")+tagActions+proAction+banAction+"</div></div>";
  }).join("")||"No registered users.";
 }
+allUsersBox.querySelectorAll(".pro-toggle").forEach(b=>b.onclick=async()=>{
+ b.disabled=true;
+ const enable=b.dataset.pro!=="1";
+ const {error}=await sb.rpc("admin_set_shardnote_pro",{target_user:b.dataset.user,enabled:enable});
+ if(error){alert("Could not change Pro status: "+error.message);b.disabled=false;return;}
+ b.dataset.pro=enable?"1":"0"; b.textContent=enable?"REMOVE PRO":"ADD PRO";
+ const pill=b.closest(".member-row")?.querySelector(".role-pill[style*='SHARDNOTE']");
+ if(enable && !pill){const p=document.createElement("span");p.className="role-pill";p.style="color:#c084fc;border-color:#7c3aed";p.textContent="SHARDNOTE PRO";b.parentElement?.insertBefore(p,b);}
+ if(!enable && pill) pill.remove();
+});
 allUsersBox.querySelectorAll(".unban-user").forEach(b=>b.onclick=async()=>{
  if(!confirm("Permanently remove the ban from "+(b.dataset.name||"this player")+"?"))return;
  b.disabled=true;const {error}=await sb.rpc("admin_unban_user",{target_user:b.dataset.user});

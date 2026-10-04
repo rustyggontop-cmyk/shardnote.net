@@ -347,10 +347,21 @@ membersBox.querySelectorAll(".ban-user").forEach(b=>b.onclick=async()=>{
  b.textContent="BANNED";
 });
 membersBox.querySelectorAll(".remove-tag").forEach(b=>b.onclick=async()=>{
-   if(!confirm("Remove this member's tag?"))return;
-   b.disabled=true;const {error}=await sb.rpc("admin_remove_user_tag",{target_user:b.dataset.user});
-   if(error){b.disabled=false;b.textContent="FAILED";return;}
-   b.textContent="REMOVED";b.closest(".member-row")?.querySelector(".user-tag")?.remove();
+   const {data:allTags,error:tagError}=await sb.from("user_tags").select("id,tag_name,tag_slot").eq("user_id",b.dataset.user).order("tag_slot");
+   if(tagError){alert("Could not load tags: "+tagError.message);return;}
+   if(!allTags?.length){alert("This user has no custom tags.");return;}
+   const choices=allTags.map((t,i)=>(i+1)+". "+t.tag_name).join("\n");
+   const answer=prompt("Choose the tag to remove:\n\n"+choices+"\n\nEnter the number:");
+   if(answer===null)return;
+   const n=Number(answer);
+   if(!Number.isInteger(n)||n<1||n>allTags.length){alert("Invalid tag selection.");return;}
+   const selected=allTags[n-1];
+   if(!confirm("Remove tag \""+selected.tag_name+"\"?"))return;
+   b.disabled=true;
+   const {error}=await sb.rpc("admin_remove_user_tag",{target_user:b.dataset.user,target_tag:selected.id});
+   if(error){alert("Could not remove tag: "+error.message);b.disabled=false;return;}
+   b.textContent="REMOVED";
+   b.closest(".member-row")?.querySelectorAll(".user-tag")?.forEach((el,j)=>{if(j===n-1)el.remove();});
  });
  membersBox.querySelectorAll(".reset-pass").forEach(b=>b.onclick=async()=>{
    const next=prompt("Enter a new password for "+(b.dataset.name||"this user")+" (minimum 8 characters):");

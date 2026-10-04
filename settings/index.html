@@ -60,6 +60,7 @@
             <option value="ru">🇷🇺 Русский</option>
             <option value="da">🇩🇰 Dansk</option>
             <option value="de">🇩🇪 Deutsch</option>
+            <option value="lt">🇱🇹 Lietuvių</option>
           </select>
           <button id="save-language" type="button" class="button orange" style="margin-top:12px">SAVE LANGUAGE</button>
           <p id="language-msg"></p>
@@ -102,7 +103,7 @@
 
   const languageSelect=document.getElementById("language");
   const languageMsg=document.getElementById("language-msg");
-  languageSelect.value=["en","es","ru","da","de"].includes(profile?.language)?profile.language:"en";
+  languageSelect.value=["en","es","ru","da","de","lt"].includes(profile?.language)?profile.language:"en";
   document.documentElement.lang=languageSelect.value;
 
   document.getElementById("save-language").onclick=async()=>{

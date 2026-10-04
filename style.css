@@ -235,3 +235,5 @@ header nav,header>div{position:relative;z-index:3}
 .maintenance-card{width:min(560px,100%);text-align:center;padding:38px 28px;background:#100d1d;border:1px solid #33224f;border-radius:16px;box-shadow:0 20px 80px rgba(0,0,0,.4)}
 .maintenance-card h1{margin:14px 0;font-size:clamp(34px,6vw,64px)}
 .maintenance-card p{color:#9890a8}
+
+.live-status{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:50;color:#77717f;font:600 11px Inter,Arial,sans-serif;letter-spacing:.4px;text-align:center;opacity:.9}.live-status.down{color:#77717f}

@@ -10,7 +10,7 @@
 .overall.ok{background:rgba(52,211,153,.16);border-color:rgba(52,211,153,.45);box-shadow:0 0 35px rgba(52,211,153,.10)}
 .overall.warn{background:rgba(245,190,55,.16);border-color:rgba(245,190,55,.45);box-shadow:0 0 35px rgba(245,190,55,.10)}
 .overall.down{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.50);box-shadow:0 0 35px rgba(239,68,68,.12)}
-.dot{width:12px;height:12px;border-radius:50%;background:#54e38e;box-shadow:0 0 18px rgba(84,227,142,.55);flex:none}.dot.warn{background:#f3c85b;box-shadow:0 0 18px rgba(243,200,91,.45)}.dot.down{background:#ff5d73;box-shadow:0 0 18px rgba(255,93,115,.45)}
+.dot{width:12px;height:12px;border-radius:50%;background:#6f667d;box-shadow:0 0 12px rgba(111,102,125,.22);flex:none}.dot.warn{background:#f3c85b;box-shadow:0 0 18px rgba(243,200,91,.45)}.dot.down{background:#ff5d73;box-shadow:0 0 18px rgba(255,93,115,.45)}
 .overall strong{font-size:15px}.overall span{display:block;color:#898198;font-size:12px;margin-top:3px}
 .status-card{background:rgba(15,11,27,.84);border:1px solid #282039;border-radius:14px;margin:10px 0;overflow:hidden}
 .status-row{display:flex;align-items:center;gap:14px;padding:17px 19px}.status-row+.status-row{border-top:1px solid #211a2e}
@@ -33,8 +33,10 @@ const SUPABASE_KEY="sb_publishable_O6bwaV-LOdtT0BeAlhph7A__mbDDtM9";
 async function runChecks(){
  const dot=document.getElementById("overallDot"),title=document.getElementById("overallText"),sub=document.getElementById("overallSub");
  const overall=document.getElementById("overall");
- overall.className="overall warn";
- dot.className="dot warn";title.textContent="Checking website…";sub.textContent="Reading the current website status";
+ overall.className="overall";
+ dot.className="dot";
+ title.textContent="Checking website…";
+ sub.textContent="Reading the current website status";
  try{
   const r=await fetch(SUPABASE_URL+"/rest/v1/rpc/get_service_statuses",{
    method:"POST",cache:"no-store",

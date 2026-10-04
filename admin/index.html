@@ -35,15 +35,10 @@
 <section class="panel-card wide"><small>OVERVIEW</small><h2>Team Activity</h2><div id="admin-stats" class="member-row">Loading team activity...</div></section>
 <section class="panel-card wide" id="site-controls" style="display:none">
   <small>SITE CONTROLS</small>
-  <h2>Banner & Maintenance</h2>
+  <h2>Announcement Banner</h2>
   <p class="support-note">Only the Site Owner and Co-owner can change these settings.</p>
   <label style="display:block;margin:12px 0 6px;font-size:11px;font-weight:800;color:#a970ff;letter-spacing:1px">TOP BANNER</label>
   <input id="site-banner-text" class="team-name-input" maxlength="160" placeholder="Banner text">
-  <label style="display:flex;gap:10px;align-items:center;margin:14px 0;font-weight:800">
-    <input id="maintenance-toggle" type="checkbox" style="width:18px;height:18px">
-    MAINTENANCE MODE
-  </label>
-  <p class="support-note">When enabled, only the Site Owner and Co-owner can access the site.</p>
   <button id="save-site-settings" type="button" class="button orange">SAVE SITE SETTINGS</button>
   <span id="site-settings-msg" class="support-note"></span>
 </section>
@@ -77,26 +72,22 @@ if(role==="owner"||role==="co_owner"){
   const controls=document.getElementById("site-controls");
   if(controls)controls.style.display="block";
   const bannerInput=document.getElementById("site-banner-text");
-  const maintenanceToggle=document.getElementById("maintenance-toggle");
   const siteMsg=document.getElementById("site-settings-msg");
   const {data:siteSettings,error:siteSettingsError}=await sb.rpc("get_site_settings");
   const siteData=Array.isArray(siteSettings)?siteSettings[0]:siteSettings;
   if(siteSettingsError){siteMsg.textContent="Could not load site settings: "+siteSettingsError.message;}
   if(siteData){
     bannerInput.value=siteData.banner_text||"";
-    maintenanceToggle.checked=!!siteData.maintenance_mode;
   }
   document.getElementById("save-site-settings").onclick=async()=>{
     siteMsg.textContent="Saving...";
     const {error}=await sb.rpc("update_site_settings",{
-      p_banner_text:bannerInput.value.trim(),
-      p_maintenance_mode:maintenanceToggle.checked
+      p_banner_text:bannerInput.value.trim()
     });
     siteMsg.textContent=error?"Could not save: "+error.message:"Site settings saved.";
     if(!error&&window.__shardnoteApplySiteSettings){
       await window.__shardnoteApplySiteSettings({
         banner_text:document.getElementById("site-banner-text").value.trim(),
-        maintenance_mode:document.getElementById("maintenance-toggle").checked
       });
     }
   };

@@ -2,7 +2,7 @@
 document.documentElement.style.visibility="hidden";
 const page=()=>{const p=location.pathname.split("/").filter(Boolean);return(p[p.length-1]||"index").replace(/\.html$/i,"").toLowerCase()};
 let currentState={banner_text:"We've released!! 🥳"};
-const setBanner=text=>{const v=String(text??"").trim();document.querySelectorAll(".release-banner").forEach(el=>{if(!v){el.style.display="none";return}el.style.display="";const h=document.querySelector("header");if(h&&el.parentElement!==h)h.appendChild(el);el.textContent=v})};
+const setBanner=text=>{const v=String(text??"").trim();document.querySelectorAll(".release-banner").forEach(el=>{if(!v){el.style.display="none";return}el.style.display="";let target=el.querySelector("strong");if(!target){target=document.createElement("strong");el.replaceChildren(target)}target.textContent=v})};
 const isBannedPage=()=>page()==="banned";
 const redirectIfBanned=async sb=>{
  if(isBannedPage())return true;

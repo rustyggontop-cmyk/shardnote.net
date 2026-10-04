@@ -16,9 +16,9 @@ p{color:#c4b5fd;font-size:18px;margin:0}
 </head>
 <body>
 <div class="wrap">
-<img class="cat" src="/maxwell.gif" alt="Maxwell spinning">
+<img class="cat" src="/top-secret/maxwell.gif" alt="Maxwell spinning">
 <h1>You found the spinning cat! 🐈</h1>
 <p>Have fun! :3</p>
 </div>
-</body>
+<audio id="maxwell-audio" src="/top-secret/maxwell.mp3" preload="auto" loop></audio><button id="sound" type="button" style="margin-top:18px;padding:10px 18px;border:0;border-radius:10px;background:#7c3aed;color:#fff;font-weight:700;cursor:pointer">🔊 Play Maxwell</button><script>document.getElementById("sound").addEventListener("click",function(){const a=document.getElementById("maxwell-audio");a.play();this.textContent="🔊 Maxwell is playing";});</script></body>
 </html>
